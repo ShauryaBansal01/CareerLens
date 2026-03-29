@@ -7,45 +7,44 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Outfit', 'sans-serif'],
+        sans: ['Inter', 'sans-serif'],
+        display: ['Manrope', 'sans-serif'],
       },
       colors: {
-        brand: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-          950: '#172554',
-        }
+        surface: '#f8f9fa',
+        'surface-low': '#f1f4f6',
+        'surface-lowest': '#ffffff',
+        'surface-variant': '#dbe4e7',
+        primary: {
+          400: '#8582ff',
+          500: '#4d44e3',
+          600: '#4034d7',
+        },
+        'on-surface': '#2b3437',
+        'on-surface-variant': '#586064',
+        error: '#9e3f4e',
+      },
+      boxShadow: {
+        'ambient': '0px 20px 40px rgba(77, 68, 227, 0.04)',
+        'ambient-hover': '0px 25px 50px rgba(77, 68, 227, 0.08)',
       },
       animation: {
-        'blob': 'blob 7s infinite',
-        'fade-in': 'fadeIn 0.5s ease-out',
-        'slide-up': 'slideUp 0.5s ease-out',
+        'bounce-subtle': 'bounceSubtle 3s infinite',
+        'blob': 'blob 10s infinite',
       },
       keyframes: {
+        bounceSubtle: {
+          '0%, 100%': { transform: 'translateY(-2%)' },
+          '50%': { transform: 'translateY(2%)' },
+        },
         blob: {
-          '0%': { transform: 'translate(0px, 0px) scale(1)' },
+          '0%, 100%': { transform: 'translate(0px, 0px) scale(1)' },
           '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
           '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
-          '100%': { transform: 'translate(0px, 0px) scale(1)' },
-        },
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
-        slideUp: {
-          '0%': { opacity: '0', transform: 'translateY(20px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
         }
       }
     },
   },
   plugins: [],
 }
+// trigger rebuild

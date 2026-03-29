@@ -4,7 +4,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import AuthContext from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CheckCircle, XCircle, Briefcase, Map, Folder, AlertTriangle, Target, Zap, TrendingUp, Award } from 'lucide-react';
+import { CheckCircle, XCircle, Briefcase, Map, Folder, AlertTriangle, Target, Zap, TrendingUp, Award, UploadCloud } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
@@ -89,9 +89,9 @@ const Dashboard = () => {
       <div className="flex items-center justify-center p-6 h-[70vh]">
         <div className="text-center">
           <Zap className="mx-auto h-16 w-16 text-indigo-500 mb-6 drop-shadow-lg" />
-          <h2 className="text-4xl font-extrabold text-slate-800 tracking-tight mb-4">You're almost there!</h2>
-          <p className="text-slate-500 text-lg mb-8 max-w-sm mx-auto">Sign in to unlock AI-powered career recommendations and dynamic roadmaps.</p>
-          <Link to="/login" className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-3.5 rounded-xl font-bold hover:shadow-lg shadow-indigo-500/30 transition-all inline-block">Sign In Now</Link>
+          <h2 className="text-4xl font-display font-extrabold text-on-surface tracking-tight mb-4">You're almost there!</h2>
+          <p className="text-on-surface-variant text-lg mb-8 max-w-sm mx-auto">Sign in to unlock AI-powered career recommendations and dynamic roadmaps.</p>
+          <Link to="/login" className="btn-primary px-8 py-3.5 rounded-xl font-bold hover:shadow-ambient transition-all inline-block">Sign In Now</Link>
         </div>
       </div>
     );
@@ -120,8 +120,8 @@ const Dashboard = () => {
       
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row items-start md:items-end justify-between mb-2">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight">Career Dashboard</h1>
-          <p className="text-slate-500 mt-2 font-medium text-lg">Actionable insights to land your dream job.</p>
+          <h1 className="text-4xl font-display font-black text-on-surface tracking-tight">Career Dashboard</h1>
+          <p className="text-on-surface-variant mt-2 font-medium text-lg">Actionable insights to land your dream job.</p>
         </div>
         
         {roles.length === 0 && (
@@ -147,23 +147,23 @@ const Dashboard = () => {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="glass-panel p-6 rounded-3xl col-span-1 flex flex-col justify-between">
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="glass-card p-8 col-span-1 flex flex-col justify-between">
             <div>
-              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl shadow-md flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-primary-500 text-white rounded-xl shadow-md flex items-center justify-center mb-6">
                 <Briefcase className="w-6 h-6" />
               </div>
-              <h3 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2">Target Role</h3>
-              <p className="text-slate-500 text-sm mb-6 font-medium">Select the career path you want to follow. We'll cross-reference your resume requirements instantly.</p>
+              <h3 className="text-2xl font-display font-extrabold text-on-surface tracking-tight mb-2">Target Role</h3>
+              <p className="text-on-surface-variant text-sm mb-6 font-medium">Select the career path you want to follow. We'll cross-reference your resume requirements instantly.</p>
               
               <div className="relative mb-6">
                 <select 
                   value={selectedRole} 
                   onChange={(e) => setSelectedRole(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/50 border border-slate-200 text-slate-800 font-semibold rounded-xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer"
+                  className="w-full appearance-none bg-surface-low border-b-2 border-transparent text-on-surface font-semibold rounded-xl px-4 py-3.5 outline-none focus:border-primary-500 transition-all cursor-pointer"
                 >
-                  <option value="" disabled className="text-slate-400">Choose a Role...</option>
+                  <option value="" disabled className="text-on-surface-variant">Choose a Role...</option>
                   {roles.map(r => (
-                    <option key={r._id} value={r._id} className="font-medium text-slate-800">{r.roleName}</option>
+                    <option key={r._id} value={r._id} className="font-medium text-on-surface">{r.roleName}</option>
                   ))}
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
@@ -175,7 +175,8 @@ const Dashboard = () => {
             <button 
               onClick={handleAnalyze} 
               disabled={!selectedRole || loading}
-              className="w-full group bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:text-slate-500 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center mt-auto"
+              className={`w-full group font-bold py-4 rounded-xl shadow-ambient hover:shadow-ambient-hover transition-all flex items-center justify-center mt-auto
+                ${loading || !selectedRole ? 'bg-surface-variant text-on-surface-variant cursor-not-allowed' : 'btn-primary'}`}
             >
               {loading ? (
                 <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -189,30 +190,29 @@ const Dashboard = () => {
           </motion.div>
 
           {/* Current Skills Display */}
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="glass-panel p-6 rounded-3xl col-span-1 lg:col-span-2 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-full blur-3xl opacity-60"></div>
-            <h3 className="text-xl font-extrabold text-slate-800 mb-5 relative z-10 flex items-center">
-              <Zap className="text-amber-500 w-5 h-5 mr-2" /> Current Arsenal
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="glass-card p-8 col-span-1 lg:col-span-2 relative overflow-hidden flex flex-col">
+            <h3 className="text-xl font-display font-extrabold text-on-surface mb-5 relative z-10 flex items-center">
+              <Zap className="text-primary-500 w-5 h-5 mr-2" /> Current Arsenal
             </h3>
             
-            <div className="relative z-10 pb-16">
+            <div className="relative z-10 flex-1">
               {resumeData.extractedSkills && resumeData.extractedSkills.length > 0 ? (
                 <div className="flex flex-wrap gap-2.5">
                   {resumeData.extractedSkills.map((skill, index) => (
-                    <span key={index} className="px-3.5 py-1.5 bg-white border border-slate-200 shadow-sm text-slate-700 rounded-lg text-sm font-semibold hover:border-indigo-300 hover:text-indigo-700 cursor-default transition-colors">
+                    <span key={index} className="px-3.5 py-1.5 glass-card-nested text-on-surface text-sm font-semibold hover:bg-surface-variant cursor-default transition-colors">
                       {skill}
                     </span>
                   ))}
                 </div>
               ) : (
-                <div className="border border-dashed border-slate-300 p-8 rounded-xl text-center">
-                  <p className="text-slate-500 font-medium">No distinct skills detected automatically.</p>
+                <div className="glass-card-nested p-8 text-center flex items-center justify-center h-full">
+                  <p className="text-on-surface-variant font-medium">No distinct skills detected automatically.</p>
                 </div>
               )}
             </div>
             
-            <div className="absolute bottom-6 left-6 right-6 pt-4 border-t border-slate-100 flex justify-end z-10">
-               <Link to="/upload" className="text-slate-500 hover:text-indigo-600 text-sm font-bold flex items-center transition-colors">
+            <div className="mt-8 pt-4 border-t border-outline-variant/15 flex justify-end z-10">
+               <Link to="/upload" className="text-on-surface-variant hover:text-primary-600 text-sm font-bold flex items-center transition-colors">
                   <UploadCloud className="w-4 h-4 mr-1" /> Re-upload Resume
                </Link>
             </div>
@@ -227,27 +227,27 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             
             {/* Score & Chart */}
-            <motion.div variants={fadeItem} className="lg:col-span-2 glass-panel p-6 md:p-8 rounded-3xl flex flex-col relative overflow-hidden">
-               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 to-indigo-500"></div>
-               <div className="flex justify-between items-center w-full mb-6">
-                 <h3 className="text-xl font-extrabold text-slate-800">Job Readiness</h3>
-                 <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shadow-inner">
-                   <Award className="w-4 h-4 text-indigo-500" />
+            <motion.div variants={fadeItem} className="lg:col-span-2 glass-card p-8 flex flex-col relative overflow-hidden">
+               <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary-400 to-primary-600"></div>
+               <div className="flex justify-between items-center w-full mb-6 mt-2">
+                 <h3 className="text-xl font-display font-extrabold text-on-surface">Job Readiness</h3>
+                 <div className="w-8 h-8 rounded-full bg-surface-low flex items-center justify-center">
+                   <Award className="w-4 h-4 text-primary-500" />
                  </div>
                </div>
               
-              <div className="flex-1 flex flex-col md:flex-row items-center justify-center p-2 relative z-10 gap-6">
-                <div className="w-full md:w-1/2 flex flex-col items-center justify-center bg-white rounded-2xl p-6 shadow-sm border border-slate-50">
-                  <p className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-slate-700 to-slate-900 tracking-tighter">
+              <div className="flex-1 flex flex-col md:flex-row items-center justify-center relative z-10 gap-8 mt-4">
+                <div className="w-full md:w-1/2 flex flex-col items-center justify-center">
+                  <p className="text-[5rem] font-display font-black text-primary-600 tracking-tighter leading-none">
                     {analysis.scoring.totalJobReadinessScore}
                   </p>
-                  <div className="flex items-center mt-2 group">
-                    <TrendingUp className="w-4 h-4 mr-1 text-emerald-500 group-hover:-translate-y-1 transition-transform" />
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Score / 100</p>
+                  <div className="flex items-center mt-3 group">
+                    <TrendingUp className="w-4 h-4 mr-1 text-on-surface-variant" />
+                    <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Score / 100</p>
                   </div>
                 </div>
                 
-                <div className="w-full md:w-1/2 h-40 flex items-center justify-center -ml-4">
+                <div className="w-full md:w-1/2 h-48 flex items-center justify-center">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -269,29 +269,29 @@ const Dashboard = () => {
             </motion.div>
 
             {/* Gap Analysis Details */}
-            <motion.div variants={fadeItem} className="lg:col-span-3 glass-panel p-6 md:p-8 rounded-3xl flex flex-col justify-center">
-               <h3 className="text-xl font-extrabold text-slate-800 mb-6">Skill Gap Matcher</h3>
+            <motion.div variants={fadeItem} className="lg:col-span-3 glass-card p-8 flex flex-col justify-center">
+               <h3 className="text-xl font-display font-extrabold text-on-surface mb-8">Skill Gap Matcher</h3>
                
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
-                 <div className="bg-emerald-50/50 border border-emerald-100/60 rounded-2xl p-5 shadow-sm">
-                   <h4 className="flex items-center text-emerald-700 font-extrabold mb-4 pb-2 border-b border-emerald-200/50">
-                     <CheckCircle className="w-5 h-5 mr-2" /> Verified Match
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
+                 <div className="bg-surface-low rounded-2xl p-6">
+                   <h4 className="flex items-center text-on-surface font-extrabold mb-5 pb-3 border-b border-outline-variant/15">
+                     <CheckCircle className="w-5 h-5 mr-2 text-primary-500" /> Verified Match
                    </h4>
                    <div className="flex flex-wrap gap-2">
                       {analysis.analysis.matchedSkills.length > 0 ? analysis.analysis.matchedSkills.map(s => (
-                         <span key={s} className="px-3 py-1.5 bg-white text-emerald-700 border border-emerald-200 rounded-lg text-sm font-bold shadow-sm">{s}</span>
-                      )) : <span className="text-sm text-slate-400 font-medium italic">No direct matches found.</span>}
+                         <span key={s} className="px-3 py-1.5 bg-surface-lowest text-on-surface rounded-lg text-sm font-semibold shadow-sm">{s}</span>
+                      )) : <span className="text-sm text-on-surface-variant font-medium italic">No direct matches found.</span>}
                    </div>
                  </div>
 
-                 <div className="bg-rose-50/50 border border-rose-100/60 rounded-2xl p-5 shadow-sm">
-                   <h4 className="flex items-center text-rose-700 font-extrabold mb-4 pb-2 border-b border-rose-200/50">
-                     <XCircle className="w-5 h-5 mr-2" /> Missing Arsenal
+                 <div className="bg-surface-low rounded-2xl p-6">
+                   <h4 className="flex items-center text-on-surface font-extrabold mb-5 pb-3 border-b border-outline-variant/15">
+                     <XCircle className="w-5 h-5 mr-2 text-error" /> Missing Arsenal
                    </h4>
                    <div className="flex flex-wrap gap-2">
                       {analysis.analysis.missingSkills.length > 0 ? analysis.analysis.missingSkills.map(s => (
-                         <span key={s} className="px-3 py-1.5 bg-white text-rose-700 border border-rose-200 rounded-lg text-sm font-bold shadow-sm">{s}</span>
-                      )) : <span className="text-sm text-emerald-600 font-extrabold">100% Match! Incredible profile.</span>}
+                         <span key={s} className="px-3 py-1.5 bg-surface-lowest text-on-surface rounded-lg text-sm font-semibold shadow-sm">{s}</span>
+                      )) : <span className="text-sm text-primary-500 font-extrabold">100% Match! Incredible profile.</span>}
                    </div>
                  </div>
                </div>
@@ -301,10 +301,9 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {/* Dynamic Roadmap */}
             {roadmap && (
-              <motion.div variants={fadeItem} className="xl:col-span-2 glass-panel p-6 md:p-8 rounded-3xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-blue-50/50 rounded-full blur-3xl opacity-50 -mt-20 -mr-20 pointer-events-none"></div>
-                <h3 className="text-2xl font-extrabold text-slate-800 flex items-center mb-8 relative z-10">
-                  <Map className="mr-3 text-blue-500 w-7 h-7" /> Path to Mastery
+              <motion.div variants={fadeItem} className="xl:col-span-2 glass-card p-8 relative overflow-hidden">
+                <h3 className="text-2xl font-display font-extrabold text-on-surface flex items-center mb-8 relative z-10">
+                  <Map className="mr-3 text-primary-500 w-7 h-7" /> Path to Mastery
                 </h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
@@ -312,23 +311,23 @@ const Dashboard = () => {
                     <motion.div 
                       key={level} 
                       whileHover={{ y: -4 }}
-                      className="bg-white border text-center md:text-left border-slate-100 p-6 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-200 transition-all"
+                      className="glass-card-nested text-center md:text-left p-6"
                     >
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-50 text-slate-500 font-bold mb-4 border border-slate-100 shadow-inner">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-surface-lowest text-on-surface font-display font-black mb-5 shadow-sm">
                         {i + 1}
                       </div>
-                      <h4 className="capitalize font-black text-slate-800 text-lg mb-4">{level} Phase</h4>
+                      <h4 className="capitalize font-display font-black text-on-surface text-lg mb-4">{level} Phase</h4>
                       <ul className="space-y-3">
                          {roadmap[level].map((item, idx) => (
                            <li key={idx} className="flex items-start justify-center md:justify-start">
                              <span className="shrink-0 mt-0.5">
                                {item.isMissing ? (
-                                 <div className="w-2 h-2 rounded-full bg-rose-500 mr-2.5 mt-1.5 animate-pulse"></div>
+                                 <div className="w-2 h-2 rounded-full bg-error mr-3 mt-1.5 animate-pulse"></div>
                                ) : (
-                                 <CheckCircle className="w-4 h-4 mr-2 text-emerald-500 mt-0.5" />
+                                 <CheckCircle className="w-4 h-4 mr-2 text-primary-500 mt-0.5" />
                                )}
                              </span>
-                             <span className={`text-sm ${item.isMissing ? 'font-bold text-slate-900 border-b border-rose-200/50 pb-0.5' : 'text-slate-400 line-through decoration-slate-300 font-medium'}`}>
+                             <span className={`text-sm ${item.isMissing ? 'font-bold text-on-surface pb-0.5' : 'text-on-surface-variant line-through font-medium'}`}>
                                {item.skill}
                              </span>
                            </li>
@@ -342,28 +341,27 @@ const Dashboard = () => {
 
             {/* Project Recommendations */}
             {projects.length > 0 && (
-              <motion.div variants={fadeItem} className="xl:col-span-1 glass-panel p-6 md:p-8 rounded-3xl flex flex-col h-full bg-gradient-to-b from-white/60 to-orange-50/20">
-                 <h3 className="text-2xl font-extrabold text-slate-800 flex items-center mb-2">
-                   <Folder className="mr-3 text-orange-500 w-7 h-7" /> Project Blueprints
+              <motion.div variants={fadeItem} className="xl:col-span-1 glass-card p-8 flex flex-col h-full bg-surface-lowest">
+                 <h3 className="text-2xl font-display font-extrabold text-on-surface flex items-center mb-2">
+                   <Folder className="mr-3 text-primary-500 w-7 h-7" /> Project Blueprints
                  </h3>
-                 <p className="text-slate-500 mb-8 text-sm font-medium">Curated tasks to eliminate your skill gap.</p>
+                 <p className="text-on-surface-variant mb-8 text-sm font-medium">Curated tasks to eliminate your skill gap.</p>
                  
                  <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
                    {projects.map((proj, idx) => (
                      <motion.div 
                         whileHover={{ scale: 1.02 }} 
                         key={idx} 
-                        className="bg-white border border-orange-100 p-5 rounded-2xl shadow-sm hover:shadow-orange-100/50 hover:border-orange-300 transition-all cursor-pointer relative overflow-hidden group"
+                        className="glass-card-nested p-5 hover:bg-surface-variant transition-colors cursor-pointer"
                      >
-                       <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-orange-100 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-bl-full"></div>
-                       <h4 className="font-extrabold text-slate-800 text-lg mb-2 relative z-10">{proj.title}</h4>
-                       <p className="text-slate-500 text-xs font-medium mb-4 leading-relaxed relative z-10">{proj.description}</p>
-                       <div className="flex flex-wrap gap-1.5 relative z-10">
+                       <h4 className="font-display font-extrabold text-on-surface text-lg mb-3">{proj.title}</h4>
+                       <p className="text-on-surface-variant text-xs font-medium mb-5 leading-relaxed">{proj.description}</p>
+                       <div className="flex flex-wrap gap-2">
                          {proj.requiredSkills.map(s => {
                            const isMissing = analysis.analysis.missingSkills.includes(s.toLowerCase());
                            return (
-                             <span key={s} className={`px-2 py-0.5 rounded border text-[10px] uppercase font-bold tracking-wide ${
-                               isMissing ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-slate-50 border-slate-200 text-slate-500'
+                             <span key={s} className={`px-2.5 py-1 rounded-md text-[10px] uppercase font-bold tracking-wider ${
+                               isMissing ? 'bg-error text-white' : 'bg-surface-lowest text-on-surface font-semibold shadow-sm'
                              }`}>
                                {s}
                              </span>

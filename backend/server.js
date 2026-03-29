@@ -1,6 +1,7 @@
+const dotenv = require('dotenv');
+dotenv.config();
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const resumeRoutes = require('./routes/resumeRoutes');
@@ -8,8 +9,6 @@ const analysisRoutes = require('./routes/analysisRoutes');
 const roadmapRoutes = require('./routes/roadmapRoutes');
 const projectRoutes = require('./routes/projectRoutes');
 const adminRoutes = require('./routes/adminRoutes');
-
-dotenv.config();
 
 // Connect to database
 connectDB();

@@ -19,7 +19,7 @@ exports.analyzeSkills = async (req, res) => {
       return res.status(404).json({ message: 'Target role not found.' });
     }
 
-    const analysis = analysisService.calculateSkillGap(resume.extractedSkills || [], role.requiredSkills || []);
+    const analysis = await analysisService.calculateSkillGapAI(resume.extractedSkills || [], role.requiredSkills || []);
 
     // Full Job Readiness Score computation
     // Skills (50%) + Projects (20%) + Experience (20%) + Consistency (10%)

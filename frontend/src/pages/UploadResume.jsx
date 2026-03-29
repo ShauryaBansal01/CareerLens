@@ -51,35 +51,33 @@ const UploadResume = () => {
   if (!user) {
     return (
       <div className="flex items-center justify-center p-6 h-[70vh]">
-        <div className="text-center glass-card p-10 rounded-2xl max-w-md">
-          <AlertCircle className="mx-auto h-12 w-12 text-rose-500 mb-4" />
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">Authentication Required</h2>
-          <p className="text-slate-600 mb-6">You must be logged in to upload your resume securely.</p>
+        <div className="text-center glass-card p-10 max-w-md">
+          <AlertCircle className="mx-auto h-12 w-12 text-error mb-4" />
+          <h2 className="text-2xl font-display font-medium mb-2">Authentication Required</h2>
+          <p className="text-on-surface-variant mb-6">You must be logged in to upload your resume securely.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 h-full">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 tracking-tight">Upload Your Resume</h1>
-        <p className="text-slate-500 mt-2 text-lg">Let our AI extract your skills and experience to build a personalized roadmap.</p>
+    <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-12 space-y-16 h-full mt-8">
+      <div className="text-center mb-16">
+        <h1 className="text-4xl md:text-[3.5rem] font-display font-normal text-on-surface tracking-tight leading-tight">Your Digital Career Architect</h1>
+        <p className="text-on-surface-variant mt-4 text-lg font-light">Upload your resume to begin your AI-powered career journey.</p>
       </div>
 
       <motion.div 
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="glass-card rounded-3xl p-8 sm:p-12 border border-white/60 relative overflow-hidden shadow-2xl shadow-indigo-100"
+        className="glass-card p-8 sm:p-16 relative overflow-hidden"
       >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-indigo-100 to-purple-50 rounded-full blur-3xl opacity-50 -mr-20 -mt-20"></div>
-
         <form onSubmit={handleUpload} className="relative z-10 flex flex-col items-center">
           
           <div 
             onClick={() => fileInputRef.current?.click()}
-            className={`w-full max-w-xl p-8 sm:p-12 border-2 ${file ? 'border-indigo-400 bg-indigo-50/50' : 'border-dashed border-indigo-200 hover:border-indigo-400 hover:bg-slate-50/50'} rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-300 group`}
+            className={`w-full max-w-xl p-12 border border-outline-variant/15 ${file ? 'bg-surface-low' : 'bg-surface hover:bg-surface-low'} rounded-xl flex flex-col items-center justify-center cursor-pointer transition-colors duration-300 group`}
           >
             <input 
               type="file" 
@@ -93,17 +91,16 @@ const UploadResume = () => {
               {!file ? (
                 <motion.div 
                   key="empty"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
                   className="flex flex-col items-center text-center"
                 >
-                  <div className="w-20 h-20 bg-indigo-100 text-indigo-500 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-indigo-200 transition-transform duration-300 shadow-inner">
-                    <UploadCloud className="w-10 h-10" />
+                  <div className="w-16 h-16 bg-surface-low text-on-surface-variant rounded-full flex items-center justify-center mb-6 group-hover:scale-105 transition-transform duration-300">
+                    <UploadCloud className="w-8 h-8 opacity-70" />
                   </div>
-                  <p className="text-lg font-bold text-slate-700">Click to select a PDF</p>
-                  <p className="text-sm text-slate-500 mt-1">or drag and drop it here</p>
-                  <p className="text-xs font-medium bg-slate-100 text-slate-500 py-1 px-3 rounded-full mt-4">PDF files only (max 5MB)</p>
+                  <p className="text-sm font-medium text-on-surface uppercase tracking-widest">Click to Select a PDF</p>
+                  <p className="text-xs text-on-surface-variant mt-2 font-medium">MAX 5MB</p>
                 </motion.div>
               ) : (
                 <motion.div 
@@ -112,15 +109,15 @@ const UploadResume = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   className="flex flex-col items-center w-full"
                 >
-                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200 mb-4 animate-bounce-subtle">
-                    <FileText className="w-8 h-8" />
+                  <div className="w-16 h-16 bg-surface-lowest rounded-xl flex items-center justify-center mb-6 shadow-ambient">
+                    <FileText className="w-8 h-8 text-primary-500" />
                   </div>
-                  <p className="text-lg font-bold text-slate-800 break-all text-center">{file.name}</p>
-                  <p className="text-sm text-slate-500 mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                  <p className="text-lg font-medium tracking-tight break-all text-center">{file.name}</p>
+                  <p className="text-sm text-on-surface-variant mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                   <button 
                     type="button" 
                     onClick={(e) => { e.stopPropagation(); setFile(null); }}
-                    className="mt-4 text-xs font-semibold text-rose-500 hover:text-rose-700 bg-rose-50 px-3 py-1.5 rounded-full transition-colors"
+                    className="mt-6 text-xs uppercase tracking-wider font-semibold text-error hover:opacity-80 transition-opacity"
                   >
                     Remove File
                   </button>
@@ -130,8 +127,8 @@ const UploadResume = () => {
           </div>
 
           {error && (
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-rose-500 mt-4 text-sm font-medium flex items-center">
-              <AlertCircle className="w-4 h-4 mr-1.5" /> {error}
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-error mt-6 text-sm font-medium flex items-center">
+              <AlertCircle className="w-4 h-4 mr-2" /> {error}
             </motion.p>
           )}
 
@@ -140,10 +137,10 @@ const UploadResume = () => {
             whileTap={{ scale: file && !loading ? 0.98 : 1 }}
             type="submit" 
             disabled={!file || loading}
-            className={`mt-8 w-full max-w-xs py-3.5 rounded-xl font-bold shadow-lg transition-all flex justify-center items-center
-              ${!file ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' : 
-                loading ? 'bg-indigo-400 text-white cursor-wait opacity-80' : 
-                'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-indigo-300'}
+            className={`mt-10 w-full max-w-xs py-4 rounded-xl font-medium tracking-wide transition-all flex justify-center items-center
+              ${!file ? 'bg-surface-variant text-on-surface-variant cursor-not-allowed shadow-none' : 
+                loading ? 'bg-primary-400 text-white cursor-wait opacity-80' : 
+                'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-ambient'}
             `}
           >
             {loading ? (
@@ -162,54 +159,48 @@ const UploadResume = () => {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="glass-card rounded-2xl p-6 sm:p-8 border border-white/60 shadow-xl shadow-slate-200/50 mt-8"
+            className="glass-card mt-16 p-10"
           >
-            <div className="flex items-center mb-6">
-              <div className="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center mr-3">
-                <CheckCircle2 className="w-6 h-6" />
-              </div>
-              <h3 className="text-2xl font-bold text-slate-800">Extraction Successful</h3>
+            <div className="flex items-center mb-10">
+              <h3 className="text-3xl font-display font-medium">Extraction Successful</h3>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white/50 backdrop-blur-sm p-5 rounded-xl border border-slate-100">
-                <h4 className="font-semibold text-slate-700 flex items-center mb-3">
-                  <span className="w-2 h-2 rounded-full bg-indigo-500 mr-2"></span>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="glass-card-nested p-8">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-primary-500 mb-6">
                   Detected Skills
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {resumeData.extractedSkills?.length > 0 ? (
                     resumeData.extractedSkills.map((skill, index) => (
-                      <span key={index} className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-md text-sm font-semibold border border-indigo-100/50 shadow-sm">
+                      <span key={index} className="bg-surface-lowest text-on-surface px-4 py-2 rounded-md text-sm font-medium shadow-sm">
                         {skill}
                       </span>
                     ))
-                  ) : <span className="text-slate-500 text-sm">No specific core skills matched our current database algorithms.</span>}
+                  ) : <span className="text-on-surface-variant text-sm">No specific core skills matched our current database algorithms.</span>}
                 </div>
               </div>
               
-              <div className="space-y-4">
-                <div className="bg-white/50 backdrop-blur-sm p-5 rounded-xl border border-slate-100">
-                  <h4 className="font-semibold text-slate-700 flex items-center mb-2">
-                    <span className="w-2 h-2 rounded-full bg-purple-500 mr-2"></span>
+              <div className="space-y-6">
+                <div className="glass-card-nested p-8">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-primary-500 mb-4">
                     Education Context
                   </h4>
-                  <p className="text-slate-600 text-sm">{resumeData.education}</p>
+                  <p className="text-on-surface-variant text-sm leading-relaxed">{resumeData.education}</p>
                 </div>
-                <div className="bg-white/50 backdrop-blur-sm p-5 rounded-xl border border-slate-100">
-                  <h4 className="font-semibold text-slate-700 flex items-center mb-2">
-                    <span className="w-2 h-2 rounded-full bg-pink-500 mr-2"></span>
+                <div className="glass-card-nested p-8">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-primary-500 mb-4">
                     Experience Context
                   </h4>
-                  <p className="text-slate-600 text-sm">{resumeData.experience}</p>
+                  <p className="text-on-surface-variant text-sm leading-relaxed">{resumeData.experience}</p>
                 </div>
               </div>
             </div>
             
-            <div className="mt-8 flex justify-center">
+            <div className="mt-12 flex justify-center">
               <Link 
                 to="/" 
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg hover:shadow-indigo-500/30 transition-all flex items-center"
+                className="btn-primary px-8 py-4 rounded-xl flex items-center"
               >
                 Go to AI Dashboard for Deep Analysis
                 <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>

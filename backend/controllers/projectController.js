@@ -1,4 +1,7 @@
 const Project = require('../models/Project');
+const { GoogleGenAI } = require('@google/genai');
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // @desc    Recommend projects based on missing skills
 // @route   POST /api/projects/recommend
@@ -11,17 +14,34 @@ exports.recommendProjects = async (req, res) => {
       return res.status(200).json([]);
     }
 
-    // Find projects where at least one required skill is in the user's missing skills
-    // In a real scenario, we might sort by the number of missing skills matched.
-    const allProjects = await Project.find({});
+    try {
+      const prompt = `You are an expert Coding Bootcamp Instructor. A candidate needs to learn the following specific skills: ${missingSkills.join(', ')}.
+      Design 3 unique, realistic, and highly practical project blueprints they can build to master these exact skills.
+      Each project MUST heavily utilize at least one or more of the missing skills.
+      Return EXACTLY a valid JSON array of objects with the following schema:
+      [
+        {
+          "title": "Project Title",
+          "requiredSkills": ["Missing Skill 1", "Missing Skill 2", "Other Foundational Skill"],
+          "description": "2-3 sentences explaining what this project is and why it's the perfect way to learn these skills."
+        }
+      ]
+      Do not include markdown blocks, just the raw JSON.`;
 
-    const recommended = allProjects.filter(project => {
-      // Check if project.requiredSkills has intersection with missingSkills
-      const lowerReq = project.requiredSkills.map(s => s.toLowerCase());
-      return lowerReq.some(skill => missingSkills.includes(skill));
-    });
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+        }
+      });
 
-    res.status(200).json(recommended);
+      const parsedProjects = JSON.parse(response.text);
+      res.status(200).json(parsedProjects);
+    } catch (aiError) {
+      console.error("Gemini Project Error:", aiError);
+      res.status(500).json({ message: 'Failed to generate AI projects.' });
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -1,12 +1,8 @@
 const Resume = require('../models/Resume');
 const pdfParse = require('pdf-parse');
+const { GoogleGenAI } = require('@google/genai');
 
-// Predefined lists of skills to look for in the text
-const PREDEFINED_SKILLS = [
-  'javascript', 'python', 'java', 'c++', 'react', 'node.js', 'express', 
-  'mongodb', 'sql', 'html', 'css', 'aws', 'docker', 'machine learning', 
-  'data structures', 'algorithms', 'git', 'typescript', 'tailwind'
-];
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // @desc    Upload & Parse Resume
 // @route   POST /api/resume/upload
@@ -20,17 +16,42 @@ exports.uploadResume = async (req, res) => {
     // Parse PDF buffer
     const data = await pdfParse(req.file.buffer);
     const rawText = data.text;
-    const lowerText = rawText.toLowerCase();
 
-    // Very basic extraction logic
-    const extractedSkills = PREDEFINED_SKILLS.filter(skill => 
-      lowerText.includes(skill)
-    );
+    // Use Gemini to extract structured data
+    let extractedSkills = [];
+    let education = 'Not explicitly found';
+    let experience = 'Not explicitly found';
 
-    // Dummy extraction for education and experience (can be improved)
-    // Here we just indicate some extracted text context or dummy data for now
-    const education = lowerText.includes('bachelor') ? 'Bachelor Degree found' : 'Not explicitly found';
-    const experience = lowerText.includes('experience') ? 'Experience section found' : 'Not explicitly found';
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `You are an expert technical recruiter AI. Extract the candidate's core technical skills, education summary, and experience summary from the following resume. 
+        Return EXACTLY a valid JSON object with the following schema:
+        {
+          "skills": ["skill1", "skill2"],
+          "education": "2-3 sentences summarizing their highest degrees",
+          "experience": "2-3 sentences summarizing their work experience"
+        }
+        Do not include markdown blocks, just the raw JSON.
+        
+        Resume Text:
+        ${rawText.substring(0, 15000)}`,
+        config: {
+          responseMimeType: "application/json",
+        }
+      });
+
+      const resultText = response.text;
+      const parsedData = JSON.parse(resultText);
+      extractedSkills = parsedData.skills ? parsedData.skills.map(s => s.toLowerCase()) : [];
+      education = parsedData.education || education;
+      experience = parsedData.experience || experience;
+    } catch (aiError) {
+      console.error("Gemini Extraction Error:", aiError);
+      // Fallback if AI fails or key is invalid
+      education = 'Analysis deferred (AI Key missing or error)';
+      experience = 'Analysis deferred (AI Key missing or error)';
+    }
 
     // Save or update to DB
     let resume = await Resume.findOne({ user: req.user.id });
