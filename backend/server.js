@@ -5,6 +5,8 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const resumeRoutes = require('./routes/resumeRoutes');
 const analysisRoutes = require('./routes/analysisRoutes');
+const roadmapRoutes = require('./routes/roadmapRoutes');
+const projectRoutes = require('./routes/projectRoutes');
 
 dotenv.config();
 
@@ -21,6 +23,8 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/resume', resumeRoutes);
 app.use('/api/analysis', analysisRoutes);
+app.use('/api/roadmap', roadmapRoutes);
+app.use('/api/projects', projectRoutes);
 
 app.get('/', (req, res) => {
   res.send('API is running...');
