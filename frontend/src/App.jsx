@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import UploadResume from './pages/UploadResume';
 import Dashboard from './pages/Dashboard';
+import Admin from './pages/Admin';
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
@@ -21,6 +22,9 @@ const Navbar = () => {
               <>
                 <Link to="/" className="text-gray-700 hover:text-indigo-600">Dashboard</Link>
                 <Link to="/upload" className="text-gray-700 hover:text-indigo-600">Upload Resume</Link>
+                {user.role === 'admin' && (
+                  <Link to="/admin" className="text-gray-700 hover:text-indigo-600">Admin</Link>
+                )}
                 <button onClick={logout} className="text-red-500 hover:text-red-700">Logout</button>
               </>
             ) : (
@@ -47,6 +51,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/upload" element={<UploadResume />} />
+            <Route path="/admin" element={<Admin />} />
           </Routes>
         </div>
       </Router>

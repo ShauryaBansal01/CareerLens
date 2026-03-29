@@ -7,6 +7,7 @@ const resumeRoutes = require('./routes/resumeRoutes');
 const analysisRoutes = require('./routes/analysisRoutes');
 const roadmapRoutes = require('./routes/roadmapRoutes');
 const projectRoutes = require('./routes/projectRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use('/api/resume', resumeRoutes);
 app.use('/api/analysis', analysisRoutes);
 app.use('/api/roadmap', roadmapRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/', (req, res) => {
   res.send('API is running...');
