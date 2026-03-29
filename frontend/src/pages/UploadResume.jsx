@@ -204,6 +204,16 @@ const UploadResume = () => {
                 </div>
               </div>
             </div>
+            
+            <div className="mt-8 flex justify-center">
+              <Link 
+                to="/" 
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg hover:shadow-indigo-500/30 transition-all flex items-center"
+              >
+                Go to AI Dashboard for Deep Analysis
+                <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+              </Link>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
