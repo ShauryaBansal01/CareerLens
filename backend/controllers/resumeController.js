@@ -303,19 +303,38 @@ exports.saveLatexCode = async (req, res) => {
 // @access  Private
 exports.generateLatexTemplate = async (req, res) => {
   try {
-    const resume = await Resume.findOne({ user: req.user.id });
-    if (!resume) {
-      return res.status(404).json({ message: 'No resume found.' });
-    }
+    const { resumeData } = req.body;
+    let resumeContext = "";
+    let enhancePrompt = "";
 
-    const resumeContext = `
+    if (resumeData) {
+      resumeContext = JSON.stringify(resumeData, null, 2);
+      if (resumeData.enhanceWithAI) {
+        enhancePrompt = `
+CRITICAL INSTRUCTION: The user has requested AI Enhancement. 
+Your task is to act as an elite Technical Recruiter. Take the rough notes provided in the 'experience' and 'projects' sections and heavily rewrite them into powerful, action-oriented bullet points using the STAR method. Use strong action verbs, emphasize technical skills, and make the descriptions sound highly professional and impactful. Make sure it sounds like a top-tier software engineer's resume. Do not invent entirely fake companies, but elevate the language and formatting significantly.`;
+      } else {
+        enhancePrompt = `
+Format the provided data exactly as given into the LaTeX template without altering the core descriptions or words.`;
+      }
+    } else {
+      const resume = await Resume.findOne({ user: req.user.id });
+      if (!resume) {
+        return res.status(404).json({ message: 'No resume found.' });
+      }
+      resumeContext = `
 Skills: ${resume.extractedSkills.join(', ')}
 Education: ${resume.education}
 Experience: ${resume.experience}
-    `.trim();
+      `.trim();
+      enhancePrompt = "Format this extracted data into a clean ATS-friendly LaTeX resume.";
+    }
 
-    const prompt = `You are an expert LaTeX developer. Generate a professional, clean ATS-friendly resume in full LaTeX code.
+    const prompt = `You are an expert LaTeX developer and Resume Writer. Generate a professional, clean ATS-friendly resume in full LaTeX code.
 Use a standard class like "article". Do not use external highly complex custom classes that require extra files unless standard in TeX Live. Use standard packages (geometry, hyperref, enumitem, titlesec).
+
+${enhancePrompt}
+
 Inject the following user data into the LaTeX code appropriately:
 ${resumeContext}
 
@@ -328,8 +347,11 @@ Ensure it compiles directly with pdflatex. Only return the raw LaTeX code, witho
 
     let latexCode = response.text.replace(/^```(latex)?/im, '').replace(/```$/im, '').trim();
 
-    resume.rawLatexCode = latexCode;
-    await resume.save();
+    let resume = await Resume.findOne({ user: req.user.id });
+    if (resume) {
+      resume.rawLatexCode = latexCode;
+      await resume.save();
+    }
 
     res.status(200).json({ rawLatexCode: latexCode });
   } catch (error) {

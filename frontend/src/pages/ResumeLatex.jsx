@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Editor from '@monaco-editor/react';
-import { motion } from 'framer-motion';
-import { Play, Download, Save, Sparkles, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Play, Download, Save, Sparkles, FileText, CheckCircle2, AlertCircle, X, Plus, Trash2 } from 'lucide-react';
 
 const ResumeLatex = () => {
   const [latexCode, setLatexCode] = useState('');
@@ -12,6 +12,18 @@ const ResumeLatex = () => {
   const [compiling, setCompiling] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState(''); // 'success' or 'error'
+  
+  // Wizard State
+  const [showWizard, setShowWizard] = useState(false);
+  const [resumeData, setResumeData] = useState({
+    personalInfo: { name: "", email: "", phone: "", linkedin: "", github: "" },
+    summary: "",
+    education: [{ school: "", degree: "", dates: "" }],
+    experience: [{ company: "", role: "", dates: "", bulletPoints: "" }],
+    projects: [{ name: "", techStack: "", description: "" }],
+    skills: "",
+    enhanceWithAI: true
+  });
 
   useEffect(() => {
     const fetchLatex = async () => {
@@ -56,23 +68,44 @@ const ResumeLatex = () => {
     setSaving(false);
   };
 
-  const generateFromProfile = async () => {
-    setLoading(true);
+  const openWizard = async () => {
+    setShowWizard(true);
     try {
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      const { data } = await axios.post('http://localhost:5000/api/resume/latex/generate', {}, config);
-      setLatexCode(data.rawLatexCode);
-      showToast('Generated successfully from your profile');
+      const { data } = await axios.get('http://localhost:5000/api/resume/', config);
+      
+      if (data) {
+        setResumeData(prev => ({
+          ...prev,
+          skills: data.extractedSkills ? data.extractedSkills.join(', ') : prev.skills,
+          // Since existing education/experience are raw text blocks, we can map them roughly into the first block
+          education: [{ school: "From Profile", degree: data.education || "", dates: "" }],
+          experience: [{ company: "From Profile", role: "", dates: "", bulletPoints: data.experience || "" }]
+        }));
+      }
     } catch (error) {
-      showToast('Failed to generate from profile. Ensure you uploaded a resume first.', 'error');
+      console.log("No existing profile data found to prefill.");
+    }
+  };
+
+  const handleGenerate = async () => {
+    setLoading(true);
+    setShowWizard(false); // Close modal while loading
+    try {
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const { data } = await axios.post('http://localhost:5000/api/resume/latex/generate', { resumeData }, config);
+      setLatexCode(data.rawLatexCode);
+      showToast('Generated successfully with AI Magic!');
+    } catch (error) {
+      showToast('Failed to generate resume.', 'error');
     }
     setLoading(false);
   };
 
   const compilePdf = () => {
     setCompiling(true);
-    // Add a slight delay to show loading state since the iframe load can't be easily tracked cross-origin
     setTimeout(() => setCompiling(false), 1500); 
     const encoded = encodeURIComponent(latexCode);
     const url = `https://latexonline.cc/compile?text=${encoded}&force=true`;
@@ -90,8 +123,161 @@ const ResumeLatex = () => {
     showToast('Downloaded .tex file');
   };
 
+  // Handlers for Wizard dynamic arrays
+  const addExperience = () => setResumeData({...resumeData, experience: [...resumeData.experience, { company: "", role: "", dates: "", bulletPoints: "" }]});
+  const updateExperience = (index, field, value) => {
+    const newExp = [...resumeData.experience];
+    newExp[index][field] = value;
+    setResumeData({...resumeData, experience: newExp});
+  };
+  const removeExperience = (index) => setResumeData({...resumeData, experience: resumeData.experience.filter((_, i) => i !== index)});
+
+  const addProject = () => setResumeData({...resumeData, projects: [...resumeData.projects, { name: "", techStack: "", description: "" }]});
+  const updateProject = (index, field, value) => {
+    const newProj = [...resumeData.projects];
+    newProj[index][field] = value;
+    setResumeData({...resumeData, projects: newProj});
+  };
+  const removeProject = (index) => setResumeData({...resumeData, projects: resumeData.projects.filter((_, i) => i !== index)});
+
+  const addEducation = () => setResumeData({...resumeData, education: [...resumeData.education, { school: "", degree: "", dates: "" }]});
+  const updateEducation = (index, field, value) => {
+    const newEdu = [...resumeData.education];
+    newEdu[index][field] = value;
+    setResumeData({...resumeData, education: newEdu});
+  };
+  const removeEducation = (index) => setResumeData({...resumeData, education: resumeData.education.filter((_, i) => i !== index)});
+
   return (
-    <div className="h-[calc(100vh-54px)] flex flex-col bg-[#f5f5f7] overflow-hidden">
+    <div className="h-[calc(100vh-54px)] flex flex-col bg-[#f5f5f7] overflow-hidden relative">
+      
+      {/* Wizard Modal */}
+      <AnimatePresence>
+        {showWizard && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
+            >
+              <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                    <Sparkles className="text-purple-500" size={20} />
+                    AI Resume Wizard
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1">Provide your details, and our AI will rewrite and format a brilliant LaTeX resume.</p>
+                </div>
+                <button onClick={() => setShowWizard(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+                {/* Personal Info */}
+                <section>
+                  <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">Personal Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <input className="apple-input bg-gray-50 text-sm" placeholder="Full Name" value={resumeData.personalInfo.name} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, name: e.target.value}})} />
+                    <input className="apple-input bg-gray-50 text-sm" placeholder="Email" value={resumeData.personalInfo.email} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, email: e.target.value}})} />
+                    <input className="apple-input bg-gray-50 text-sm" placeholder="Phone" value={resumeData.personalInfo.phone} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, phone: e.target.value}})} />
+                    <input className="apple-input bg-gray-50 text-sm" placeholder="LinkedIn URL" value={resumeData.personalInfo.linkedin} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, linkedin: e.target.value}})} />
+                    <input className="apple-input bg-gray-50 text-sm col-span-2" placeholder="GitHub / Portfolio URL" value={resumeData.personalInfo.github} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, github: e.target.value}})} />
+                  </div>
+                </section>
+
+                {/* Skills */}
+                <section>
+                  <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">Skills</h3>
+                  <textarea className="apple-input bg-gray-50 text-sm min-h-[80px]" placeholder="React, Node.js, Python, AWS (comma separated)" value={resumeData.skills} onChange={e => setResumeData({...resumeData, skills: e.target.value})} />
+                </section>
+
+                {/* Experience */}
+                <section>
+                  <div className="flex justify-between items-end border-b pb-2 mb-4">
+                    <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Experience</h3>
+                    <button onClick={addExperience} className="text-blue-600 text-xs font-medium flex items-center gap-1 hover:text-blue-700"><Plus size={14}/> Add Job</button>
+                  </div>
+                  <div className="space-y-6">
+                    {resumeData.experience.map((exp, index) => (
+                      <div key={index} className="p-4 border border-gray-100 rounded-xl bg-gray-50/50 relative group">
+                        <button onClick={() => removeExperience(index)} className="absolute top-3 right-3 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
+                        <div className="grid grid-cols-2 gap-3 mb-3">
+                          <input className="apple-input bg-white text-sm" placeholder="Company Name" value={exp.company} onChange={e => updateExperience(index, 'company', e.target.value)} />
+                          <input className="apple-input bg-white text-sm" placeholder="Role / Title" value={exp.role} onChange={e => updateExperience(index, 'role', e.target.value)} />
+                          <input className="apple-input bg-white text-sm col-span-2" placeholder="Dates (e.g., Jan 2021 - Present)" value={exp.dates} onChange={e => updateExperience(index, 'dates', e.target.value)} />
+                        </div>
+                        <textarea className="apple-input bg-white text-sm min-h-[100px]" placeholder="Rough notes on what you did... AI will enhance this into STAR bullet points!" value={exp.bulletPoints} onChange={e => updateExperience(index, 'bulletPoints', e.target.value)} />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {/* Projects */}
+                <section>
+                  <div className="flex justify-between items-end border-b pb-2 mb-4">
+                    <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Projects</h3>
+                    <button onClick={addProject} className="text-blue-600 text-xs font-medium flex items-center gap-1 hover:text-blue-700"><Plus size={14}/> Add Project</button>
+                  </div>
+                  <div className="space-y-6">
+                    {resumeData.projects.map((proj, index) => (
+                      <div key={index} className="p-4 border border-gray-100 rounded-xl bg-gray-50/50 relative group">
+                        <button onClick={() => removeProject(index)} className="absolute top-3 right-3 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
+                        <div className="grid grid-cols-2 gap-3 mb-3">
+                          <input className="apple-input bg-white text-sm" placeholder="Project Name" value={proj.name} onChange={e => updateProject(index, 'name', e.target.value)} />
+                          <input className="apple-input bg-white text-sm" placeholder="Tech Stack (e.g., React, Firebase)" value={proj.techStack} onChange={e => updateProject(index, 'techStack', e.target.value)} />
+                        </div>
+                        <textarea className="apple-input bg-white text-sm min-h-[80px]" placeholder="Rough notes on the project... AI will enhance this!" value={proj.description} onChange={e => updateProject(index, 'description', e.target.value)} />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+                
+                {/* Education */}
+                <section>
+                  <div className="flex justify-between items-end border-b pb-2 mb-4">
+                    <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Education</h3>
+                    <button onClick={addEducation} className="text-blue-600 text-xs font-medium flex items-center gap-1 hover:text-blue-700"><Plus size={14}/> Add Education</button>
+                  </div>
+                  <div className="space-y-4">
+                    {resumeData.education.map((edu, index) => (
+                      <div key={index} className="p-4 border border-gray-100 rounded-xl bg-gray-50/50 relative group flex gap-3">
+                        <button onClick={() => removeEducation(index)} className="absolute top-3 right-3 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
+                        <input className="apple-input bg-white text-sm w-1/3" placeholder="School/University" value={edu.school} onChange={e => updateEducation(index, 'school', e.target.value)} />
+                        <input className="apple-input bg-white text-sm w-1/3" placeholder="Degree (e.g., BS Computer Science)" value={edu.degree} onChange={e => updateEducation(index, 'degree', e.target.value)} />
+                        <input className="apple-input bg-white text-sm w-1/3 mr-6" placeholder="Dates/Graduation" value={edu.dates} onChange={e => updateEducation(index, 'dates', e.target.value)} />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </div>
+
+              <div className="p-5 border-t border-gray-200 bg-white flex items-center justify-between">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className="relative flex items-center">
+                    <input type="checkbox" className="sr-only" checked={resumeData.enhanceWithAI} onChange={(e) => setResumeData({...resumeData, enhanceWithAI: e.target.checked})} />
+                    <div className={`w-11 h-6 rounded-full transition-colors ${resumeData.enhanceWithAI ? 'bg-purple-500' : 'bg-gray-300'}`}></div>
+                    <div className={`absolute w-4 h-4 bg-white rounded-full transition-transform transform ${resumeData.enhanceWithAI ? 'translate-x-6' : 'translate-x-1'} top-1`}></div>
+                  </div>
+                  <span className="text-sm font-medium text-gray-800 flex items-center gap-1.5">
+                    <Sparkles size={16} className={resumeData.enhanceWithAI ? "text-purple-500" : "text-gray-400"} />
+                    Enhance bullet points with AI
+                  </span>
+                </label>
+                
+                <div className="flex gap-3">
+                  <button onClick={() => setShowWizard(false)} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">Cancel</button>
+                  <button onClick={handleGenerate} className="px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all shadow-md flex items-center gap-2">
+                    Generate Resume
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Top Toolbar */}
       <header className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center z-10 shrink-0">
         <div className="flex items-center gap-3">
@@ -120,16 +306,16 @@ const ResumeLatex = () => {
           )}
 
           <button 
-            onClick={generateFromProfile} 
+            onClick={openWizard} 
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-[#f5f5f7] text-[#1d1d1f] hover:bg-[#e8e8ea] transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors disabled:opacity-50 border border-purple-100 shadow-sm"
           >
             {loading ? (
-              <div className="w-3.5 h-3.5 border-2 border-[#1d1d1f] border-t-transparent rounded-full animate-spin" />
+              <div className="w-3.5 h-3.5 border-2 border-purple-700 border-t-transparent rounded-full animate-spin" />
             ) : (
-              <Sparkles size={14} className="text-purple-500" />
+              <Sparkles size={14} />
             )}
-            AI Generate
+            AI Resume Wizard
           </button>
           
           <div className="w-px h-4 bg-gray-300 mx-1" />
