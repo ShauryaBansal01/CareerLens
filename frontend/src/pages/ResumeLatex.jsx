@@ -28,8 +28,10 @@ const ResumeLatex = () => {
   useEffect(() => {
     const fetchLatex = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (token) {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          const token = user.token;
           const config = { headers: { Authorization: `Bearer ${token}` } };
           const { data } = await axios.get('http://localhost:5000/api/resume/latex', config);
           if (data.rawLatexCode) {
@@ -58,7 +60,8 @@ const ResumeLatex = () => {
   const saveLatex = async () => {
     setSaving(true);
     try {
-      const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+      const token = userStr ? JSON.parse(userStr).token : null;
       const config = { headers: { Authorization: `Bearer ${token}` } };
       await axios.post('http://localhost:5000/api/resume/latex', { rawLatexCode: latexCode }, config);
       showToast('Code saved successfully');
@@ -71,7 +74,8 @@ const ResumeLatex = () => {
   const openWizard = async () => {
     setShowWizard(true);
     try {
-      const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+      const token = userStr ? JSON.parse(userStr).token : null;
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const { data } = await axios.get('http://localhost:5000/api/resume/', config);
       
@@ -93,7 +97,8 @@ const ResumeLatex = () => {
     setLoading(true);
     setShowWizard(false); // Close modal while loading
     try {
-      const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+      const token = userStr ? JSON.parse(userStr).token : null;
       const config = { headers: { Authorization: `Bearer ${token}` } };
       const { data } = await axios.post('http://localhost:5000/api/resume/latex/generate', { resumeData }, config);
       setLatexCode(data.rawLatexCode);
