@@ -4,7 +4,11 @@ import Editor from '@monaco-editor/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Download, Save, Sparkles, FileText, CheckCircle2, AlertCircle, X, Plus, Trash2 } from 'lucide-react';
 
+import AuthContext from '../context/AuthContext';
+import { useContext } from 'react';
+
 const ResumeLatex = () => {
+  const { user } = useContext(AuthContext);
   const [latexCode, setLatexCode] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,25 +31,21 @@ const ResumeLatex = () => {
 
   useEffect(() => {
     const fetchLatex = async () => {
+      if (!user) return;
       try {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          const token = user.token;
-          const config = { headers: { Authorization: `Bearer ${token}` } };
-          const { data } = await axios.get('http://localhost:5000/api/resume/latex', config);
-          if (data.rawLatexCode) {
+        const config = { headers: { Authorization: `Bearer ${user.token}` } };
+        const { data } = await axios.get('http://localhost:5000/api/resume/latex', config);
+        if (data.rawLatexCode) {
             setLatexCode(data.rawLatexCode);
           } else {
             setLatexCode('% Start writing your LaTeX resume here!\n\\documentclass{article}\n\\begin{document}\nHello World\n\\end{document}');
           }
-        }
       } catch (error) {
         console.error('Failed to fetch LaTeX code', error);
       }
     };
     fetchLatex();
-  }, []);
+  }, [user]);
 
   const handleEditorChange = (value) => {
     setLatexCode(value);
@@ -58,11 +58,10 @@ const ResumeLatex = () => {
   };
 
   const saveLatex = async () => {
+    if (!user) return;
     setSaving(true);
     try {
-      const userStr = localStorage.getItem('user');
-      const token = userStr ? JSON.parse(userStr).token : null;
-      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const config = { headers: { Authorization: `Bearer ${user.token}` } };
       await axios.post('http://localhost:5000/api/resume/latex', { rawLatexCode: latexCode }, config);
       showToast('Code saved successfully');
     } catch (error) {
@@ -72,11 +71,10 @@ const ResumeLatex = () => {
   };
 
   const openWizard = async () => {
+    if (!user) return;
     setShowWizard(true);
     try {
-      const userStr = localStorage.getItem('user');
-      const token = userStr ? JSON.parse(userStr).token : null;
-      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const config = { headers: { Authorization: `Bearer ${user.token}` } };
       const { data } = await axios.get('http://localhost:5000/api/resume/', config);
       
       if (data) {
@@ -94,12 +92,11 @@ const ResumeLatex = () => {
   };
 
   const handleGenerate = async () => {
+    if (!user) return;
     setLoading(true);
     setShowWizard(false); // Close modal while loading
     try {
-      const userStr = localStorage.getItem('user');
-      const token = userStr ? JSON.parse(userStr).token : null;
-      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const config = { headers: { Authorization: `Bearer ${user.token}` } };
       const { data } = await axios.post('http://localhost:5000/api/resume/latex/generate', { resumeData }, config);
       setLatexCode(data.rawLatexCode);
       showToast('Generated successfully with AI Magic!');
