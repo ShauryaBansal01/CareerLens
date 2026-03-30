@@ -15,18 +15,29 @@ exports.recommendProjects = async (req, res) => {
     }
 
     try {
-      const prompt = `You are an expert Coding Bootcamp Instructor. A candidate needs to learn the following specific skills: ${missingSkills.join(', ')}.
-      Design 3 unique, realistic, and highly practical project blueprints they can build to master these exact skills.
-      Each project MUST heavily utilize at least one or more of the missing skills.
-      Return EXACTLY a valid JSON array of objects with the following schema:
+      const prompt = `You are a Principal Engineer at a top tech company and an expert coding bootcamp instructor. A candidate needs to master these specific skills: ${missingSkills.join(', ')}.
+
+      Design 3 unique, production-grade project blueprints they can build and put on their GitHub/portfolio to impress real hiring managers in ${new Date().getFullYear()}.
+
+      Rules:
+      - Each project must heavily use the missing skills listed above
+      - Projects must be realistic and deployable (not "todo apps") — think real-world use cases
+      - Stack must reflect what companies actually use (e.g. Next.js, Docker, PostgreSQL, AWS, Prisma, Stripe, etc.)
+      - Include a "deployTarget" like "Vercel", "AWS EC2", "Railway", "Fly.io", etc.
+      - Include a "difficulty" field: "Beginner", "Intermediate", or "Advanced"
+      - description should explain what the project does, which missing skill it primarily targets, and why it impresses hiring managers
+
+      Return EXACTLY a valid JSON array:
       [
         {
           "title": "Project Title",
-          "requiredSkills": ["Missing Skill 1", "Missing Skill 2", "Other Foundational Skill"],
-          "description": "2-3 sentences explaining what this project is and why it's the perfect way to learn these skills."
+          "difficulty": "Intermediate",
+          "deployTarget": "Vercel",
+          "requiredSkills": ["Missing Skill 1", "Missing Skill 2", "Supporting Tool"],
+          "description": "2-3 sentences: what it is, what skill gap it closes, and what makes it impressive to recruiters."
         }
       ]
-      Do not include markdown blocks, just the raw JSON.`;
+      Do not include markdown blocks, just raw JSON.`;
 
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',

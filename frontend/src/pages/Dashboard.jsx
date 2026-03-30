@@ -1,43 +1,68 @@
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Label } from 'recharts';
 import AuthContext from '../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { CheckCircle, XCircle, Briefcase, Map, Folder, AlertTriangle, Target, Zap, TrendingUp, Award, UploadCloud } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  CheckCircle, XCircle, Briefcase, Map, Folder,
+  AlertTriangle, Target, Zap, TrendingUp, Award, UploadCloud,
+  ChevronRight,
+} from 'lucide-react';
+
+// ── Accent bar colors for insights ────────────────────────────────────────────
+const INSIGHT_COLORS = ['#0071e3', '#34c759', '#ff9500', '#ff3b30', '#5856d6'];
+
+// ── Stagger variants ───────────────────────────────────────────────────────────
+const stagger = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.07 } },
+};
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+};
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+const StatCard = ({ label, value, caption, captionColor }) => (
+  <div className="stat-card">
+    <p style={{ fontSize: 13, color: '#6e6e73', fontWeight: 400, marginBottom: 8 }}>{label}</p>
+    <p className="stat-value">{value}</p>
+    {caption && (
+      <p style={{ fontSize: 12, color: captionColor || '#6e6e73', marginTop: 6, fontWeight: 500 }}>
+        {caption}
+      </p>
+    )}
+  </div>
+);
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
-  const [resumeData, setResumeData] = useState(null);
-  const [roles, setRoles] = useState([]);
+  const [resumeData, setResumeData]   = useState(null);
+  const [roles, setRoles]             = useState([]);
   const [selectedRole, setSelectedRole] = useState('');
-  
-  const [analysis, setAnalysis] = useState(null);
-  const [roadmap, setRoadmap] = useState(null);
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [analysis, setAnalysis]       = useState(null);
+  const [roadmap, setRoadmap]         = useState(null);
+  const [projects, setProjects]       = useState([]);
+  const [loading, setLoading]         = useState(false);
 
   useEffect(() => {
-    if (user) {
-      fetchDashboardData();
-    }
+    if (user) fetchDashboardData();
   }, [user]);
 
   const fetchDashboardData = async () => {
     try {
-      const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      
+      const cfg = { headers: { Authorization: `Bearer ${user.token}` } };
       try {
-        const resumeRes = await axios.get('http://localhost:5000/api/resume', config);
-        setResumeData(resumeRes.data);
+        const r = await axios.get('http://localhost:5000/api/resume', cfg);
+        setResumeData(r.data);
       } catch (e) {
-        if (e.response && e.response.status === 404) setResumeData(null);
+        if (e.response?.status === 404) setResumeData(null);
       }
-
       const rolesRes = await axios.get('http://localhost:5000/api/analysis/roles');
       setRoles(rolesRes.data);
-    } catch (error) {
-      console.error('Error fetching data:', error);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -47,336 +72,757 @@ const Dashboard = () => {
       await axios.post('http://localhost:5000/api/roadmap/seed');
       await axios.post('http://localhost:5000/api/projects/seed');
       fetchDashboardData();
-    } catch (error) {
-      console.error(error);
-    }
+    } catch (e) { console.error(e); }
   };
 
   const handleAnalyze = async () => {
     if (!selectedRole) return;
     setLoading(true);
     try {
-      const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      
-      const analysisRes = await axios.post('http://localhost:5000/api/analysis/analyze', { roleId: selectedRole }, config);
+      const cfg = { headers: { Authorization: `Bearer ${user.token}` } };
+      const analysisRes = await axios.post(
+        'http://localhost:5000/api/analysis/analyze',
+        { roleId: selectedRole },
+        cfg,
+      );
       setAnalysis(analysisRes.data);
-
-      const targetRoleName = analysisRes.data.role;
-      const missingSkills = analysisRes.data.analysis.missingSkills;
-
+      const { role: targetRoleName, analysis: { missingSkills } } = analysisRes.data;
       try {
-        const roadmapRes = await axios.post('http://localhost:5000/api/roadmap/generate', { roleName: targetRoleName, missingSkills }, config);
+        const roadmapRes = await axios.post(
+          'http://localhost:5000/api/roadmap/generate',
+          { roleName: targetRoleName, missingSkills },
+          cfg,
+        );
         setRoadmap(roadmapRes.data);
-      } catch (err) {
-        setRoadmap(null);
-      }
-
+      } catch { setRoadmap(null); }
       try {
-        const projectsRes = await axios.post('http://localhost:5000/api/projects/recommend', { missingSkills }, config);
+        const projectsRes = await axios.post(
+          'http://localhost:5000/api/projects/recommend',
+          { missingSkills },
+          cfg,
+        );
         setProjects(projectsRes.data);
-      } catch (err) {
-        setProjects([]);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+      } catch { setProjects([]); }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
   };
 
+  // ── Not authenticated ──────────────────────────────────────────────────────
   if (!user) {
     return (
-      <div className="flex items-center justify-center p-6 h-[70vh]">
-        <div className="text-center">
-          <Zap className="mx-auto h-16 w-16 text-indigo-500 mb-6 drop-shadow-lg" />
-          <h2 className="text-4xl font-display font-extrabold text-on-surface tracking-tight mb-4">You're almost there!</h2>
-          <p className="text-on-surface-variant text-lg mb-8 max-w-sm mx-auto">Sign in to unlock AI-powered career recommendations and dynamic roadmaps.</p>
-          <Link to="/login" className="btn-primary px-8 py-3.5 rounded-xl font-bold hover:shadow-ambient transition-all inline-block">Sign In Now</Link>
-        </div>
+      <div
+        style={{
+          minHeight: 'calc(100vh - 54px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 24,
+          background: '#f5f5f7',
+        }}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ textAlign: 'center', maxWidth: 480 }}
+        >
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 18,
+              background: 'linear-gradient(135deg, #0071e3, #0059b5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 28px',
+            }}
+          >
+            <Zap style={{ width: 32, height: 32, color: '#fff' }} />
+          </div>
+          <h1
+            style={{
+              fontSize: 40,
+              fontWeight: 700,
+              color: '#1d1d1f',
+              letterSpacing: '-0.03em',
+              marginBottom: 12,
+            }}
+          >
+            Navigate your career with AI.
+          </h1>
+          <p style={{ fontSize: 17, color: '#6e6e73', marginBottom: 36 }}>
+            Sign in to unlock skill gap analysis, personalized roadmaps, and job-fit scoring.
+          </p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link to="/login" className="btn-apple" style={{ textDecoration: 'none', padding: '13px 32px', fontSize: 16 }}>
+              Sign In
+            </Link>
+            <Link to="/register" className="btn-apple-secondary" style={{ textDecoration: 'none', padding: '13px 32px', fontSize: 16 }}>
+              Create Account
+            </Link>
+          </div>
+        </motion.div>
       </div>
     );
   }
 
   const chartData = analysis ? [
-    { name: 'Matched', value: analysis.analysis.matchedSkills.length, color: '#10B981' }, // emerald-500
-    { name: 'Missing', value: analysis.analysis.missingSkills.length, color: '#f43f5e' }  // rose-500
+    { name: 'Matched', value: analysis.analysis.matchedSkills.length, color: '#34c759' },
+    { name: 'Missing', value: analysis.analysis.missingSkills.length, color: '#ff3b30' },
   ] : [];
 
-  const staggerContainer = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
-  };
-
-  const fadeItem = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
-  };
+  const firstName = user?.name?.split(' ')[0] || 'there';
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 pb-20 pt-4">
-      
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row items-start md:items-end justify-between mb-2">
-        <div>
-          <h1 className="text-4xl font-display font-black text-on-surface tracking-tight">Career Dashboard</h1>
-          <p className="text-on-surface-variant mt-2 font-medium text-lg">Actionable insights to land your dream job.</p>
-        </div>
-        
-        {roles.length === 0 && (
-          <button onClick={seedDatabase} className="mt-4 md:mt-0 flex items-center bg-white border border-amber-300 text-amber-600 hover:bg-amber-50 px-4 py-2 rounded-lg font-semibold shadow-sm transition">
-            <AlertTriangle className="w-4 h-4 mr-2" /> Populate Data
-          </button>
-        )}
-      </motion.div>
+    <div
+      style={{
+        background: '#f5f5f7',
+        minHeight: 'calc(100vh - 54px)',
+        padding: '56px 24px 80px',
+      }}
+    >
+      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
 
-      {!resumeData ? (
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-card bg-indigo-600 border-none p-8 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between text-white relative overflow-hidden overflow-visible relative items-center justify-between z-10">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl -mr-20 -mt-20"></div>
-          <div className="relative z-10 w-full md:w-2/3">
-            <h3 className="text-2xl font-bold mb-3 flex items-center"><Target className="mr-2" /> Step 1: Upload Your Profile</h3>
-            <p className="text-indigo-100 font-medium mb-6 md:mb-0 max-w-lg">Upload your latest resume. Our AI will instantly automatically extract your core technical skills and build a foundation for your career roadmap.</p>
-          </div>
-          <div className="relative z-10">
-            <Link to="/upload" className="bg-white text-indigo-600 font-bold px-8 py-3.5 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all outline-none flex items-center">
-              Let's Go <Target className="ml-2 w-4 h-4" />
-            </Link>
+        {/* ── Hero greeting ──────────────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          style={{ marginBottom: 48 }}
+        >
+          <h1
+            style={{
+              fontSize: 44,
+              fontWeight: 700,
+              color: '#1d1d1f',
+              letterSpacing: '-0.03em',
+              marginBottom: 10,
+            }}
+          >
+            {greeting}, {firstName}.
+          </h1>
+          <p style={{ fontSize: 17, color: '#6e6e73', marginBottom: 24 }}>
+            {resumeData
+              ? 'Your resume is loaded. Select a target role to run a full analysis.'
+              : 'Upload your resume to get started with AI-powered career insights.'}
+          </p>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            {!resumeData ? (
+              <Link to="/upload" className="btn-apple" style={{ textDecoration: 'none', padding: '11px 24px' }}>
+                Upload Resume
+              </Link>
+            ) : (
+              <>
+                {selectedRole && (
+                  <button
+                    onClick={handleAnalyze}
+                    disabled={loading}
+                    className="btn-apple"
+                    style={{ padding: '11px 24px', cursor: loading ? 'wait' : 'pointer' }}
+                  >
+                    {loading ? (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span className="apple-spinner" style={{ width: 16, height: 16 }} />
+                        Analyzing…
+                      </span>
+                    ) : 'Analyze Profile'}
+                  </button>
+                )}
+                <Link to="/upload" className="btn-apple-secondary" style={{ textDecoration: 'none', padding: '11px 24px' }}>
+                  Re-upload Resume
+                </Link>
+                {roles.length === 0 && (
+                  <button onClick={seedDatabase} className="btn-apple-secondary" style={{ padding: '11px 24px' }}>
+                    <AlertTriangle style={{ width: 14, height: 14, marginRight: 8 }} />
+                    Populate Data
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </motion.div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="glass-card p-8 col-span-1 flex flex-col justify-between">
+
+        {/* ── No resume — CTA banner ────────────────────────────────────────── */}
+        {!resumeData && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            style={{
+              background: 'linear-gradient(135deg, #0071e3 0%, #0059b5 100%)',
+              borderRadius: 20,
+              padding: '40px 44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 24,
+              flexWrap: 'wrap',
+            }}
+          >
             <div>
-              <div className="w-12 h-12 bg-primary-500 text-white rounded-xl shadow-md flex items-center justify-center mb-6">
-                <Briefcase className="w-6 h-6" />
-              </div>
-              <h3 className="text-2xl font-display font-extrabold text-on-surface tracking-tight mb-2">Target Role</h3>
-              <p className="text-on-surface-variant text-sm mb-6 font-medium">Select the career path you want to follow. We'll cross-reference your resume requirements instantly.</p>
-              
-              <div className="relative mb-6">
-                <select 
-                  value={selectedRole} 
-                  onChange={(e) => setSelectedRole(e.target.value)}
-                  className="w-full appearance-none bg-surface-low border-b-2 border-transparent text-on-surface font-semibold rounded-xl px-4 py-3.5 outline-none focus:border-primary-500 transition-all cursor-pointer"
-                >
-                  <option value="" disabled className="text-on-surface-variant">Choose a Role...</option>
-                  {roles.map(r => (
-                    <option key={r._id} value={r._id} className="font-medium text-on-surface">{r.roleName}</option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
-                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                </div>
-              </div>
+              <p
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: 'rgba(255,255,255,0.7)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  marginBottom: 10,
+                }}
+              >
+                Step 1 — Get started
+              </p>
+              <h2
+                style={{
+                  fontSize: 26,
+                  fontWeight: 700,
+                  color: '#ffffff',
+                  letterSpacing: '-0.02em',
+                  marginBottom: 8,
+                }}
+              >
+                Upload your resume
+              </h2>
+              <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.8)' }}>
+                Our AI extracts your skills and builds a personalized career roadmap.
+              </p>
             </div>
-            
-            <button 
-              onClick={handleAnalyze} 
-              disabled={!selectedRole || loading}
-              className={`w-full group font-bold py-4 rounded-xl shadow-ambient hover:shadow-ambient-hover transition-all flex items-center justify-center mt-auto
-                ${loading || !selectedRole ? 'bg-surface-variant text-on-surface-variant cursor-not-allowed' : 'btn-primary'}`}
+            <Link
+              to="/upload"
+              style={{
+                background: 'rgba(255,255,255,0.15)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255,255,255,0.25)',
+                color: '#ffffff',
+                fontSize: 15,
+                fontWeight: 500,
+                padding: '13px 28px',
+                borderRadius: 980,
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                whiteSpace: 'nowrap',
+                transition: 'background 0.2s',
+                flexShrink: 0,
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
             >
-              {loading ? (
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              ) : (
-                <>Analyze Profile <Target className="ml-2 w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" /></>
-              )}
-            </button>
+              Get started <ChevronRight style={{ width: 16, height: 16 }} />
+            </Link>
           </motion.div>
+        )}
 
-          {/* Current Skills Display */}
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="glass-card p-8 col-span-1 lg:col-span-2 relative overflow-hidden flex flex-col">
-            <h3 className="text-xl font-display font-extrabold text-on-surface mb-5 relative z-10 flex items-center">
-              <Zap className="text-primary-500 w-5 h-5 mr-2" /> Current Arsenal
-            </h3>
-            
-            <div className="relative z-10 flex-1">
-              {resumeData.extractedSkills && resumeData.extractedSkills.length > 0 ? (
-                <div className="flex flex-wrap gap-2.5">
-                  {resumeData.extractedSkills.map((skill, index) => (
-                    <span key={index} className="px-3.5 py-1.5 glass-card-nested text-on-surface text-sm font-semibold hover:bg-surface-variant cursor-default transition-colors">
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <div className="glass-card-nested p-8 text-center flex items-center justify-center h-full">
-                  <p className="text-on-surface-variant font-medium">No distinct skills detected automatically.</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="mt-8 pt-4 border-t border-outline-variant/15 flex justify-end z-10">
-               <Link to="/upload" className="text-on-surface-variant hover:text-primary-600 text-sm font-bold flex items-center transition-colors">
-                  <UploadCloud className="w-4 h-4 mr-1" /> Re-upload Resume
-               </Link>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Analysis Results Display */}
-      {analysis && (
-        <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-8 pt-4">
-          
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            
-            {/* Score & Chart */}
-            <motion.div variants={fadeItem} className="lg:col-span-2 glass-card p-8 flex flex-col relative overflow-hidden">
-               <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary-400 to-primary-600"></div>
-               <div className="flex justify-between items-center w-full mb-6 mt-2">
-                 <h3 className="text-xl font-display font-extrabold text-on-surface">Job Readiness</h3>
-                 <div className="w-8 h-8 rounded-full bg-surface-low flex items-center justify-center">
-                   <Award className="w-4 h-4 text-primary-500" />
-                 </div>
-               </div>
-              
-              <div className="flex-1 flex flex-col md:flex-row items-center justify-center relative z-10 gap-8 mt-4">
-                <div className="w-full md:w-1/2 flex flex-col items-center justify-center">
-                  <p className="text-[5rem] font-display font-black text-primary-600 tracking-tighter leading-none">
-                    {analysis.scoring.totalJobReadinessScore}
-                  </p>
-                  <div className="flex items-center mt-3 group">
-                    <TrendingUp className="w-4 h-4 mr-1 text-on-surface-variant" />
-                    <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">Score / 100</p>
+        {/* ── Resume loaded — role selector + skills ────────────────────────── */}
+        {resumeData && (
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            animate="show"
+          >
+            {/* Role selector */}
+            <motion.div variants={fadeUp} style={{ marginBottom: 24 }}>
+              <div
+                style={{
+                  background: '#ffffff',
+                  borderRadius: 18,
+                  padding: '28px 32px',
+                }}
+              >
+                <p className="section-title" style={{ marginBottom: 6 }}>
+                  <Briefcase style={{ display: 'inline', width: 18, height: 18, marginRight: 8, verticalAlign: 'middle', color: '#0071e3' }} />
+                  Choose a target role
+                </p>
+                <p style={{ fontSize: 14, color: '#6e6e73', marginBottom: 20 }}>
+                  We'll cross-reference your resume against real-world job requirements.
+                </p>
+                <div style={{ position: 'relative', maxWidth: 400 }}>
+                  <select
+                    value={selectedRole}
+                    onChange={e => setSelectedRole(e.target.value)}
+                    className="apple-select"
+                  >
+                    <option value="" disabled>Select a role…</option>
+                    {roles.map(r => (
+                      <option key={r._id} value={r._id}>{r.roleName}</option>
+                    ))}
+                  </select>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      right: 16,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+                      <path d="M1 1l5 5 5-5" stroke="#6e6e73" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
                   </div>
                 </div>
-                
-                <div className="w-full md:w-1/2 h-48 flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={chartData} innerRadius={35} outerRadius={60}
-                        paddingAngle={6} dataKey="value" stroke="none" cornerRadius={6}
-                      >
-                        {chartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} className="drop-shadow-sm filter" />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)', fontWeight: 'bold' }}
-                        itemStyle={{ color: '#1e293b' }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
               </div>
             </motion.div>
 
-            {/* Gap Analysis Details */}
-            <motion.div variants={fadeItem} className="lg:col-span-3 glass-card p-8 flex flex-col justify-center">
-               <h3 className="text-xl font-display font-extrabold text-on-surface mb-8">Skill Gap Matcher</h3>
-               
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
-                 <div className="bg-surface-low rounded-2xl p-6">
-                   <h4 className="flex items-center text-on-surface font-extrabold mb-5 pb-3 border-b border-outline-variant/15">
-                     <CheckCircle className="w-5 h-5 mr-2 text-primary-500" /> Verified Match
-                   </h4>
-                   <div className="flex flex-wrap gap-2">
-                      {analysis.analysis.matchedSkills.length > 0 ? analysis.analysis.matchedSkills.map(s => (
-                         <span key={s} className="px-3 py-1.5 bg-surface-lowest text-on-surface rounded-lg text-sm font-semibold shadow-sm">{s}</span>
-                      )) : <span className="text-sm text-on-surface-variant font-medium italic">No direct matches found.</span>}
-                   </div>
-                 </div>
-
-                 <div className="bg-surface-low rounded-2xl p-6">
-                   <h4 className="flex items-center text-on-surface font-extrabold mb-5 pb-3 border-b border-outline-variant/15">
-                     <XCircle className="w-5 h-5 mr-2 text-error" /> Missing Arsenal
-                   </h4>
-                   <div className="flex flex-wrap gap-2">
-                      {analysis.analysis.missingSkills.length > 0 ? analysis.analysis.missingSkills.map(s => (
-                         <span key={s} className="px-3 py-1.5 bg-surface-lowest text-on-surface rounded-lg text-sm font-semibold shadow-sm">{s}</span>
-                      )) : <span className="text-sm text-primary-500 font-extrabold">100% Match! Incredible profile.</span>}
-                   </div>
-                 </div>
-               </div>
+            {/* Extracted skills */}
+            <motion.div variants={fadeUp}>
+              <div
+                style={{
+                  background: '#ffffff',
+                  borderRadius: 18,
+                  padding: '28px 32px',
+                  marginBottom: 24,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                  <p className="section-title" style={{ marginBottom: 0 }}>
+                    <Zap style={{ display: 'inline', width: 18, height: 18, marginRight: 8, verticalAlign: 'middle', color: '#0071e3' }} />
+                    Your skills
+                  </p>
+                  <span className="apple-pill">{resumeData.extractedSkills?.length || 0} detected</span>
+                </div>
+                {resumeData.extractedSkills?.length > 0 ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {resumeData.extractedSkills.map((s, i) => (
+                      <span key={i} className="skill-tag">{s}</span>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ fontSize: 14, color: '#aeaeb2' }}>No specific skills detected.</p>
+                )}
+              </div>
             </motion.div>
-          </div>
+          </motion.div>
+        )}
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            {/* Dynamic Roadmap */}
-            {roadmap && (
-              <motion.div variants={fadeItem} className="xl:col-span-2 glass-card p-8 relative overflow-hidden">
-                <h3 className="text-2xl font-display font-extrabold text-on-surface flex items-center mb-8 relative z-10">
-                  <Map className="mr-3 text-primary-500 w-7 h-7" /> Path to Mastery
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-                  {['beginner', 'intermediate', 'advanced'].map((level, i) => (
-                    <motion.div 
-                      key={level} 
-                      whileHover={{ y: -4 }}
-                      className="glass-card-nested text-center md:text-left p-6"
-                    >
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-surface-lowest text-on-surface font-display font-black mb-5 shadow-sm">
-                        {i + 1}
+        {/* ── Analysis results ──────────────────────────────────────────────── */}
+        <AnimatePresence>
+          {analysis && (
+            <motion.div
+              variants={stagger}
+              initial="hidden"
+              animate="show"
+              style={{ marginTop: 8 }}
+            >
+              {/* ── Stats row ── */}
+              <motion.div
+                variants={fadeUp}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: 16,
+                  marginBottom: 24,
+                }}
+              >
+                <StatCard
+                  label="Job Readiness Score"
+                  value={analysis.scoring?.totalJobReadinessScore}
+                  caption="out of 100"
+                />
+                <StatCard
+                  label="Skills Matched"
+                  value={analysis.analysis.matchedSkills.length}
+                  caption={`of ${analysis.analysis.matchedSkills.length + analysis.analysis.missingSkills.length} required`}
+                />
+                <StatCard
+                  label="Skill Gaps"
+                  value={analysis.analysis.missingSkills.length}
+                  caption="to close for this role"
+                  captionColor="#ff3b30"
+                />
+                <StatCard
+                  label="Match Rate"
+                  value={`${Math.round(
+                    (analysis.analysis.matchedSkills.length /
+                      (analysis.analysis.matchedSkills.length + analysis.analysis.missingSkills.length)) *
+                      100,
+                  )}%`}
+                  caption="skill alignment"
+                  captionColor="#34c759"
+                />
+              </motion.div>
+
+              {/* ── Score chart + gap analysis ── */}
+              <motion.div
+                variants={fadeUp}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 2fr',
+                  gap: 16,
+                  marginBottom: 24,
+                }}
+              >
+                {/* Score chart */}
+                <div
+                  style={{
+                    background: '#ffffff',
+                    borderRadius: 18,
+                    padding: '28px 32px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <p className="section-title" style={{ alignSelf: 'flex-start', marginBottom: 20 }}>
+                    <Award style={{ display: 'inline', width: 18, height: 18, marginRight: 8, verticalAlign: 'middle', color: '#0071e3' }} />
+                    Job Fit
+                  </p>
+                  <div style={{ width: '100%', height: 180 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={chartData}
+                          innerRadius={52}
+                          outerRadius={72}
+                          paddingAngle={4}
+                          dataKey="value"
+                          stroke="none"
+                          cornerRadius={5}
+                          startAngle={90}
+                          endAngle={-270}
+                        >
+                          {chartData.map((entry, i) => (
+                            <Cell key={i} fill={entry.color} />
+                          ))}
+                          <Label
+                            content={({ viewBox }) => {
+                              const { cx, cy } = viewBox;
+                              const matchPct = Math.round(
+                                (analysis.analysis.matchedSkills.length /
+                                  (analysis.analysis.matchedSkills.length + analysis.analysis.missingSkills.length)) * 100
+                              );
+                              return (
+                                <g>
+                                  <text
+                                    x={cx}
+                                    y={cy - 6}
+                                    textAnchor="middle"
+                                    dominantBaseline="middle"
+                                    style={{ fontSize: 26, fontWeight: 700, fill: '#1d1d1f', fontFamily: 'Inter, -apple-system, sans-serif', letterSpacing: '-0.03em' }}
+                                  >
+                                    {matchPct}%
+                                  </text>
+                                  <text
+                                    x={cx}
+                                    y={cy + 16}
+                                    textAnchor="middle"
+                                    dominantBaseline="middle"
+                                    style={{ fontSize: 11, fontWeight: 500, fill: '#6e6e73', fontFamily: 'Inter, -apple-system, sans-serif' }}
+                                  >
+                                    match
+                                  </text>
+                                </g>
+                              );
+                            }}
+                          />
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            borderRadius: 12,
+                            border: 'none',
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                            fontSize: 13,
+                            fontWeight: 600,
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div style={{ display: 'flex', gap: 16, marginTop: 4 }}>
+                    <span style={{ fontSize: 12, color: '#248a3d', display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#34c759', display: 'inline-block' }} />
+                      Matched
+                    </span>
+                    <span style={{ fontSize: 12, color: '#c0392b', display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff3b30', display: 'inline-block' }} />
+                      Missing
+                    </span>
+                  </div>
+                </div>
+
+                {/* Skill gap detail */}
+                <div style={{ background: '#ffffff', borderRadius: 18, padding: '28px 32px' }}>
+                  <p className="section-title">
+                    <Target style={{ display: 'inline', width: 18, height: 18, marginRight: 8, verticalAlign: 'middle', color: '#0071e3' }} />
+                    Skill Gap Analysis — {analysis.role}
+                  </p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    {/* Matched */}
+                    <div style={{ background: '#f5f5f7', borderRadius: 14, padding: '20px 22px' }}>
+                      <p
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: '#248a3d',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.07em',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          marginBottom: 14,
+                        }}
+                      >
+                        <CheckCircle style={{ width: 14, height: 14 }} />
+                        Verified matches
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {analysis.analysis.matchedSkills.length > 0
+                          ? analysis.analysis.matchedSkills.map(s => (
+                              <span key={s} className="skill-tag-matched">{s}</span>
+                            ))
+                          : <span style={{ fontSize: 13, color: '#aeaeb2' }}>None found.</span>
+                        }
                       </div>
-                      <h4 className="capitalize font-display font-black text-on-surface text-lg mb-4">{level} Phase</h4>
-                      <ul className="space-y-3">
-                         {roadmap[level].map((item, idx) => (
-                           <li key={idx} className="flex items-start justify-center md:justify-start">
-                             <span className="shrink-0 mt-0.5">
-                               {item.isMissing ? (
-                                 <div className="w-2 h-2 rounded-full bg-error mr-3 mt-1.5 animate-pulse"></div>
-                               ) : (
-                                 <CheckCircle className="w-4 h-4 mr-2 text-primary-500 mt-0.5" />
-                               )}
-                             </span>
-                             <span className={`text-sm ${item.isMissing ? 'font-bold text-on-surface pb-0.5' : 'text-on-surface-variant line-through font-medium'}`}>
-                               {item.skill}
-                             </span>
-                           </li>
-                         ))}
-                      </ul>
-                    </motion.div>
-                  ))}
+                    </div>
+                    {/* Missing */}
+                    <div style={{ background: '#f5f5f7', borderRadius: 14, padding: '20px 22px' }}>
+                      <p
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: '#c0392b',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.07em',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          marginBottom: 14,
+                        }}
+                      >
+                        <XCircle style={{ width: 14, height: 14 }} />
+                        Skill gaps
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {analysis.analysis.missingSkills.length > 0
+                          ? analysis.analysis.missingSkills.map(s => (
+                              <span key={s} className="skill-tag-missing">{s}</span>
+                            ))
+                          : <span style={{ fontSize: 13, color: '#34c759', fontWeight: 600 }}>🎉 100% match!</span>
+                        }
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
-            )}
 
-            {/* Project Recommendations */}
-            {projects.length > 0 && (
-              <motion.div variants={fadeItem} className="xl:col-span-1 glass-card p-8 flex flex-col h-full bg-surface-lowest">
-                 <h3 className="text-2xl font-display font-extrabold text-on-surface flex items-center mb-2">
-                   <Folder className="mr-3 text-primary-500 w-7 h-7" /> Project Blueprints
-                 </h3>
-                 <p className="text-on-surface-variant mb-8 text-sm font-medium">Curated tasks to eliminate your skill gap.</p>
-                 
-                 <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
-                   {projects.map((proj, idx) => (
-                     <motion.div 
-                        whileHover={{ scale: 1.02 }} 
-                        key={idx} 
-                        className="glass-card-nested p-5 hover:bg-surface-variant transition-colors cursor-pointer"
-                     >
-                       <h4 className="font-display font-extrabold text-on-surface text-lg mb-3">{proj.title}</h4>
-                       <p className="text-on-surface-variant text-xs font-medium mb-5 leading-relaxed">{proj.description}</p>
-                       <div className="flex flex-wrap gap-2">
-                         {proj.requiredSkills.map(s => {
-                           const isMissing = analysis.analysis.missingSkills.includes(s.toLowerCase());
-                           return (
-                             <span key={s} className={`px-2.5 py-1 rounded-md text-[10px] uppercase font-bold tracking-wider ${
-                               isMissing ? 'bg-error text-white' : 'bg-surface-lowest text-on-surface font-semibold shadow-sm'
-                             }`}>
-                               {s}
-                             </span>
-                           );
-                         })}
-                       </div>
-                     </motion.div>
-                   ))}
-                 </div>
+              {/* ── Roadmap + Projects ── */}
+              <motion.div
+                variants={fadeUp}
+                style={{ display: 'grid', gridTemplateColumns: roadmap && projects.length ? '2fr 1fr' : '1fr', gap: 16 }}
+              >
+                {/* Roadmap */}
+                {roadmap && (
+                  <div style={{ background: '#ffffff', borderRadius: 18, padding: '28px 32px' }}>
+                    <p className="section-title">
+                      <Map style={{ display: 'inline', width: 18, height: 18, marginRight: 8, verticalAlign: 'middle', color: '#0071e3' }} />
+                      Learning Roadmap
+                    </p>
+                    {/* Phase labels and time */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+                      {['beginner', 'intermediate', 'advanced'].map((level, i) => {
+                        const phaseColors = ['#34c759', '#ff9500', '#0071e3'];
+                        const phaseLabels = ['Foundation', 'Intermediate', 'Advanced'];
+                        const phaseWeeks = ['Week 1–4', 'Week 5–10', 'Week 11–16'];
+                        return (
+                          <div
+                            key={level}
+                            style={{
+                              background: '#f5f5f7',
+                              borderRadius: 14,
+                              padding: '20px 18px',
+                            }}
+                          >
+                            {/* Phase header */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div
+                                  style={{
+                                    width: 22,
+                                    height: 22,
+                                    borderRadius: '50%',
+                                    background: phaseColors[i],
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                    color: '#ffffff',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {i + 1}
+                                </div>
+                                <p style={{ fontSize: 13, fontWeight: 600, color: '#1d1d1f' }}>
+                                  {phaseLabels[i]}
+                                </p>
+                              </div>
+                              <span style={{ fontSize: 10, color: '#6e6e73', background: '#ffffff', padding: '2px 8px', borderRadius: 980, fontWeight: 500 }}>
+                                {phaseWeeks[i]}
+                              </span>
+                            </div>
+
+                            {/* Skills list */}
+                            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                              {roadmap[level].map((item, idx) => (
+                                <li key={idx}>
+                                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 3 }}>
+                                    {item.isMissing ? (
+                                      <div
+                                        style={{
+                                          width: 6,
+                                          height: 6,
+                                          borderRadius: '50%',
+                                          background: phaseColors[i],
+                                          marginTop: 5,
+                                          flexShrink: 0,
+                                        }}
+                                      />
+                                    ) : (
+                                      <CheckCircle
+                                        style={{ width: 14, height: 14, color: '#34c759', marginTop: 1, flexShrink: 0 }}
+                                      />
+                                    )}
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <span
+                                        style={{
+                                          fontSize: 13,
+                                          color: item.isMissing ? '#1d1d1f' : '#aeaeb2',
+                                          fontWeight: item.isMissing ? 600 : 400,
+                                          textDecoration: item.isMissing ? 'none' : 'line-through',
+                                          display: 'block',
+                                        }}
+                                      >
+                                        {item.skill}
+                                      </span>
+                                      {/* Time + Resource row */}
+                                      {item.isMissing && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3, flexWrap: 'wrap' }}>
+                                          {item.timeEstimate && (
+                                            <span style={{ fontSize: 10, color: '#6e6e73', fontWeight: 500 }}>⏱ {item.timeEstimate}</span>
+                                          )}
+                                          {item.resource && item.resource !== 'https://...' && (
+                                            <a
+                                              href={item.resource}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              style={{ fontSize: 10, color: '#0071e3', fontWeight: 500, textDecoration: 'none' }}
+                                            >
+                                              Learn →
+                                            </a>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Project recommendations */}
+                {projects.length > 0 && (
+                  <div style={{ background: '#ffffff', borderRadius: 18, padding: '28px 32px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                      <p className="section-title" style={{ marginBottom: 0 }}>
+                        <Folder style={{ display: 'inline', width: 18, height: 18, marginRight: 8, verticalAlign: 'middle', color: '#0071e3' }} />
+                        Portfolio Projects
+                      </p>
+                      <span style={{ fontSize: 12, color: '#6e6e73' }}>Build → Deploy → Impress</span>
+                    </div>
+                    <div
+                      className="custom-scrollbar"
+                      style={{ display: 'flex', flexDirection: 'column', gap: 14, maxHeight: 420, overflowY: 'auto', paddingRight: 4 }}
+                    >
+                      {projects.map((proj, idx) => {
+                        const difficultyColors = { Beginner: '#34c759', Intermediate: '#ff9500', Advanced: '#ff3b30' };
+                        const diffColor = difficultyColors[proj.difficulty] || '#6e6e73';
+                        return (
+                          <div
+                            key={idx}
+                            style={{
+                              background: '#f5f5f7',
+                              borderRadius: 14,
+                              padding: '18px 20px',
+                              borderLeft: `3px solid ${INSIGHT_COLORS[idx % INSIGHT_COLORS.length]}`,
+                            }}
+                          >
+                            {/* Header row */}
+                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+                              <p style={{ fontSize: 14, fontWeight: 600, color: '#1d1d1f', letterSpacing: '-0.01em', flex: 1 }}>
+                                {proj.title}
+                              </p>
+                              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                                {proj.difficulty && (
+                                  <span
+                                    style={{
+                                      fontSize: 10,
+                                      fontWeight: 600,
+                                      color: diffColor,
+                                      background: `${diffColor}15`,
+                                      padding: '2px 8px',
+                                      borderRadius: 980,
+                                      whiteSpace: 'nowrap',
+                                    }}
+                                  >
+                                    {proj.difficulty}
+                                  </span>
+                                )}
+                                {proj.deployTarget && (
+                                  <span
+                                    style={{
+                                      fontSize: 10,
+                                      fontWeight: 500,
+                                      color: '#6e6e73',
+                                      background: '#ffffff',
+                                      padding: '2px 8px',
+                                      borderRadius: 980,
+                                      border: '1px solid #e8e8ea',
+                                      whiteSpace: 'nowrap',
+                                    }}
+                                  >
+                                    🚀 {proj.deployTarget}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <p style={{ fontSize: 13, color: '#6e6e73', marginBottom: 12, lineHeight: 1.55 }}>
+                              {proj.description}
+                            </p>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                              {proj.requiredSkills.map(s => {
+                                const isMissing = analysis.analysis.missingSkills.includes(s.toLowerCase());
+                                return (
+                                  <span
+                                    key={s}
+                                    className={isMissing ? 'apple-pill-error' : 'apple-pill-success'}
+                                    style={{ fontSize: 11 }}
+                                  >
+                                    {s}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </motion.div>
-            )}
-          </div>
-          
-        </motion.div>
-      )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+      </div>
     </div>
   );
 };

@@ -18,16 +18,25 @@ exports.generateRoadmap = async (req, res) => {
     }
 
     try {
-      const prompt = `You are a Senior Tech Career Coach. A candidate wants to become a "${roleName}" but is missing these exact skills: ${missingSkills.join(', ')}.
-      Create a 3-stage learning roadmap (beginner, intermediate, advanced) specifically tailored to teach them ONLY these missing skills.
-      Distribute the missing skills logically across the 3 stages based on difficulty. Add 1-2 fundamental prerequisites if absolutely necessary, but focus on the missing skills.
-      Return EXACTLY a valid JSON object with the following schema:
+      const prompt = `You are a Senior Tech Career Coach at a top FAANG company. A candidate is targeting the role of "${roleName}" and is missing these exact skills: ${missingSkills.join(', ')}.
+
+      Create a detailed, industry-standard 3-stage learning roadmap (beginner, intermediate, advanced) laser-focused on teaching ONLY these missing skills using the most in-demand tools and frameworks used at real companies in ${new Date().getFullYear()}.
+
+      Rules:
+      - "beginner" stage: foundational concepts and setup (week 1-4)
+      - "intermediate" stage: real frameworks, libraries, and project-level application (week 5-10)
+      - "advanced" stage: production-grade patterns, system design, performance, CI/CD, cloud deployment, or industry certifications (week 11-16)
+      - Every skill entry must be something a hiring manager or tech lead at a real company would value
+      - Include industry tools like Docker, GitHub Actions, AWS, Vercel, Supabase, Prisma, Playwright, etc. where relevant
+      - isMissing should be true for all missing skills, false only for foundational prerequisites you add
+
+      Return EXACTLY a valid JSON object:
       {
-        "beginner": [{"skill": "Concept 1", "isMissing": true}],
-        "intermediate": [{"skill": "Concept 2", "isMissing": true}],
-        "advanced": [{"skill": "Concept 3", "isMissing": true}]
+        "beginner": [{"skill": "Skill Name", "isMissing": true, "timeEstimate": "1 week", "resource": "https://..."}],
+        "intermediate": [{"skill": "Skill Name", "isMissing": true, "timeEstimate": "2 weeks", "resource": "https://..."}],
+        "advanced": [{"skill": "Skill Name", "isMissing": true, "timeEstimate": "3 weeks", "resource": "https://..."}]
       }
-      Do not include markdown blocks, just the raw JSON.`;
+      Do not include markdown blocks, just raw JSON.`;
 
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',

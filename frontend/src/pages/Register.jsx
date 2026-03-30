@@ -4,87 +4,180 @@ import AuthContext from '../context/AuthContext';
 import { motion } from 'framer-motion';
 
 const Register = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [name, setName]         = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const { register } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     setIsLoading(true);
     try {
       await register(name, email, password, 'user');
       navigate('/');
-    } catch (error) {
-      alert('Failed to register. Please try again.');
+    } catch {
+      setError('Registration failed. This email may already be in use.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center pt-8 px-4">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4 }}
-        className="w-full max-w-md glass-card rounded-2xl p-8 relative overflow-hidden"
+    <div
+      style={{
+        minHeight: 'calc(100vh - 54px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '40px 16px',
+        background: '#f5f5f7',
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        style={{
+          width: '100%',
+          maxWidth: 440,
+          background: '#ffffff',
+          borderRadius: 20,
+          padding: '48px 44px',
+          boxShadow: '0 2px 24px rgba(0,0,0,0.06)',
+        }}
       >
-        <div className="relative z-10">
-          <div className="text-center mb-8">
-            <h3 className="text-3xl font-display font-extrabold text-on-surface tracking-tight">Create an account</h3>
-            <p className="text-on-surface-variant mt-2 text-sm">Join CareerLens to unlock your career path.</p>
+        {/* Logo mark */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 9,
+              background: 'linear-gradient(135deg, #0071e3, #0059b5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <span style={{ color: '#fff', fontWeight: 700, fontSize: 16 }}>C</span>
           </div>
-          
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-semibold text-on-surface mb-1.5" htmlFor="name">Full Name</label>
-              <input 
-                type="text" 
-                id="name"
-                placeholder="Alex Doe"
-                className="w-full px-4 py-3 bg-surface-low border border-transparent rounded-xl focus:outline-none focus:border-primary-500 transition-all placeholder:text-on-surface-variant text-on-surface"
-                value={name} onChange={(e) => setName(e.target.value)} required 
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-on-surface mb-1.5" htmlFor="email">Email Address</label>
-              <input 
-                type="email" 
-                id="email"
-                placeholder="alex@example.com"
-                className="w-full px-4 py-3 bg-surface-low border border-transparent rounded-xl focus:outline-none focus:border-primary-500 transition-all placeholder:text-on-surface-variant text-on-surface"
-                value={email} onChange={(e) => setEmail(e.target.value)} required 
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-on-surface mb-1.5" htmlFor="password">Password</label>
-              <input 
-                type="password" 
-                id="password"
-                placeholder="••••••••"
-                className="w-full px-4 py-3 bg-surface-low border border-transparent rounded-xl focus:outline-none focus:border-primary-500 transition-all placeholder:text-on-surface-variant text-on-surface"
-                value={password} onChange={(e) => setPassword(e.target.value)} required 
-              />
-            </div>
-            
-            <motion.button 
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
-              type="submit" 
-              disabled={isLoading}
-              className="btn-primary w-full py-3.5 mt-4 transition-all disabled:opacity-70"
-            >
-              {isLoading ? 'Creating Account...' : 'Sign Up'}
-            </motion.button>
-            
-            <p className="text-center text-sm text-on-surface-variant mt-6">
-              Already have an account? <Link to="/login" className="font-bold text-primary-600 hover:opacity-80 transition-colors">Sign in</Link>
-            </p>
-          </form>
+          <span style={{ fontSize: 17, fontWeight: 600, color: '#1d1d1f', letterSpacing: '-0.02em' }}>
+            CareerLens
+          </span>
         </div>
+
+        {/* Heading */}
+        <h1
+          style={{
+            fontSize: 32,
+            fontWeight: 700,
+            color: '#1d1d1f',
+            letterSpacing: '-0.03em',
+            marginBottom: 6,
+          }}
+        >
+          Create your account.
+        </h1>
+        <p style={{ fontSize: 15, color: '#6e6e73', marginBottom: 32 }}>
+          Start your AI-powered career journey today.
+        </p>
+
+        {/* Error */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              background: 'rgba(255,59,48,0.08)',
+              color: '#c0392b',
+              padding: '12px 16px',
+              borderRadius: 10,
+              fontSize: 14,
+              marginBottom: 20,
+              fontWeight: 500,
+            }}
+          >
+            {error}
+          </motion.div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: 16 }}>
+            <label className="apple-label" htmlFor="reg-name">Full name</label>
+            <input
+              id="reg-name"
+              type="text"
+              className="apple-input"
+              placeholder="Shaurya Bansal"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              required
+            />
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label className="apple-label" htmlFor="reg-email">Email address</label>
+            <input
+              id="reg-email"
+              type="email"
+              className="apple-input"
+              placeholder="you@example.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div style={{ marginBottom: 8 }}>
+            <label className="apple-label" htmlFor="reg-password">Password</label>
+            <input
+              id="reg-password"
+              type="password"
+              className="apple-input"
+              placeholder="Minimum 8 characters"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              minLength={8}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="btn-apple-rect"
+            style={{ marginTop: 28 }}
+          >
+            {isLoading ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
+                <span className="apple-spinner" />
+                Creating account…
+              </span>
+            ) : 'Create Account'}
+          </button>
+
+          <p
+            style={{
+              textAlign: 'center',
+              fontSize: 14,
+              color: '#6e6e73',
+              marginTop: 24,
+            }}
+          >
+            Already have an account?{' '}
+            <Link
+              to="/login"
+              style={{ color: '#0071e3', textDecoration: 'none', fontWeight: 500 }}
+            >
+              Sign in
+            </Link>
+          </p>
+        </form>
       </motion.div>
     </div>
   );
