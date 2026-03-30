@@ -1,12 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { uploadResume, getResume } = require('../controllers/resumeController');
+const {
+  uploadResume,
+  getResume,
+  improveResume,
+  optimizeForCompany,
+} = require('../controllers/resumeController');
 const { protect } = require('../middleware/authMiddleware');
 
-// Setup multer memory storage (we don't save file to disk, just buffer)
+// Setup multer memory storage
 const storage = multer.memoryStorage();
-const upload = multer({ 
+const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
     if (file.mimetype === 'application/pdf') {
@@ -19,5 +24,8 @@ const upload = multer({
 
 router.post('/upload', protect, upload.single('resume'), uploadResume);
 router.get('/', protect, getResume);
+router.post('/improve', protect, improveResume);
+router.post('/optimize', protect, optimizeForCompany);
 
 module.exports = router;
+
