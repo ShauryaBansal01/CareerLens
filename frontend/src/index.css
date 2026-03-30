@@ -417,6 +417,19 @@
   .custom-scrollbar::-webkit-scrollbar-thumb { background: #d2d2d7; border-radius: 4px; }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #aeaeb2; }
 
+  /* Pill variants */
+  .apple-pill-gray {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 980px;
+    font-size: 12px;
+    font-weight: 500;
+    background: #e8e8ea;
+    color: #6e6e73;
+    white-space: nowrap;
+  }
+
   /* Page content push for fixed navbar */
   .page-top { padding-top: 54px; }
 }

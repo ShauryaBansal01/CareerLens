@@ -1,4 +1,5 @@
 const Roadmap = require('../models/Roadmap');
+const UserAnalysis = require('../models/UserAnalysis');
 const { GoogleGenAI } = require('@google/genai');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -11,10 +12,7 @@ exports.generateRoadmap = async (req, res) => {
     const { roleName, missingSkills } = req.body;
 
     if (!missingSkills || missingSkills.length === 0) {
-      return res.status(200).json({
-        role: roleName,
-        beginner: [], intermediate: [], advanced: []
-      });
+      return res.status(200).json({ role: roleName, beginner: [], intermediate: [], advanced: [] });
     }
 
     try {
@@ -41,12 +39,20 @@ exports.generateRoadmap = async (req, res) => {
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-        }
+        config: { responseMimeType: "application/json" }
       });
 
       const parsedRoadmap = JSON.parse(response.text);
+
+      // ── Persist roadmap into UserAnalysis (merge with existing record) ───────
+      if (req.user) {
+        await UserAnalysis.findOneAndUpdate(
+          { user: req.user.id },
+          { $set: { roadmap: parsedRoadmap } },
+          { new: true }
+        );
+      }
+
       res.status(200).json({ role: roleName, ...parsedRoadmap });
     } catch (aiError) {
       console.error("Gemini Roadmap Error:", aiError);
@@ -56,6 +62,8 @@ exports.generateRoadmap = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
 
 // @desc    Seed Roadmap data
 // @route   POST /api/roadmap/seed

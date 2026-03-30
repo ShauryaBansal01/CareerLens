@@ -1,5 +1,6 @@
 const Resume = require('../models/Resume');
 const Role = require('../models/Role');
+const UserAnalysis = require('../models/UserAnalysis');
 const analysisService = require('../services/analysisService');
 
 // @desc    Analyze user resume against a specific role
@@ -21,26 +22,34 @@ exports.analyzeSkills = async (req, res) => {
 
     const analysis = await analysisService.calculateSkillGapAI(resume.extractedSkills || [], role.requiredSkills || []);
 
-    // Full Job Readiness Score computation
-    // Skills (50%) + Projects (20%) + Experience (20%) + Consistency (10%)
-    // Mocking the non-skill parts for now as per instructions (will integrate Projects later)
-    const experienceScore = resume.experience && resume.experience !== 'Not explicitly found' ? 20 : 5; 
-    const projectsScore = 0; // To be implemented in Step 5
-    const consistencyScore = 5; // Dummy value
-
+    const experienceScore  = resume.experience && resume.experience !== 'Not explicitly found' ? 20 : 5;
+    const projectsScore    = 0;
+    const consistencyScore = 5;
     const totalJobReadinessScore = analysis.skillsWeightedScore + experienceScore + projectsScore + consistencyScore;
 
-    res.status(200).json({
-      role: role.roleName,
-      analysis,
-      scoring: {
-        skillsScore: analysis.skillsWeightedScore,
-        experienceScore,
-        projectsScore,
-        consistencyScore,
-        totalJobReadinessScore
-      }
-    });
+    const scoring = { skillsScore: analysis.skillsWeightedScore, experienceScore, projectsScore, consistencyScore, totalJobReadinessScore };
+
+    // ── Persist so the dashboard can reload without re-running ─────────────
+    await UserAnalysis.findOneAndUpdate(
+      { user: req.user.id },
+      { user: req.user.id, roleId: roleId.toString(), roleName: role.roleName, analysis, scoring, roadmap: {} },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    res.status(200).json({ role: role.roleName, roleId: roleId.toString(), analysis, scoring });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get latest persisted analysis for the logged-in user
+// @route   GET /api/analysis/latest
+// @access  Private
+exports.getLatestAnalysis = async (req, res) => {
+  try {
+    const result = await UserAnalysis.findOne({ user: req.user.id });
+    if (!result) return res.status(404).json({ message: 'No analysis found' });
+    res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

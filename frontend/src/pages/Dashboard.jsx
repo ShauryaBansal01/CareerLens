@@ -5,7 +5,7 @@ import AuthContext from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  CheckCircle, XCircle, Briefcase, Map, Folder,
+  CheckCircle, XCircle, Briefcase, Map,
   AlertTriangle, Target, Zap, TrendingUp, Award, UploadCloud,
   ChevronRight,
 } from 'lucide-react';
@@ -60,7 +60,16 @@ const Dashboard = () => {
         if (e.response?.status === 404) setResumeData(null);
       }
       const rolesRes = await axios.get('http://localhost:5000/api/analysis/roles');
-      setRoles(rolesRes.data);
+      if (rolesRes.data && rolesRes.data.length > 0) {
+        setRoles(rolesRes.data);
+      } else {
+        // DB is empty (first launch or fresh deploy) — seed automatically
+        await axios.post('http://localhost:5000/api/analysis/seed');
+        await axios.post('http://localhost:5000/api/roadmap/seed');
+        await axios.post('http://localhost:5000/api/projects/seed');
+        const seeded = await axios.get('http://localhost:5000/api/analysis/roles');
+        setRoles(seeded.data);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -609,10 +618,10 @@ const Dashboard = () => {
                 </div>
               </motion.div>
 
-              {/* ── Roadmap + Projects ── */}
+              {/* ── Roadmap ── */}
               <motion.div
                 variants={fadeUp}
-                style={{ display: 'grid', gridTemplateColumns: roadmap && projects.length ? '2fr 1fr' : '1fr', gap: 16 }}
+                style={{ gap: 16 }}
               >
                 {/* Roadmap */}
                 {roadmap && (
@@ -728,95 +737,6 @@ const Dashboard = () => {
                   </div>
                 )}
 
-                {/* Project recommendations */}
-                {projects.length > 0 && (
-                  <div style={{ background: '#ffffff', borderRadius: 18, padding: '28px 32px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                      <p className="section-title" style={{ marginBottom: 0 }}>
-                        <Folder style={{ display: 'inline', width: 18, height: 18, marginRight: 8, verticalAlign: 'middle', color: '#0071e3' }} />
-                        Portfolio Projects
-                      </p>
-                      <span style={{ fontSize: 12, color: '#6e6e73' }}>Build → Deploy → Impress</span>
-                    </div>
-                    <div
-                      className="custom-scrollbar"
-                      style={{ display: 'flex', flexDirection: 'column', gap: 14, maxHeight: 420, overflowY: 'auto', paddingRight: 4 }}
-                    >
-                      {projects.map((proj, idx) => {
-                        const difficultyColors = { Beginner: '#34c759', Intermediate: '#ff9500', Advanced: '#ff3b30' };
-                        const diffColor = difficultyColors[proj.difficulty] || '#6e6e73';
-                        return (
-                          <div
-                            key={idx}
-                            style={{
-                              background: '#f5f5f7',
-                              borderRadius: 14,
-                              padding: '18px 20px',
-                              borderLeft: `3px solid ${INSIGHT_COLORS[idx % INSIGHT_COLORS.length]}`,
-                            }}
-                          >
-                            {/* Header row */}
-                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
-                              <p style={{ fontSize: 14, fontWeight: 600, color: '#1d1d1f', letterSpacing: '-0.01em', flex: 1 }}>
-                                {proj.title}
-                              </p>
-                              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                                {proj.difficulty && (
-                                  <span
-                                    style={{
-                                      fontSize: 10,
-                                      fontWeight: 600,
-                                      color: diffColor,
-                                      background: `${diffColor}15`,
-                                      padding: '2px 8px',
-                                      borderRadius: 980,
-                                      whiteSpace: 'nowrap',
-                                    }}
-                                  >
-                                    {proj.difficulty}
-                                  </span>
-                                )}
-                                {proj.deployTarget && (
-                                  <span
-                                    style={{
-                                      fontSize: 10,
-                                      fontWeight: 500,
-                                      color: '#6e6e73',
-                                      background: '#ffffff',
-                                      padding: '2px 8px',
-                                      borderRadius: 980,
-                                      border: '1px solid #e8e8ea',
-                                      whiteSpace: 'nowrap',
-                                    }}
-                                  >
-                                    🚀 {proj.deployTarget}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <p style={{ fontSize: 13, color: '#6e6e73', marginBottom: 12, lineHeight: 1.55 }}>
-                              {proj.description}
-                            </p>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                              {proj.requiredSkills.map(s => {
-                                const isMissing = analysis.analysis.missingSkills.includes(s.toLowerCase());
-                                return (
-                                  <span
-                                    key={s}
-                                    className={isMissing ? 'apple-pill-error' : 'apple-pill-success'}
-                                    style={{ fontSize: 11 }}
-                                  >
-                                    {s}
-                                  </span>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
               </motion.div>
             </motion.div>
           )}

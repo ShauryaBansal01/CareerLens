@@ -31,6 +31,12 @@ const UploadResume = () => {
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!file) { setError('Please select a PDF file first.'); return; }
+
+    if (!user?.token) {
+      setError('You are not signed in. Please log out and sign back in.');
+      return;
+    }
+
     const formData = new FormData();
     formData.append('resume', file);
     try {
@@ -39,12 +45,22 @@ const UploadResume = () => {
       const res = await axios.post('http://localhost:5000/api/resume/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${user?.token}`,
+          Authorization: `Bearer ${user.token}`,
         },
       });
       setResumeData(res.data);
-    } catch {
-      setError('Upload failed. Please ensure the file is a valid PDF under 5MB.');
+    } catch (err) {
+      const status = err.response?.status;
+      const msg    = err.response?.data?.message;
+      if (status === 401) {
+        setError('Session expired. Please log out and sign back in.');
+      } else if (status === 400) {
+        setError(msg || 'Invalid file. Please upload a PDF.');
+      } else if (status === 500) {
+        setError(msg || 'Server error. Please try again in a moment.');
+      } else {
+        setError(msg || 'Upload failed. Please ensure the file is a valid PDF under 5MB.');
+      }
     } finally {
       setLoading(false);
     }

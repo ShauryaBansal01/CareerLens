@@ -6,8 +6,10 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import UploadResume from './pages/UploadResume';
 import Dashboard from './pages/Dashboard';
+import ResumeAI from './pages/ResumeAI';
 import Admin from './pages/Admin';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles } from 'lucide-react';
 
 // ─── Apple-style Navbar ───────────────────────────────────────────────────────
 const Navbar = () => {
@@ -74,6 +76,24 @@ const Navbar = () => {
               }}
             >
               Upload Resume
+            </Link>
+            <Link
+              to="/resume-ai"
+              style={{
+                fontSize: 14,
+                fontWeight: 400,
+                color: isActive('/resume-ai') ? '#0071e3' : '#6e6e73',
+                padding: '6px 14px',
+                borderRadius: 8,
+                textDecoration: 'none',
+                transition: 'color 0.15s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+              }}
+            >
+              <Sparkles style={{ width: 13, height: 13 }} />
+              Resume AI
             </Link>
             {user.role === 'admin' && (
               <Link
@@ -167,11 +187,12 @@ function App() {
           <Navbar />
           <div className="page-top">
             <Routes>
-              <Route path="/"        element={<PageWrapper><Dashboard /></PageWrapper>} />
-              <Route path="/login"   element={<PageWrapper><Login /></PageWrapper>} />
-              <Route path="/register" element={<PageWrapper><Register /></PageWrapper>} />
-              <Route path="/upload"  element={<PageWrapper><UploadResume /></PageWrapper>} />
-              <Route path="/admin"   element={<PageWrapper><Admin /></PageWrapper>} />
+              <Route path="/"           element={<PageWrapper><Dashboard /></PageWrapper>} />
+              <Route path="/login"      element={<PageWrapper><Login /></PageWrapper>} />
+              <Route path="/register"   element={<PageWrapper><Register /></PageWrapper>} />
+              <Route path="/upload"     element={<PageWrapper><UploadResume /></PageWrapper>} />
+              <Route path="/resume-ai"  element={<PageWrapper><ResumeAI /></PageWrapper>} />
+              <Route path="/admin"      element={<PageWrapper><Admin /></PageWrapper>} />
             </Routes>
           </div>
         </div>
