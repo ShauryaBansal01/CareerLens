@@ -308,25 +308,25 @@ exports.generateLatexTemplate = async (req, res) => {
       return res.status(404).json({ message: 'No resume found.' });
     }
 
-    const resumeContext = \`
-Skills: \${resume.extractedSkills.join(', ')}
-Education: \${resume.education}
-Experience: \${resume.experience}
-    \`.trim();
+    const resumeContext = `
+Skills: ${resume.extractedSkills.join(', ')}
+Education: ${resume.education}
+Experience: ${resume.experience}
+    `.trim();
 
-    const prompt = \`You are an expert LaTeX developer. Generate a professional, clean ATS-friendly resume in full LaTeX code.
+    const prompt = `You are an expert LaTeX developer. Generate a professional, clean ATS-friendly resume in full LaTeX code.
 Use a standard class like "article". Do not use external highly complex custom classes that require extra files unless standard in TeX Live. Use standard packages (geometry, hyperref, enumitem, titlesec).
 Inject the following user data into the LaTeX code appropriately:
-\${resumeContext}
+${resumeContext}
 
-Ensure it compiles directly with pdflatex. Only return the raw LaTeX code, without any markdown formatting or explanations. Start with \\\\documentclass.\`;
+Ensure it compiles directly with pdflatex. Only return the raw LaTeX code, without any markdown formatting or explanations. Start with \\documentclass.`;
 
     const response = await callGeminiWithRetry({
       model: 'gemini-2.5-flash',
       contents: prompt
     });
 
-    let latexCode = response.text.replace(/^\`\`\`(latex)?/im, '').replace(/\`\`\`$/im, '').trim();
+    let latexCode = response.text.replace(/^```(latex)?/im, '').replace(/```$/im, '').trim();
 
     resume.rawLatexCode = latexCode;
     await resume.save();
