@@ -110,43 +110,42 @@ const ResumeLatex = () => {
     setCompiling(true);
     
     // Instead of sending the full text in the URL which causes 414 URI Too Large,
-    // we use latexonline's POST endpoint or pass it via URL but chunked.
-    // However, latexonline.cc supports POST! Let's just create a form and submit it to a hidden iframe.
-    // That way we don't hit URL length limits.
+    // we use texlive.net's POST endpoint via a hidden form and iframe.
     
     try {
-      // Create a blob URL for the iframe to load a "compiling..." state first
-      const loadingHtml = `
-        <html>
-          <body style="display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#525659;color:white;font-family:sans-serif;">
-            <div style="text-align:center;">
-              <div style="width:40px;height:40px;border:3px solid #0071e3;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;"></div>
-              <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
-              <p>Sending to compiler...</p>
-            </div>
-          </body>
-        </html>
-      `;
-      setPdfUrl('data:text/html;charset=utf-8,' + encodeURIComponent(loadingHtml));
-
-      // We need a form to POST the data to latexonline to avoid 414 error
+      // We need a form to POST the data to texlive to avoid 414 error
       const form = document.createElement('form');
       form.method = 'POST';
-      form.action = 'https://latexonline.cc/compile';
+      form.action = 'https://texlive.net/cgi-bin/latexcgi';
       form.target = 'pdf-preview-iframe'; // Target the iframe
+      form.enctype = 'multipart/form-data';
 
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'text';
-      input.value = latexCode;
+      // texlive.net requires specific fields
+      const filecontents = document.createElement('input');
+      filecontents.type = 'hidden';
+      filecontents.name = 'filecontents[]';
+      filecontents.value = latexCode;
 
-      const forceInput = document.createElement('input');
-      forceInput.type = 'hidden';
-      forceInput.name = 'force';
-      forceInput.value = 'true';
+      const filename = document.createElement('input');
+      filename.type = 'hidden';
+      filename.name = 'filename[]';
+      filename.value = 'document.tex';
 
-      form.appendChild(input);
-      form.appendChild(forceInput);
+      const engine = document.createElement('input');
+      engine.type = 'hidden';
+      engine.name = 'engine';
+      engine.value = 'pdflatex';
+
+      const returnType = document.createElement('input');
+      returnType.type = 'hidden';
+      returnType.name = 'return';
+      returnType.value = 'pdf';
+
+      form.appendChild(filecontents);
+      form.appendChild(filename);
+      form.appendChild(engine);
+      form.appendChild(returnType);
+      
       document.body.appendChild(form);
 
       // Submit the form which will load the result into the iframe
@@ -155,11 +154,11 @@ const ResumeLatex = () => {
       // Cleanup
       document.body.removeChild(form);
       
-      // We don't set pdfUrl here because the iframe is directly targeted by the form submit
-      // We just need to ensure the iframe has the correct name attribute
-      setPdfUrl(''); 
+      // We mark pdfUrl as 'compiled' so the UI knows we have something in the iframe
+      setPdfUrl('compiled'); 
       
-      setTimeout(() => setCompiling(false), 2000); 
+      // Give the compiler some time before hiding the overlay
+      setTimeout(() => setCompiling(false), 3000); 
     } catch (error) {
       console.error(error);
       setCompiling(false);
@@ -446,7 +445,6 @@ const ResumeLatex = () => {
           <div className="flex-1 overflow-hidden flex items-center justify-center relative">
             <iframe 
               name="pdf-preview-iframe"
-              src={pdfUrl || "about:blank"} 
               className={`w-full h-full border-none bg-white ${!latexCode || (!pdfUrl && !compiling) ? 'hidden' : ''}`}
               title="PDF Preview"
             />

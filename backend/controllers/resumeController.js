@@ -6,14 +6,23 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-const callGeminiWithRetry = async (params, maxRetries = 3) => {
+const callGeminiWithRetry = async (params, maxRetries = 4) => {
   for (let i = 0; i < maxRetries; i++) {
     try {
       return await ai.models.generateContent(params);
     } catch (error) {
       if ((error.status === 503 || error.status === 429) && i < maxRetries - 1) {
-        console.warn(`Gemini API Error ${error.status}. Retrying in ${2 ** i} seconds...`);
-        await sleep((2 ** i) * 1000);
+        // Default backoff: 5s, 15s, 30s
+        let delayMs = [5000, 15000, 30000][i] || 30000;
+        
+        // Try to extract exact requested wait time from Google's error message
+        const match = String(error).match(/retry in ([\d\.]+)s/);
+        if (match && match[1]) {
+          delayMs = Math.ceil(parseFloat(match[1]) * 1000) + 2000; // Add 2s buffer
+        }
+
+        console.warn(`Gemini API Error 429/503. Retrying in ${Math.round(delayMs / 1000)} seconds...`);
+        await sleep(delayMs);
       } else {
         throw error;
       }
@@ -311,11 +320,16 @@ exports.generateLatexTemplate = async (req, res) => {
       resumeContext = JSON.stringify(resumeData, null, 2);
       if (resumeData.enhanceWithAI) {
         enhancePrompt = `
-CRITICAL INSTRUCTION: The user has requested AI Enhancement. 
-Your task is to act as an elite Technical Recruiter. Take the rough notes provided in the 'experience' and 'projects' sections and heavily rewrite them into powerful, action-oriented bullet points using the STAR method. Use strong action verbs, emphasize technical skills, and make the descriptions sound highly professional and impactful. Make sure it sounds like a top-tier software engineer's resume. Do not invent entirely fake companies, but elevate the language and formatting significantly.`;
+CRITICAL INSTRUCTION FOR CONTENT: The user has requested AI Enhancement. 
+Your task is to act as an elite Technical Recruiter. Take the rough notes provided in the 'experience' and 'projects' sections and heavily rewrite them into powerful, action-oriented bullet points using the STAR method (Situation, Task, Action, Result). 
+- Use strong action verbs.
+- Include quantifiable metrics where possible.
+- Emphasize technical skills and modern frameworks.
+- Generate strictly 3-4 bullet points per job/project. Do NOT write paragraphs.
+- Keep bullet points concise and to the point.`;
       } else {
         enhancePrompt = `
-Format the provided data exactly as given into the LaTeX template without altering the core descriptions or words.`;
+CRITICAL INSTRUCTION FOR CONTENT: Format the provided data exactly as given into the LaTeX template without altering the core descriptions or words.`;
       }
     } else {
       const resume = await Resume.findOne({ user: req.user.id });
@@ -330,21 +344,39 @@ Experience: ${resume.experience}
       enhancePrompt = "Format this extracted data into a clean ATS-friendly LaTeX resume.";
     }
 
-    const prompt = `You are an expert LaTeX developer and Resume Writer. Generate a professional, clean ATS-friendly resume in full LaTeX code.
+    const prompt = `You are an expert LaTeX developer and a Senior Technical Recruiter. Your task is to generate a beautiful, modern, ATS-friendly software engineering resume in strict LaTeX code based on the provided JSON data.
 
-CRITICAL REQUIREMENTS FOR LATEX:
-- You must use the "article" class.
-- You MUST INCLUDE these required packages at the very beginning of the document: \\usepackage{geometry}, \\usepackage{hyperref}, \\usepackage{enumitem}, \\usepackage{titlesec}, \\usepackage{xcolor}, \\usepackage{ragged2e}, \\usepackage{amsmath}, \\usepackage{fontawesome5}.
-- Do NOT use custom classes or files that are not standard in TeX Live. 
-- Ensure proper escaping of special characters like &, %, $, #, _, {, }, ~, ^, \\.
-- Make sure lists (itemize) are properly opened and closed.
+CRITICAL LATEX & DESIGN REQUIREMENTS:
+- Use the standard "article" class with 11pt font.
+- You MUST INCLUDE these required packages: \\usepackage[letterpaper, margin=0.5in]{geometry}, \\usepackage{hyperref}, \\usepackage{enumitem}, \\usepackage{titlesec}, \\usepackage{xcolor}, \\usepackage{tgtermes}, \\usepackage[T1]{fontenc}.
+- The font must be a highly professional serif font (TeX Gyre Termes, which resembles Times New Roman) for a classic, executive look.
+- Disable page numbers by including \\pagestyle{empty}.
+- Configure the list formatting globally for a clean, tight look: \\setlist[itemize]{leftmargin=0.15in, label={--}, itemsep=2pt, parsep=0pt, topsep=2pt, partopsep=0pt}
+- Format section headers to be classic and distinct. Example: \\titleformat{\\section}{\\large\\bfseries\\scshape}{}{0em}{}[\\vspace{-0.5em}\\rule{\\textwidth}{0.5pt}]
+- Ensure proper escaping of LaTeX special characters like &, %, $, #, _, {, }, ~, ^, \\ manually in the text. Do NOT define or use any custom macros like \\safeText for escaping. Escape them directly (e.g. \\%).
+- For the Header: The Name should be large, centered, and bold (e.g. \\begin{center}\\Huge\\textbf{Name}\\vspace{2pt}\\end{center}). Below it, output the contact info centered on a single line, separated by pipes (|) and hyperlinking the URLs.
+- For Sections (Education, Experience, Projects): Use a strict 4-corner layout for headers. Do NOT use \\item for headers. Just use regular text and line breaks (\\\\).
+  Example format for a job or project:
+  \\noindent\\textbf{Company Name} \\hfill Location\\\\
+  \\textit{Job Title} \\hfill \\textit{Jan 2020 -- Present}
+  \\begin{itemize}
+    \\item First bullet point...
+  \\end{itemize}
+- Use bullet points (\\begin{itemize} \\item ... \\end{itemize}) ONLY for the descriptions/accomplishments under each job or project.
+
+CONDITIONAL LOGIC (EXTREMELY IMPORTANT):
+- You are receiving the user's data as JSON.
+- IF a field, array, or section (such as 'projects', 'experience', 'education', 'skills', or any contact link) is EMPTY, blank, contains only whitespace, or is missing in the JSON, you MUST completely omit that section or field from the LaTeX document. 
+- Do NOT output empty headers (e.g. no "Projects" section if the projects array is empty).
+- Do NOT output placeholder text (e.g. "School Name" or "Company Name") if the user provided blank strings. Just skip that entry.
+- DO NOT define or use any custom commands or macros like \\safeText. Write pure, standard LaTeX.
 
 ${enhancePrompt}
 
-Inject the following user data into the LaTeX code appropriately:
+USER DATA (JSON):
 ${resumeContext}
 
-Ensure it compiles directly with pdflatex without any errors. Only return the raw LaTeX code, without any markdown formatting or explanations. Start with \\documentclass.`;
+Ensure it compiles directly with pdflatex without any errors. Only return the raw LaTeX code, without any markdown formatting blocks (do not wrap in \`\`\`latex ... \`\`\`). Start the output immediately with \\documentclass.`;
 
     const response = await callGeminiWithRetry({
       model: 'gemini-2.5-flash',
