@@ -6,6 +6,9 @@ const {
   getResume,
   improveResume,
   optimizeForCompany,
+  getLatexCode,
+  saveLatexCode,
+  generateLatexTemplate
 } = require('../controllers/resumeController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -27,5 +30,11 @@ router.get('/', protect, getResume);
 router.post('/improve', protect, improveResume);
 router.post('/optimize', protect, optimizeForCompany);
 
+// LaTeX Routes
+router.get('/latex', protect, getLatexCode);
+router.post('/latex', protect, saveLatexCode);
+router.post('/latex/generate', protect, generateLatexTemplate);
+
 module.exports = router;
+
 

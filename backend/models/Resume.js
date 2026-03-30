@@ -17,6 +17,10 @@ const resumeSchema = new mongoose.Schema({
   },
   rawText: {
     type: String
+  },
+  rawLatexCode: {
+    type: String,
+    default: ""
   }
 }, { timestamps: true });
 

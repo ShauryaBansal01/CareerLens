@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import UploadResume from './pages/UploadResume';
 import Dashboard from './pages/Dashboard';
 import ResumeAI from './pages/ResumeAI';
+import ResumeLatex from './pages/ResumeLatex';
 import Admin from './pages/Admin';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
@@ -94,6 +95,20 @@ const Navbar = () => {
             >
               <Sparkles style={{ width: 13, height: 13 }} />
               Resume AI
+            </Link>
+            <Link
+              to="/resume-latex"
+              style={{
+                fontSize: 14,
+                fontWeight: 400,
+                color: isActive('/resume-latex') ? '#0071e3' : '#6e6e73',
+                padding: '6px 14px',
+                borderRadius: 8,
+                textDecoration: 'none',
+                transition: 'color 0.15s',
+              }}
+            >
+              LaTeX Builder
             </Link>
             {user.role === 'admin' && (
               <Link
@@ -192,6 +207,7 @@ function App() {
               <Route path="/register"   element={<PageWrapper><Register /></PageWrapper>} />
               <Route path="/upload"     element={<PageWrapper><UploadResume /></PageWrapper>} />
               <Route path="/resume-ai"  element={<PageWrapper><ResumeAI /></PageWrapper>} />
+              <Route path="/resume-latex" element={<PageWrapper><ResumeLatex /></PageWrapper>} />
               <Route path="/admin"      element={<PageWrapper><Admin /></PageWrapper>} />
             </Routes>
           </div>

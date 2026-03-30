@@ -254,3 +254,88 @@ keywords = top 5-8 ATS keywords from the job description missing in the resume`;
   }
 };
 
+// @desc    Get saved LaTeX code
+// @route   GET /api/resume/latex
+// @access  Private
+exports.getLatexCode = async (req, res) => {
+  try {
+    const resume = await Resume.findOne({ user: req.user.id });
+    if (!resume) {
+      return res.status(404).json({ message: 'No resume found.' });
+    }
+    res.status(200).json({ rawLatexCode: resume.rawLatexCode || '' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Save LaTeX code
+// @route   POST /api/resume/latex
+// @access  Private
+exports.saveLatexCode = async (req, res) => {
+  try {
+    const { rawLatexCode } = req.body;
+    let resume = await Resume.findOne({ user: req.user.id });
+    
+    if (resume) {
+      resume.rawLatexCode = rawLatexCode;
+      await resume.save();
+    } else {
+      // Create barebone if doesn't exist but has ID
+      resume = await Resume.create({
+        user: req.user.id,
+        rawLatexCode,
+        extractedSkills: [],
+        education: "",
+        experience: "",
+        rawText: ""
+      });
+    }
+    
+    res.status(200).json({ message: 'LaTeX code saved successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Generate a tailored LaTeX template from parsed data
+// @route   POST /api/resume/latex/generate
+// @access  Private
+exports.generateLatexTemplate = async (req, res) => {
+  try {
+    const resume = await Resume.findOne({ user: req.user.id });
+    if (!resume) {
+      return res.status(404).json({ message: 'No resume found.' });
+    }
+
+    const resumeContext = \`
+Skills: \${resume.extractedSkills.join(', ')}
+Education: \${resume.education}
+Experience: \${resume.experience}
+    \`.trim();
+
+    const prompt = \`You are an expert LaTeX developer. Generate a professional, clean ATS-friendly resume in full LaTeX code.
+Use a standard class like "article". Do not use external highly complex custom classes that require extra files unless standard in TeX Live. Use standard packages (geometry, hyperref, enumitem, titlesec).
+Inject the following user data into the LaTeX code appropriately:
+\${resumeContext}
+
+Ensure it compiles directly with pdflatex. Only return the raw LaTeX code, without any markdown formatting or explanations. Start with \\\\documentclass.\`;
+
+    const response = await callGeminiWithRetry({
+      model: 'gemini-2.5-flash',
+      contents: prompt
+    });
+
+    let latexCode = response.text.replace(/^\`\`\`(latex)?/im, '').replace(/\`\`\`$/im, '').trim();
+
+    resume.rawLatexCode = latexCode;
+    await resume.save();
+
+    res.status(200).json({ rawLatexCode: latexCode });
+  } catch (error) {
+    console.error('LaTeX Generation Error:', error);
+    res.status(500).json({ message: 'Failed to generate LaTeX template.' });
+  }
+};
+
+
