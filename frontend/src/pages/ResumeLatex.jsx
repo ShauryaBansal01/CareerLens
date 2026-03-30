@@ -109,12 +109,65 @@ const ResumeLatex = () => {
     setLoading(false);
   };
 
-  const compilePdf = () => {
+  const compilePdf = async () => {
     setCompiling(true);
-    setTimeout(() => setCompiling(false), 1500); 
-    const encoded = encodeURIComponent(latexCode);
-    const url = `https://latexonline.cc/compile?text=${encoded}&force=true`;
-    setPdfUrl(url);
+    
+    // Instead of sending the full text in the URL which causes 414 URI Too Large,
+    // we use latexonline's POST endpoint or pass it via URL but chunked.
+    // However, latexonline.cc supports POST! Let's just create a form and submit it to a hidden iframe.
+    // That way we don't hit URL length limits.
+    
+    try {
+      // Create a blob URL for the iframe to load a "compiling..." state first
+      const loadingHtml = `
+        <html>
+          <body style="display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#525659;color:white;font-family:sans-serif;">
+            <div style="text-align:center;">
+              <div style="width:40px;height:40px;border:3px solid #0071e3;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;"></div>
+              <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+              <p>Sending to compiler...</p>
+            </div>
+          </body>
+        </html>
+      `;
+      setPdfUrl('data:text/html;charset=utf-8,' + encodeURIComponent(loadingHtml));
+
+      // We need a form to POST the data to latexonline to avoid 414 error
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = 'https://latexonline.cc/compile';
+      form.target = 'pdf-preview-iframe'; // Target the iframe
+
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'text';
+      input.value = latexCode;
+
+      const forceInput = document.createElement('input');
+      forceInput.type = 'hidden';
+      forceInput.name = 'force';
+      forceInput.value = 'true';
+
+      form.appendChild(input);
+      form.appendChild(forceInput);
+      document.body.appendChild(form);
+
+      // Submit the form which will load the result into the iframe
+      form.submit();
+      
+      // Cleanup
+      document.body.removeChild(form);
+      
+      // We don't set pdfUrl here because the iframe is directly targeted by the form submit
+      // We just need to ensure the iframe has the correct name attribute
+      setPdfUrl(''); 
+      
+      setTimeout(() => setCompiling(false), 2000); 
+    } catch (error) {
+      console.error(error);
+      setCompiling(false);
+      showToast('Compilation failed to start', 'error');
+    }
   };
 
   const downloadTex = () => {
@@ -394,14 +447,15 @@ const ResumeLatex = () => {
           </div>
           
           <div className="flex-1 overflow-hidden flex items-center justify-center relative">
-            {pdfUrl ? (
-              <iframe 
-                src={pdfUrl} 
-                className="w-full h-full border-none bg-white"
-                title="PDF Preview"
-              />
-            ) : (
-              <div className="text-[#a0a0a0] flex flex-col items-center max-w-xs text-center">
+            <iframe 
+              name="pdf-preview-iframe"
+              src={pdfUrl || "about:blank"} 
+              className={`w-full h-full border-none bg-white ${!latexCode || (!pdfUrl && !compiling) ? 'hidden' : ''}`}
+              title="PDF Preview"
+            />
+            
+            {(!latexCode || (!pdfUrl && !compiling)) && (
+              <div className="text-[#a0a0a0] flex flex-col items-center max-w-xs text-center absolute">
                 <div className="w-16 h-16 mb-4 rounded-2xl bg-[#404346] flex items-center justify-center border border-[#5c5f62] shadow-inner">
                   <Play size={24} className="text-[#8e8e8e] ml-1" />
                 </div>
