@@ -331,14 +331,20 @@ Experience: ${resume.experience}
     }
 
     const prompt = `You are an expert LaTeX developer and Resume Writer. Generate a professional, clean ATS-friendly resume in full LaTeX code.
-Use a standard class like "article". Do not use external highly complex custom classes that require extra files unless standard in TeX Live. Use standard packages (geometry, hyperref, enumitem, titlesec).
+
+CRITICAL REQUIREMENTS FOR LATEX:
+- You must use the "article" class.
+- You MUST INCLUDE these required packages at the very beginning of the document: \\usepackage{geometry}, \\usepackage{hyperref}, \\usepackage{enumitem}, \\usepackage{titlesec}, \\usepackage{xcolor}, \\usepackage{ragged2e}, \\usepackage{amsmath}, \\usepackage{fontawesome5}.
+- Do NOT use custom classes or files that are not standard in TeX Live. 
+- Ensure proper escaping of special characters like &, %, $, #, _, {, }, ~, ^, \\.
+- Make sure lists (itemize) are properly opened and closed.
 
 ${enhancePrompt}
 
 Inject the following user data into the LaTeX code appropriately:
 ${resumeContext}
 
-Ensure it compiles directly with pdflatex. Only return the raw LaTeX code, without any markdown formatting or explanations. Start with \\documentclass.`;
+Ensure it compiles directly with pdflatex without any errors. Only return the raw LaTeX code, without any markdown formatting or explanations. Start with \\documentclass.`;
 
     const response = await callGeminiWithRetry({
       model: 'gemini-2.5-flash',
