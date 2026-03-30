@@ -4,6 +4,23 @@ const { GoogleGenAI } = require('@google/genai');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const callGeminiWithRetry = async (params, maxRetries = 3) => {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await ai.models.generateContent(params);
+    } catch (error) {
+      if ((error.status === 503 || error.status === 429) && i < maxRetries - 1) {
+        console.warn(`Gemini API Error ${error.status}. Retrying in ${2 ** i} seconds...`);
+        await sleep((2 ** i) * 1000);
+      } else {
+        throw error;
+      }
+    }
+  }
+};
+
 // @desc    Upload & Parse Resume
 // @route   POST /api/resume/upload
 // @access  Private
@@ -21,7 +38,7 @@ exports.uploadResume = async (req, res) => {
     let experience = 'Not explicitly found';
 
     try {
-      const response = await ai.models.generateContent({
+      const response = await callGeminiWithRetry({
         model: 'gemini-2.5-flash',
         contents: `You are an expert technical recruiter AI. Extract the candidate's core technical skills, education summary, and experience summary from the following resume. 
         Return EXACTLY a valid JSON object with the following schema:
