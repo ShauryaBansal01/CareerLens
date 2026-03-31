@@ -398,4 +398,75 @@ Ensure it compiles directly with pdflatex without any errors. Only return the ra
   }
 };
 
+// @desc    Tailor a resume specifically to a given Job Description and generate LaTeX
+// @route   POST /api/resume/latex/tailor
+// @access  Private
+exports.tailorLatexToJob = async (req, res) => {
+  try {
+    const { jobDescription } = req.body;
+    
+    if (!jobDescription || jobDescription.trim().length < 20) {
+      return res.status(400).json({ message: 'Please provide a valid job description (minimum 20 characters).' });
+    }
+
+    const resume = await Resume.findOne({ user: req.user.id });
+    if (!resume) {
+      return res.status(404).json({ message: 'No resume found. Please upload your resume first.' });
+    }
+
+    const resumeContext = `
+Skills: ${resume.extractedSkills.join(', ')}
+Education: ${resume.education}
+Experience: ${resume.experience}
+Raw Text (first 8000 chars): ${(resume.rawText || '').substring(0, 8000)}
+    `.trim();
+
+    const prompt = `You are an expert LaTeX developer and an elite Technical Recruiter at a top tech company. 
+Your task is to generate a beautiful, modern, ATS-friendly software engineering resume in strict LaTeX code based on the candidate's existing resume AND a Target Job Description.
+
+CRITICAL INSTRUCTION FOR CONTENT (TAILORING):
+- You MUST aggressively tailor the candidate's existing experience and skills to match the Job Description.
+- Identify the core skills, keywords, and responsibilities mentioned in the JD.
+- Keep ONLY the candidate's experience, projects, and skills that are highly relevant to this specific JD. Completely remove or drastically minimize irrelevant "fluff" or unrelated jobs.
+- Rewrite the bullet points using the STAR method (Situation, Task, Action, Result) to subtly incorporate keywords from the JD without lying. Emphasize their achievements that align best with the target role.
+- Maximize keyword density for ATS optimization based on the JD.
+
+CRITICAL LATEX & DESIGN REQUIREMENTS:
+- Use the standard "article" class with 11pt font.
+- You MUST INCLUDE these required packages: \\usepackage[letterpaper, margin=0.5in]{geometry}, \\usepackage{hyperref}, \\usepackage{enumitem}, \\usepackage{titlesec}, \\usepackage{xcolor}, \\usepackage{tgtermes}, \\usepackage[T1]{fontenc}.
+- The font must be a highly professional serif font (TeX Gyre Termes).
+- Disable page numbers with \\pagestyle{empty}.
+- Configure list formatting globally: \\setlist[itemize]{leftmargin=0.15in, label={--}, itemsep=2pt, parsep=0pt, topsep=2pt, partopsep=0pt}
+- Format section headers to be classic and distinct. Example: \\titleformat{\\section}{\\large\\bfseries\\scshape}{}{0em}{}[\\vspace{-0.5em}\\rule{\\textwidth}{0.5pt}]
+- Escape LaTeX special characters (e.g. &, %, $, #, _) directly in the text. Do NOT use custom macros.
+- Header: Name large, centered, bold. Contact info centered below it on a single line, separated by pipes (|).
+- Sections (Education, Experience, Projects): Use a strict 4-corner layout for headers. Use regular text and line breaks (\\\\), NOT \\item for headers.
+- Use bullet points (\\begin{itemize} \\item ... \\end{itemize}) ONLY for the descriptions/accomplishments.
+- Start output immediately with \\documentclass. Do NOT output any markdown blocks (e.g., \`\`\`latex ... \`\`\`).
+
+CANDIDATE'S EXISTING RESUME:
+${resumeContext}
+
+TARGET JOB DESCRIPTION:
+${jobDescription.substring(0, 4000)}
+
+Only return the raw, compiling LaTeX code.`;
+
+    const response = await callGeminiWithRetry({
+      model: 'gemini-2.5-flash',
+      contents: prompt
+    });
+
+    let latexCode = response.text.replace(/^```(latex)?/im, '').replace(/```$/im, '').trim();
+
+    resume.rawLatexCode = latexCode;
+    await resume.save();
+
+    res.status(200).json({ rawLatexCode: latexCode });
+  } catch (error) {
+    console.error('Tailor LaTeX Error:', error);
+    res.status(500).json({ message: 'Failed to generate tailored LaTeX resume.' });
+  }
+};
+
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Editor from '@monaco-editor/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Download, Save, Sparkles, FileText, CheckCircle2, AlertCircle, X, Plus, Trash2 } from 'lucide-react';
+import { Play, Download, Save, Sparkles, FileText, CheckCircle2, AlertCircle, X, Plus, Trash2, Target } from 'lucide-react';
 
 import AuthContext from '../context/AuthContext';
 import { useContext } from 'react';
@@ -28,6 +28,11 @@ const ResumeLatex = () => {
     skills: "",
     enhanceWithAI: true
   });
+
+  // Tailor State
+  const [showTailorWizard, setShowTailorWizard] = useState(false);
+  const [jobDescriptionText, setJobDescriptionText] = useState('');
+  const [tailoring, setTailoring] = useState(false);
 
   useEffect(() => {
     const fetchLatex = async () => {
@@ -104,6 +109,25 @@ const ResumeLatex = () => {
       showToast('Failed to generate resume.', 'error');
     }
     setLoading(false);
+  };
+
+  const handleTailorJob = async () => {
+    if (!user) return;
+    if (!jobDescriptionText || jobDescriptionText.trim().length < 20) {
+      showToast('Please provide a valid job description (min 20 chars)', 'error');
+      return;
+    }
+    setTailoring(true);
+    setShowTailorWizard(false); // Close modal while loading
+    try {
+      const config = { headers: { Authorization: `Bearer ${user.token}` } };
+      const { data } = await axios.post('http://localhost:5000/api/resume/latex/tailor', { jobDescription: jobDescriptionText }, config);
+      setLatexCode(data.rawLatexCode);
+      showToast('Resume successfully tailored to JD!');
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Failed to tailor resume.', 'error');
+    }
+    setTailoring(false);
   };
 
   const compilePdf = async () => {
@@ -332,6 +356,50 @@ const ResumeLatex = () => {
         )}
       </AnimatePresence>
 
+      {/* Tailor to Job Modal */}
+      <AnimatePresence>
+        {showTailorWizard && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden"
+            >
+              <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                    <Target className="text-blue-500" size={20} />
+                    Tailor to Job Description
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1">Paste the JD. We'll extract keywords and rewrite your resume to match.</p>
+                </div>
+                <button onClick={() => setShowTailorWizard(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                <textarea 
+                  className="apple-input bg-gray-50 text-sm min-h-[300px] w-full" 
+                  placeholder="Paste the target Job Description or company requirements here..." 
+                  value={jobDescriptionText} 
+                  onChange={e => setJobDescriptionText(e.target.value)} 
+                />
+              </div>
+
+              <div className="p-5 border-t border-gray-200 bg-white flex items-center justify-end gap-3">
+                <button onClick={() => setShowTailorWizard(false)} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">Cancel</button>
+                <button onClick={handleTailorJob} className="px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md flex items-center gap-2">
+                  <Target size={16} />
+                  Tailor Resume
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Top Toolbar */}
       <header className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center z-10 shrink-0">
         <div className="flex items-center gap-3">
@@ -370,6 +438,19 @@ const ResumeLatex = () => {
               <Sparkles size={14} />
             )}
             AI Resume Wizard
+          </button>
+
+          <button 
+            onClick={() => setShowTailorWizard(true)} 
+            disabled={tailoring || loading}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-50 border border-blue-100 shadow-sm ml-1"
+          >
+            {tailoring ? (
+              <div className="w-3.5 h-3.5 border-2 border-blue-700 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Target size={14} />
+            )}
+            Tailor to Job
           </button>
           
           <div className="w-px h-4 bg-gray-300 mx-1" />

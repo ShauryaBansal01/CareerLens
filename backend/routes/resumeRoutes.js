@@ -8,7 +8,8 @@ const {
   optimizeForCompany,
   getLatexCode,
   saveLatexCode,
-  generateLatexTemplate
+  generateLatexTemplate,
+  tailorLatexToJob
 } = require('../controllers/resumeController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -34,6 +35,7 @@ router.post('/optimize', protect, optimizeForCompany);
 router.get('/latex', protect, getLatexCode);
 router.post('/latex', protect, saveLatexCode);
 router.post('/latex/generate', protect, generateLatexTemplate);
+router.post('/latex/tailor', protect, tailorLatexToJob);
 
 module.exports = router;
 
