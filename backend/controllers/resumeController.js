@@ -1,12 +1,4 @@
 
-
-
-
-
-
-
-
-
 const Resume = require('../models/Resume');
 const ResumeVersion = require('../models/ResumeVersion');
 const pdfParse = require('pdf-parse');

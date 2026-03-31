@@ -29,8 +29,13 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
-  const register = async (name, email, password, role) => {
-    const res = await axios.post('http://localhost:5000/api/auth/register', { name, email, password, role });
+  const sendOtp = async (email) => {
+    const res = await axios.post('http://localhost:5000/api/auth/send-otp', { email });
+    return res.data;
+  };
+
+  const register = async (name, email, password, role, otp) => {
+    const res = await axios.post('http://localhost:5000/api/auth/register', { name, email, password, role, otp });
     if (res.data) {
       localStorage.setItem('user', JSON.stringify(res.data));
       setUser(res.data);
@@ -44,7 +49,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, sendOtp, register, logout }}>
       {!loading && children}
     </AuthContext.Provider>
   );

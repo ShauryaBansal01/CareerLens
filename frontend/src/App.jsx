@@ -26,7 +26,7 @@ const Navbar = () => {
     `text-[14px] font-normal px-3.5 py-1.5 rounded-lg text-decoration-none transition-colors duration-150 flex items-center gap-1.5 ${
       isActive(path)
         ? 'text-primary-500 bg-primary-500/10 dark:bg-primary-500/20'
-        : 'text-on-surface-variant dark:text-dark-muted hover:bg-surface-variant dark:hover:bg-dark-hover'
+        : 'text-gray-500 dark:text-on-dark-muted hover:bg-surface-variant dark:hover:bg-dark-hover'
     }`;
 
   const closeMenu = () => setMobileMenuOpen(false);
@@ -73,7 +73,7 @@ const Navbar = () => {
               <div className="w-px h-4 bg-outline-variant dark:bg-dark-border mx-2" />
               <button
                 onClick={logout}
-                className="text-[14px] font-normal text-on-surface-variant dark:text-dark-muted hover:text-error dark:hover:text-error px-3.5 py-1.5 rounded-lg cursor-pointer transition-colors duration-150"
+                className="text-[14px] font-normal text-gray-500 dark:text-on-dark-muted hover:text-error dark:hover:text-error px-3.5 py-1.5 rounded-lg cursor-pointer transition-colors duration-150"
               >
                 Logout
               </button>
@@ -84,7 +84,7 @@ const Navbar = () => {
             <div className="flex items-center gap-3 ml-4">
               <Link
                 to="/login"
-                className="text-[14px] font-normal text-on-surface-variant dark:text-dark-muted hover:text-on-surface dark:hover:text-on-dark transition-colors px-3.5 py-1.5"
+                className="text-[14px] font-normal text-gray-500 dark:text-on-dark-muted hover:text-on-surface dark:hover:text-on-dark transition-colors px-3.5 py-1.5"
               >
                 Sign In
               </Link>
@@ -100,7 +100,7 @@ const Navbar = () => {
           {/* Theme Toggle (Desktop) */}
           <button
             onClick={toggleTheme}
-            className="ml-2 p-2 rounded-full text-on-surface-variant dark:text-dark-muted hover:bg-surface-variant dark:hover:bg-dark-hover transition-colors"
+            className="ml-2 p-2 rounded-full text-gray-500 dark:text-on-dark-muted hover:bg-surface-variant dark:hover:bg-dark-hover transition-colors"
             aria-label="Toggle Theme"
           >
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
@@ -111,7 +111,7 @@ const Navbar = () => {
         <div className="flex items-center gap-2 md:hidden z-50">
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-full text-on-surface-variant dark:text-dark-muted hover:bg-surface-variant dark:hover:bg-dark-hover transition-colors"
+            className="p-2 rounded-full text-gray-500 dark:text-on-dark-muted hover:bg-surface-variant dark:hover:bg-dark-hover transition-colors"
           >
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
@@ -130,7 +130,7 @@ const Navbar = () => {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="absolute top-[54px] left-0 right-0 bg-surface dark:bg-dark-surface border-b border-outline-variant dark:border-dark-border p-4 flex flex-col gap-2 shadow-lg md:hidden"
+              className="absolute top-[54px] left-0 right-0 bg-surface dark:bg-dark-surface border-b border-outline-variant dark:border-white/5 p-4 flex flex-col gap-2 shadow-lg md:hidden"
             >
               {user ? (
                 <>

@@ -21,15 +21,15 @@ export default {
         
         // Dark Mode Apple-inspired
         'dark-surface': '#000000',
-        'dark-card': '#1c1c1e',
-        'dark-border': '#38383a',
-        'dark-hover': '#2c2c2e',
-        'dark-muted': '#8e8e93',
+        'dark-card': '#050505',
+        'dark-border': '#111111',
+        'dark-hover': '#0a0a0a',
+        'dark-muted': '#71717a',
         
         primary: {
-          400: '#47a3f5',
-          500: '#0071e3',
-          600: '#0059b5',
+          400: '#818cf8',
+          500: '#6366f1',
+          600: '#4f46e5',
         },
         // Text
         'on-surface': '#1d1d1f',

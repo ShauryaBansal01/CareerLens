@@ -332,7 +332,7 @@ const ResumeLatex = () => {
   const removeEducation = (index) => setResumeData({...resumeData, education: resumeData.education.filter((_, i) => i !== index)});
 
   return (
-    <div className="h-[calc(100vh-54px)] flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden relative">
+    <div className="h-[calc(100vh-54px)] flex flex-col bg-gray-50 dark:bg-dark-surface overflow-hidden relative">
       
       {/* Wizard Modal */}
       <AnimatePresence>
@@ -342,9 +342,9 @@ const ResumeLatex = () => {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700"
+              className="bg-white dark:bg-dark-card rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden border border-white/10 dark:border-white/5"
             >
-              <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
+              <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-dark-card/50">
                 <div>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
                     <Sparkles className="text-purple-500" size={20} />
@@ -360,38 +360,38 @@ const ResumeLatex = () => {
               <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
                 {/* Personal Info */}
                 <section>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Personal Information</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4 border-b border-white/10 dark:border-white/5 pb-2">Personal Information</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    <input className="apple-input bg-gray-50 dark:bg-gray-900 w-full text-sm" placeholder="Full Name" value={resumeData.personalInfo.name} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, name: e.target.value}})} />
-                    <input className="apple-input bg-gray-50 dark:bg-gray-900 w-full text-sm" placeholder="Email" value={resumeData.personalInfo.email} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, email: e.target.value}})} />
-                    <input className="apple-input bg-gray-50 dark:bg-gray-900 w-full text-sm" placeholder="Phone" value={resumeData.personalInfo.phone} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, phone: e.target.value}})} />
-                    <input className="apple-input bg-gray-50 dark:bg-gray-900 w-full text-sm" placeholder="LinkedIn URL" value={resumeData.personalInfo.linkedin} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, linkedin: e.target.value}})} />
-                    <input className="apple-input bg-gray-50 dark:bg-gray-900 w-full text-sm col-span-2" placeholder="GitHub / Portfolio URL" value={resumeData.personalInfo.github} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, github: e.target.value}})} />
+                    <input className="apple-input bg-gray-50 dark:bg-dark-surface w-full text-sm" placeholder="Full Name" value={resumeData.personalInfo.name} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, name: e.target.value}})} />
+                    <input className="apple-input bg-gray-50 dark:bg-dark-surface w-full text-sm" placeholder="Email" value={resumeData.personalInfo.email} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, email: e.target.value}})} />
+                    <input className="apple-input bg-gray-50 dark:bg-dark-surface w-full text-sm" placeholder="Phone" value={resumeData.personalInfo.phone} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, phone: e.target.value}})} />
+                    <input className="apple-input bg-gray-50 dark:bg-dark-surface w-full text-sm" placeholder="LinkedIn URL" value={resumeData.personalInfo.linkedin} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, linkedin: e.target.value}})} />
+                    <input className="apple-input bg-gray-50 dark:bg-dark-surface w-full text-sm col-span-2" placeholder="GitHub / Portfolio URL" value={resumeData.personalInfo.github} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, github: e.target.value}})} />
                   </div>
                 </section>
 
                 {/* Skills */}
                 <section>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Skills</h3>
-                  <textarea className="apple-input bg-gray-50 dark:bg-gray-900 w-full text-sm min-h-[80px]" placeholder="React, Node.js, Python, AWS (comma separated)" value={resumeData.skills} onChange={e => setResumeData({...resumeData, skills: e.target.value})} />
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4 border-b border-white/10 dark:border-white/5 pb-2">Skills</h3>
+                  <textarea className="apple-input bg-gray-50 dark:bg-dark-surface w-full text-sm min-h-[80px]" placeholder="React, Node.js, Python, AWS (comma separated)" value={resumeData.skills} onChange={e => setResumeData({...resumeData, skills: e.target.value})} />
                 </section>
 
                 {/* Experience */}
                 <section>
-                  <div className="flex justify-between items-end border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
+                  <div className="flex justify-between items-end border-b border-white/10 dark:border-white/5 pb-2 mb-4">
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">Experience</h3>
                     <button onClick={addExperience} className="text-blue-600 dark:text-blue-400 text-xs font-medium flex items-center gap-1 hover:text-blue-700 dark:hover:text-blue-300"><Plus size={14}/> Add Job</button>
                   </div>
                   <div className="space-y-6">
                     {resumeData.experience.map((exp, index) => (
-                      <div key={index} className="p-4 border border-gray-100 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-900/50 relative group">
+                      <div key={index} className="p-4 border border-gray-100 dark:border-white/5 rounded-xl bg-gray-50/50 dark:bg-dark-surface/50 relative group">
                         <button onClick={() => removeExperience(index)} className="absolute top-3 right-3 text-red-400 hover:text-red-600 dark:hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
                         <div className="grid grid-cols-2 gap-3 mb-3">
-                          <input className="apple-input bg-white dark:bg-gray-800 w-full text-sm" placeholder="Company Name" value={exp.company} onChange={e => updateExperience(index, 'company', e.target.value)} />
-                          <input className="apple-input bg-white dark:bg-gray-800 w-full text-sm" placeholder="Role / Title" value={exp.role} onChange={e => updateExperience(index, 'role', e.target.value)} />
-                          <input className="apple-input bg-white dark:bg-gray-800 w-full text-sm col-span-2" placeholder="Dates (e.g., Jan 2021 - Present)" value={exp.dates} onChange={e => updateExperience(index, 'dates', e.target.value)} />
+                          <input className="apple-input bg-white dark:bg-dark-card w-full text-sm" placeholder="Company Name" value={exp.company} onChange={e => updateExperience(index, 'company', e.target.value)} />
+                          <input className="apple-input bg-white dark:bg-dark-card w-full text-sm" placeholder="Role / Title" value={exp.role} onChange={e => updateExperience(index, 'role', e.target.value)} />
+                          <input className="apple-input bg-white dark:bg-dark-card w-full text-sm col-span-2" placeholder="Dates (e.g., Jan 2021 - Present)" value={exp.dates} onChange={e => updateExperience(index, 'dates', e.target.value)} />
                         </div>
-                        <textarea className="apple-input bg-white dark:bg-gray-800 w-full text-sm min-h-[100px]" placeholder="Rough notes on what you did... AI will enhance this into STAR bullet points!" value={exp.bulletPoints} onChange={e => updateExperience(index, 'bulletPoints', e.target.value)} />
+                        <textarea className="apple-input bg-white dark:bg-dark-card w-full text-sm min-h-[100px]" placeholder="Rough notes on what you did... AI will enhance this into STAR bullet points!" value={exp.bulletPoints} onChange={e => updateExperience(index, 'bulletPoints', e.target.value)} />
                       </div>
                     ))}
                   </div>
@@ -399,19 +399,19 @@ const ResumeLatex = () => {
 
                 {/* Projects */}
                 <section>
-                  <div className="flex justify-between items-end border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
+                  <div className="flex justify-between items-end border-b border-white/10 dark:border-white/5 pb-2 mb-4">
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">Projects</h3>
                     <button onClick={addProject} className="text-blue-600 dark:text-blue-400 text-xs font-medium flex items-center gap-1 hover:text-blue-700 dark:hover:text-blue-300"><Plus size={14}/> Add Project</button>
                   </div>
                   <div className="space-y-6">
                     {resumeData.projects.map((proj, index) => (
-                      <div key={index} className="p-4 border border-gray-100 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-900/50 relative group">
+                      <div key={index} className="p-4 border border-gray-100 dark:border-white/5 rounded-xl bg-gray-50/50 dark:bg-dark-surface/50 relative group">
                         <button onClick={() => removeProject(index)} className="absolute top-3 right-3 text-red-400 hover:text-red-600 dark:hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
                         <div className="grid grid-cols-2 gap-3 mb-3">
-                          <input className="apple-input bg-white dark:bg-gray-800 w-full text-sm" placeholder="Project Name" value={proj.name} onChange={e => updateProject(index, 'name', e.target.value)} />
-                          <input className="apple-input bg-white dark:bg-gray-800 w-full text-sm" placeholder="Tech Stack (e.g., React, Firebase)" value={proj.techStack} onChange={e => updateProject(index, 'techStack', e.target.value)} />
+                          <input className="apple-input bg-white dark:bg-dark-card w-full text-sm" placeholder="Project Name" value={proj.name} onChange={e => updateProject(index, 'name', e.target.value)} />
+                          <input className="apple-input bg-white dark:bg-dark-card w-full text-sm" placeholder="Tech Stack (e.g., React, Firebase)" value={proj.techStack} onChange={e => updateProject(index, 'techStack', e.target.value)} />
                         </div>
-                        <textarea className="apple-input bg-white dark:bg-gray-800 w-full text-sm min-h-[80px]" placeholder="Rough notes on the project... AI will enhance this!" value={proj.description} onChange={e => updateProject(index, 'description', e.target.value)} />
+                        <textarea className="apple-input bg-white dark:bg-dark-card w-full text-sm min-h-[80px]" placeholder="Rough notes on the project... AI will enhance this!" value={proj.description} onChange={e => updateProject(index, 'description', e.target.value)} />
                       </div>
                     ))}
                   </div>
@@ -419,28 +419,28 @@ const ResumeLatex = () => {
                 
                 {/* Education */}
                 <section>
-                  <div className="flex justify-between items-end border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
+                  <div className="flex justify-between items-end border-b border-white/10 dark:border-white/5 pb-2 mb-4">
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">Education</h3>
                     <button onClick={addEducation} className="text-blue-600 dark:text-blue-400 text-xs font-medium flex items-center gap-1 hover:text-blue-700 dark:hover:text-blue-300"><Plus size={14}/> Add Education</button>
                   </div>
                   <div className="space-y-4">
                     {resumeData.education.map((edu, index) => (
-                      <div key={index} className="p-4 border border-gray-100 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-900/50 relative group flex flex-col md:flex-row gap-3">
+                      <div key={index} className="p-4 border border-gray-100 dark:border-white/5 rounded-xl bg-gray-50/50 dark:bg-dark-surface/50 relative group flex flex-col md:flex-row gap-3">
                         <button onClick={() => removeEducation(index)} className="absolute top-3 right-3 text-red-400 hover:text-red-600 dark:hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
-                        <input className="apple-input bg-white dark:bg-gray-800 w-full md:w-1/3 text-sm" placeholder="School/University" value={edu.school} onChange={e => updateEducation(index, 'school', e.target.value)} />
-                        <input className="apple-input bg-white dark:bg-gray-800 w-full md:w-1/3 text-sm" placeholder="Degree (e.g., BS Computer Science)" value={edu.degree} onChange={e => updateEducation(index, 'degree', e.target.value)} />
-                        <input className="apple-input bg-white dark:bg-gray-800 w-full md:w-1/3 text-sm md:mr-6" placeholder="Dates/Graduation" value={edu.dates} onChange={e => updateEducation(index, 'dates', e.target.value)} />
+                        <input className="apple-input bg-white dark:bg-dark-card w-full md:w-1/3 text-sm" placeholder="School/University" value={edu.school} onChange={e => updateEducation(index, 'school', e.target.value)} />
+                        <input className="apple-input bg-white dark:bg-dark-card w-full md:w-1/3 text-sm" placeholder="Degree (e.g., BS Computer Science)" value={edu.degree} onChange={e => updateEducation(index, 'degree', e.target.value)} />
+                        <input className="apple-input bg-white dark:bg-dark-card w-full md:w-1/3 text-sm md:mr-6" placeholder="Dates/Graduation" value={edu.dates} onChange={e => updateEducation(index, 'dates', e.target.value)} />
                       </div>
                     ))}
                   </div>
                 </section>
               </div>
 
-              <div className="p-5 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between">
+              <div className="p-5 border-t border-white/10 dark:border-white/5 bg-white dark:bg-dark-card flex items-center justify-between">
                 <label className="flex items-center gap-3 cursor-pointer group">
                   <div className="relative flex items-center">
                     <input type="checkbox" className="sr-only" checked={resumeData.enhanceWithAI} onChange={(e) => setResumeData({...resumeData, enhanceWithAI: e.target.checked})} />
-                    <div className={`w-11 h-6 rounded-full transition-colors ${resumeData.enhanceWithAI ? 'bg-purple-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                    <div className={`w-11 h-6 rounded-full transition-colors ${resumeData.enhanceWithAI ? 'bg-purple-500' : 'bg-gray-300 dark:bg-dark-card'}`}></div>
                     <div className={`absolute w-4 h-4 bg-white rounded-full transition-transform transform ${resumeData.enhanceWithAI ? 'translate-x-6' : 'translate-x-1'} top-1`}></div>
                   </div>
                   <span className="text-sm font-medium text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
@@ -469,9 +469,9 @@ const ResumeLatex = () => {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700"
+              className="bg-white dark:bg-dark-card rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden border border-white/10 dark:border-white/5"
             >
-              <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
+              <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-dark-card/50">
                 <div>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
                     <Target className="text-blue-500" size={20} />
@@ -488,25 +488,25 @@ const ResumeLatex = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Version Title (Required)</label>
-                    <input className="apple-input bg-gray-50 dark:bg-gray-900 w-full text-sm" placeholder="e.g. Frontend Dev - Meta" value={tailorVersionTitle} onChange={e => setTailorVersionTitle(e.target.value)} />
+                    <input className="apple-input bg-gray-50 dark:bg-dark-surface w-full text-sm" placeholder="e.g. Frontend Dev - Meta" value={tailorVersionTitle} onChange={e => setTailorVersionTitle(e.target.value)} />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Target Company (Optional)</label>
-                    <input className="apple-input bg-gray-50 dark:bg-gray-900 w-full text-sm" placeholder="e.g. Meta" value={targetCompany} onChange={e => setTargetCompany(e.target.value)} />
+                    <input className="apple-input bg-gray-50 dark:bg-dark-surface w-full text-sm" placeholder="e.g. Meta" value={targetCompany} onChange={e => setTargetCompany(e.target.value)} />
                   </div>
                 </div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Job Description</label>
                 <textarea 
-                  className="apple-input bg-gray-50 dark:bg-gray-900 text-sm min-h-[200px] w-full resize-none" 
+                  className="apple-input bg-gray-50 dark:bg-dark-surface text-sm min-h-[200px] w-full resize-none" 
                   placeholder="Paste the target Job Description or company requirements here..." 
                   value={jobDescriptionText} 
                   onChange={e => setJobDescriptionText(e.target.value)} 
                 />
               </div>
 
-              <div className="p-5 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-end gap-3">
+              <div className="p-5 border-t border-white/10 dark:border-white/5 bg-white dark:bg-dark-card flex items-center justify-end gap-3">
                 <button onClick={() => setShowTailorWizard(false)} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Cancel</button>
-                <button onClick={handleTailorJob} className="px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md flex items-center gap-2">
+                <button onClick={handleTailorJob} className="px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md flex items-center gap-2">
                   <Target size={16} />
                   Tailor Resume
                 </button>
@@ -525,9 +525,9 @@ const ResumeLatex = () => {
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-200 dark:border-gray-700"
+              className="bg-white dark:bg-dark-card rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-white/10 dark:border-white/5"
             >
-              <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
+              <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-dark-card/50">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
                   <Save className="text-blue-500" size={20} />
                   Save as New Version
@@ -539,14 +539,14 @@ const ResumeLatex = () => {
               <div className="p-6">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Version Title</label>
                 <input 
-                  className="apple-input bg-gray-50 dark:bg-gray-900 w-full text-sm" 
+                  className="apple-input bg-gray-50 dark:bg-dark-surface w-full text-sm" 
                   placeholder="e.g. Software Engineer - Google" 
                   value={saveAsTitle} 
                   onChange={e => setSaveAsTitle(e.target.value)} 
                   autoFocus
                 />
               </div>
-              <div className="p-5 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-end gap-3">
+              <div className="p-5 border-t border-white/10 dark:border-white/5 bg-white dark:bg-dark-card flex items-center justify-end gap-3">
                 <button onClick={() => setShowSaveAsModal(false)} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Cancel</button>
                 <button onClick={saveAsNewVersion} disabled={!saveAsTitle.trim()} className="px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-md disabled:opacity-50">
                   Save Version
@@ -558,7 +558,7 @@ const ResumeLatex = () => {
       </AnimatePresence>
 
       {/* Top Toolbar */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-3 flex justify-between items-center z-10 shrink-0">
+      <header className="bg-white dark:bg-dark-card border-b border-white/10 dark:border-white/5 px-6 py-3 flex justify-between items-center z-10 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
             <FileText size={18} strokeWidth={2.5} />
@@ -569,9 +569,9 @@ const ResumeLatex = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 mr-2 border-r border-gray-200 dark:border-gray-700 pr-4">
+        <div className="flex items-center gap-2 mr-2 border-r border-white/10 dark:border-white/5 pr-4">
             <select 
-              className="apple-input bg-gray-50 dark:bg-gray-900 text-[13px] py-1.5 px-3 rounded-lg min-w-[200px]"
+              className="apple-input bg-gray-50 dark:bg-dark-surface text-[13px] py-1.5 px-3 rounded-lg min-w-[200px]"
               value={activeVersionId || ''}
               onChange={(e) => loadVersion(e.target.value)}
             >
@@ -629,12 +629,12 @@ const ResumeLatex = () => {
             Tailor to Job
           </button>
           
-          <div className="w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1" />
+          <div className="w-px h-4 bg-gray-300 dark:bg-dark-card mx-1" />
 
           <button 
             onClick={saveLatex} 
             disabled={saving}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-gray-100 dark:bg-dark-card text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
           >
             <Save size={14} />
             {saving ? 'Saving...' : 'Save'}
@@ -642,7 +642,7 @@ const ResumeLatex = () => {
           
           <button 
             onClick={() => setShowSaveAsModal(true)} 
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-gray-100 dark:bg-dark-card text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
           >
             <Plus size={14} />
             Save As
@@ -650,7 +650,7 @@ const ResumeLatex = () => {
 
           <button 
             onClick={downloadTex} 
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-gray-100 dark:bg-dark-card text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
           >
             <Download size={14} />
             .tex
@@ -674,7 +674,7 @@ const ResumeLatex = () => {
       {/* Main Workspace */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Left Pane: Editor */}
-        <div className="w-full md:w-1/2 h-1/2 md:h-full border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 bg-[#1e1e1e] flex flex-col">
+        <div className="w-full md:w-1/2 h-1/2 md:h-full border-b md:border-b-0 md:border-r border-white/10 dark:border-white/5 bg-[#1e1e1e] flex flex-col">
           <div className="bg-[#2d2d2d] text-[#858585] text-[11px] px-4 py-1.5 font-mono border-b border-[#1e1e1e] flex justify-between">
             <span>resume.tex</span>
             <span>LaTeX</span>
@@ -702,8 +702,8 @@ const ResumeLatex = () => {
         </div>
 
         {/* Right Pane: Preview */}
-        <div className="w-full md:w-1/2 h-1/2 md:h-full bg-gray-200 dark:bg-gray-800 flex flex-col relative">
-          <div className="bg-gray-300 dark:bg-gray-900 text-gray-600 dark:text-gray-400 text-[11px] px-4 py-1.5 font-sans border-b border-gray-200 dark:border-gray-700 shadow-sm z-10">
+        <div className="w-full md:w-1/2 h-1/2 md:h-full bg-gray-200 dark:bg-dark-card flex flex-col relative">
+          <div className="bg-gray-300 dark:bg-dark-surface text-gray-600 dark:text-gray-400 text-[11px] px-4 py-1.5 font-sans border-b border-white/10 dark:border-white/5 shadow-sm z-10">
             Preview.pdf
           </div>
           
@@ -716,7 +716,7 @@ const ResumeLatex = () => {
             
             {(!latexCode || (!pdfUrl && !compiling)) && (
               <div className="text-gray-500 dark:text-gray-400 flex flex-col items-center max-w-xs text-center absolute">
-                <div className="w-16 h-16 mb-4 rounded-2xl bg-white dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600 shadow-sm">
+                <div className="w-16 h-16 mb-4 rounded-2xl bg-white dark:bg-dark-card flex items-center justify-center border border-white/10 dark:border-gray-600 shadow-sm">
                   <Play size={24} className="text-gray-400 dark:text-gray-500 ml-1" />
                 </div>
                 <h3 className="text-gray-700 dark:text-gray-200 font-medium text-lg mb-1">No Preview Available</h3>
@@ -728,7 +728,7 @@ const ResumeLatex = () => {
             
             {/* Compiling Overlay Overlay */}
             {compiling && (
-              <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex flex-col items-center justify-center z-20">
+              <div className="absolute inset-0 bg-white/80 dark:bg-dark-card/80 backdrop-blur-sm flex flex-col items-center justify-center z-20">
                  <div className="w-10 h-10 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
                  <p className="text-gray-900 dark:text-white font-medium text-sm">Compiling document...</p>
                  <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">Connecting to compiler engine</p>

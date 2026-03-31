@@ -27,10 +27,10 @@ const fadeUp = {
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const StatCard = ({ label, value, caption, captionClass }) => (
   <div className="stat-card">
-    <p className="text-[13px] text-on-surface-variant dark:text-dark-muted font-normal mb-2">{label}</p>
+    <p className="text-[13px] text-gray-500 dark:text-on-dark-muted font-normal mb-2">{label}</p>
     <p className="stat-value">{value}</p>
     {caption && (
-      <p className={`text-[12px] mt-1.5 font-medium ${captionClass || 'text-on-surface-variant dark:text-dark-muted'}`}>
+      <p className={`text-[12px] mt-1.5 font-medium ${captionClass || 'text-gray-500 dark:text-on-dark-muted'}`}>
         {caption}
       </p>
     )}
@@ -133,7 +133,7 @@ const Dashboard = () => {
           <h1 className="text-4xl font-bold text-on-surface dark:text-on-dark tracking-tighter mb-3">
             Navigate your career with AI.
           </h1>
-          <p className="text-[17px] text-on-surface-variant dark:text-dark-muted mb-9">
+          <p className="text-[17px] text-gray-500 dark:text-on-dark-muted mb-9">
             Sign in to unlock skill gap analysis, personalized roadmaps, and job-fit scoring.
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
@@ -172,7 +172,7 @@ const Dashboard = () => {
           <h1 className="text-4xl md:text-5xl font-bold text-on-surface dark:text-on-dark tracking-tighter mb-3">
             {greeting}, {firstName}.
           </h1>
-          <p className="text-[17px] text-on-surface-variant dark:text-dark-muted mb-6">
+          <p className="text-[17px] text-gray-500 dark:text-on-dark-muted mb-6">
             {resumeData
               ? 'Your resume is loaded. Select a target role to run a full analysis.'
               : 'Upload your resume to get started with AI-powered career insights.'}
@@ -250,7 +250,7 @@ const Dashboard = () => {
                   <Briefcase className="w-[18px] h-[18px] mr-2 text-primary-500" />
                   Choose a target role
                 </p>
-                <p className="text-[14px] text-on-surface-variant dark:text-dark-muted mb-5">
+                <p className="text-[14px] text-gray-500 dark:text-on-dark-muted mb-5">
                   We'll cross-reference your resume against real-world job requirements.
                 </p>
                 <div className="relative max-w-[400px]">
@@ -266,7 +266,7 @@ const Dashboard = () => {
                   </select>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                     <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
-                      <path d="M1 1l5 5 5-5" stroke="currentColor" className="text-on-surface-variant dark:text-dark-muted" strokeWidth="1.5" strokeLinecap="round" />
+                      <path d="M1 1l5 5 5-5" stroke="currentColor" className="text-gray-500 dark:text-on-dark-muted" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
                   </div>
                 </div>
@@ -290,7 +290,7 @@ const Dashboard = () => {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-[14px] text-[#aeaeb2] dark:text-dark-muted">No specific skills detected.</p>
+                  <p className="text-[14px] text-[#aeaeb2] dark:text-on-dark-muted">No specific skills detected.</p>
                 )}
               </div>
             </motion.div>
@@ -444,7 +444,7 @@ const Dashboard = () => {
                           ? analysis.analysis.matchedSkills.map(s => (
                               <span key={s} className="skill-tag-matched">{s}</span>
                             ))
-                          : <span className="text-[13px] text-[#aeaeb2] dark:text-dark-muted">None found.</span>
+                          : <span className="text-[13px] text-[#aeaeb2] dark:text-on-dark-muted">None found.</span>
                         }
                       </div>
                     </div>
@@ -496,7 +496,7 @@ const Dashboard = () => {
                                   {phaseLabels[i]}
                                 </p>
                               </div>
-                              <span className="text-[10px] text-on-surface-variant dark:text-dark-muted bg-white dark:bg-dark-card px-2 py-0.5 rounded-full font-medium">
+                              <span className="text-[10px] text-gray-500 dark:text-on-dark-muted bg-white dark:bg-dark-card px-2 py-0.5 rounded-full font-medium">
                                 {phaseWeeks[i]}
                               </span>
                             </div>
@@ -522,7 +522,7 @@ const Dashboard = () => {
                                       {item.isMissing && (
                                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                                           {item.timeEstimate && (
-                                            <span className="text-[10px] text-on-surface-variant dark:text-dark-muted font-medium">⏱ {item.timeEstimate}</span>
+                                            <span className="text-[10px] text-gray-500 dark:text-on-dark-muted font-medium">⏱ {item.timeEstimate}</span>
                                           )}
                                           {item.resource && item.resource !== 'https://...' && (
                                             <a

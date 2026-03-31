@@ -74,7 +74,7 @@ const UploadResume = () => {
           <h2 className="text-2xl font-bold text-on-surface dark:text-on-dark tracking-tight mb-2">
             Sign in required
           </h2>
-          <p className="text-[15px] text-on-surface-variant dark:text-dark-muted mb-7">
+          <p className="text-[15px] text-gray-500 dark:text-on-dark-muted mb-7">
             You need to be signed in to upload your resume.
           </p>
           <Link to="/login" className="btn-apple px-7 py-3">
@@ -99,7 +99,7 @@ const UploadResume = () => {
           <h1 className="text-4xl md:text-[40px] font-bold text-on-surface dark:text-on-dark tracking-tighter mb-2.5">
             Upload Your Resume
           </h1>
-          <p className="text-[17px] text-on-surface-variant dark:text-dark-muted">
+          <p className="text-[17px] text-gray-500 dark:text-on-dark-muted">
             Our AI analyzes your resume and gives you actionable career insights in seconds.
           </p>
         </motion.div>
@@ -140,7 +140,7 @@ const UploadResume = () => {
                     <p className="text-[16px] font-semibold text-on-surface dark:text-on-dark tracking-tight mb-1">
                       Drag &amp; drop your resume here
                     </p>
-                    <p className="text-[14px] text-on-surface-variant dark:text-dark-muted">or click to browse files</p>
+                    <p className="text-[14px] text-gray-500 dark:text-on-dark-muted">or click to browse files</p>
                     <p className="text-[12px] text-[#aeaeb2] dark:text-[#636366] mt-4">Max 5 MB</p>
                   </motion.div>
                 ) : (
@@ -155,7 +155,7 @@ const UploadResume = () => {
                     <p className="text-[15px] font-semibold text-on-surface dark:text-on-dark mb-1">
                       {file.name}
                     </p>
-                    <p className="text-[13px] text-on-surface-variant dark:text-dark-muted mb-4">
+                    <p className="text-[13px] text-gray-500 dark:text-on-dark-muted mb-4">
                       {(file.size / 1024 / 1024).toFixed(2)} MB
                     </p>
                     <button
@@ -223,7 +223,7 @@ const UploadResume = () => {
                   <h3 className="text-[21px] font-semibold text-on-surface dark:text-on-dark tracking-tight">
                     Analysis complete
                   </h3>
-                  <p className="text-[13px] text-on-surface-variant dark:text-dark-muted mt-0.5">
+                  <p className="text-[13px] text-gray-500 dark:text-on-dark-muted mt-0.5">
                     Your resume has been successfully processed.
                   </p>
                 </div>
@@ -233,7 +233,7 @@ const UploadResume = () => {
 
               {/* Skills */}
               <div className="mb-7">
-                <p className="text-[12px] font-semibold text-on-surface-variant dark:text-dark-muted uppercase tracking-[0.06em] mb-3.5">
+                <p className="text-[12px] font-semibold text-gray-500 dark:text-on-dark-muted uppercase tracking-[0.06em] mb-3.5">
                   Detected Skills
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -249,7 +249,7 @@ const UploadResume = () => {
               {/* Education & Experience */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                 <div className="bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-[14px] p-5">
-                  <p className="text-[12px] font-semibold text-on-surface-variant dark:text-dark-muted uppercase tracking-[0.06em] mb-2.5">
+                  <p className="text-[12px] font-semibold text-gray-500 dark:text-on-dark-muted uppercase tracking-[0.06em] mb-2.5">
                     Education
                   </p>
                   <p className="text-[14px] text-on-surface dark:text-on-dark leading-[1.6]">
@@ -257,7 +257,7 @@ const UploadResume = () => {
                   </p>
                 </div>
                 <div className="bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-[14px] p-5">
-                  <p className="text-[12px] font-semibold text-on-surface-variant dark:text-dark-muted uppercase tracking-[0.06em] mb-2.5">
+                  <p className="text-[12px] font-semibold text-gray-500 dark:text-on-dark-muted uppercase tracking-[0.06em] mb-2.5">
                     Experience
                   </p>
                   <p className="text-[14px] text-on-surface dark:text-on-dark leading-[1.6]">

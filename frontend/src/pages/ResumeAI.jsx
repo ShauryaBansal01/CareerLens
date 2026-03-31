@@ -189,7 +189,7 @@ const OptimizeCard = ({ item, type }) => {
                 <p className="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">{item.reason}</p>
               )}
               {item.howTo && (
-                <div className="bg-white dark:bg-gray-800 rounded-lg px-3.5 py-2.5 border border-gray-200 dark:border-gray-700">
+                <div className="bg-white dark:bg-dark-card rounded-lg px-3.5 py-2.5 border border-white/10 dark:border-white/5">
                   <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
                     How to add
                   </p>
@@ -219,7 +219,7 @@ const OptimizeCard = ({ item, type }) => {
 // ── Spinner ────────────────────────────────────────────────────────────────────
 const Spinner = ({ label }) => (
   <div className="flex flex-col items-center gap-3.5 py-12">
-    <div className="w-11 h-11 rounded-full border-[3px] border-gray-200 dark:border-gray-700 border-t-blue-600 animate-spin" />
+    <div className="w-11 h-11 rounded-full border-[3px] border-white/10 dark:border-white/5 border-t-blue-600 animate-spin" />
     <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
   </div>
 );
@@ -277,8 +277,8 @@ const ResumeAI = () => {
   // ── Not logged in ─────────────────────────────────────────────────────────────
   if (!user) {
     return (
-      <div className="min-h-[calc(100vh-54px)] flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-6">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-12 px-10 text-center max-w-[400px] shadow-sm">
+      <div className="min-h-[calc(100vh-54px)] flex items-center justify-center bg-gray-50 dark:bg-dark-surface p-6">
+        <div className="bg-white dark:bg-dark-card rounded-2xl p-12 px-10 text-center max-w-[400px] shadow-sm">
           <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-5" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight mb-2">Sign in required</h2>
           <p className="text-gray-500 dark:text-gray-400 text-[15px] mb-7">Sign in and upload your resume to use AI Resume tools.</p>
@@ -289,13 +289,13 @@ const ResumeAI = () => {
   }
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-900 min-h-[calc(100vh-54px)] px-6 py-14 pb-20">
+    <div className="bg-gray-50 dark:bg-dark-surface min-h-[calc(100vh-54px)] px-6 py-14 pb-20">
       <div className="max-w-[900px] mx-auto">
 
         {/* ── Page header ────────────────────────────────────────────────────── */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="mb-12">
           <div className="flex items-center gap-3.5 mb-2.5">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-indigo-500 flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -313,7 +313,7 @@ const ResumeAI = () => {
             SECTION 1 — Improve Your Resume
         ══════════════════════════════════════════════════════════════════════ */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-9 px-10 mb-6 shadow-sm">
+          <div className="bg-white dark:bg-dark-card rounded-2xl p-9 px-10 mb-6 shadow-sm">
 
             {/* Header */}
             <div className="flex items-start justify-between gap-4 mb-7 flex-wrap">
@@ -341,7 +341,7 @@ const ResumeAI = () => {
             {/* CTA */}
             {!improveFeedback && !improveLoading && (
               <div className="flex flex-col items-center py-8 pb-4">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center mb-4">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-700 border border-white/10 dark:border-gray-600 flex items-center justify-center mb-4">
                   <Sparkles className="w-7 h-7 text-blue-600 dark:text-blue-400" />
                 </div>
                 <p className="text-base font-semibold text-gray-900 dark:text-white mb-1.5">Ready to analyze your resume</p>
@@ -374,7 +374,7 @@ const ResumeAI = () => {
                   {/* Score banner */}
                   <motion.div
                     variants={fadeUp}
-                    className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-800/50 rounded-2xl p-5 px-6 flex items-center gap-5 mb-7 border border-gray-200 dark:border-gray-700"
+                    className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-800/50 rounded-2xl p-5 px-6 flex items-center gap-5 mb-7 border border-white/10 dark:border-white/5"
                   >
                     <ScoreRing score={improveFeedback.score || 0} size={80} />
                     <div className="flex-1">
@@ -447,7 +447,7 @@ const ResumeAI = () => {
             SECTION 2 — Optimize Resume for Company
         ══════════════════════════════════════════════════════════════════════ */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-9 px-10 shadow-sm">
+          <div className="bg-white dark:bg-dark-card rounded-2xl p-9 px-10 shadow-sm">
 
             {/* Header */}
             <div className="mb-7">
@@ -475,7 +475,7 @@ const ResumeAI = () => {
                 value={jobDesc}
                 onChange={e => { setJobDesc(e.target.value); setOptimizeError(''); }}
                 placeholder="Paste the full job description, role requirements, or company overview here…&#10;&#10;Example: 'We are looking for a React Developer with experience in TypeScript, Next.js, AWS, and GraphQL. The ideal candidate has 2+ years of frontend experience and has shipped production-grade applications...'"
-                className="w-full min-h-[180px] bg-gray-50 dark:bg-gray-900/50 border border-transparent rounded-xl p-4 px-4.5 text-sm text-gray-900 dark:text-gray-100 leading-relaxed resize-y outline-none transition-colors duration-200 focus:border-indigo-500 focus:bg-white dark:focus:bg-gray-800"
+                className="w-full min-h-[180px] bg-gray-50 dark:bg-dark-surface/50 border border-transparent rounded-xl p-4 px-4.5 text-sm text-gray-900 dark:text-gray-100 leading-relaxed resize-y outline-none transition-colors duration-200 focus:border-indigo-500 focus:bg-white dark:focus:bg-dark-card"
               />
               <div className="flex justify-between mt-1.5">
                 <p className={`text-xs ${jobDesc.length < 20 ? 'text-red-500' : 'text-gray-400'}`}>
@@ -527,7 +527,7 @@ const ResumeAI = () => {
                   {/* Match score + summary */}
                   <motion.div
                     variants={fadeUp}
-                    className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-5 px-6 flex items-center gap-5 mb-7 border border-gray-200 dark:border-gray-700"
+                    className="bg-gray-50 dark:bg-dark-card/50 rounded-2xl p-5 px-6 flex items-center gap-5 mb-7 border border-white/10 dark:border-white/5"
                   >
                     <ScoreRing score={optimizeResult.matchScore || 0} size={80} />
                     <div className="flex-1">
@@ -597,7 +597,7 @@ const ResumeAI = () => {
                   )}
 
                   {/* Re-run */}
-                  <motion.div variants={fadeUp} className="mt-6 pt-5 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+                  <motion.div variants={fadeUp} className="mt-6 pt-5 border-t border-white/10 dark:border-white/5 flex justify-end">
                     <button
                       onClick={() => { setOptimizeResult(null); setJobDesc(''); }}
                       className="text-[13px] text-gray-500 dark:text-gray-400 bg-transparent border-none cursor-pointer flex items-center gap-1.5 hover:underline"

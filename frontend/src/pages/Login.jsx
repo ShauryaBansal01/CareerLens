@@ -26,12 +26,12 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-54px)] flex items-center justify-center p-4 sm:p-10 bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-[calc(100vh-54px)] flex items-center justify-center p-4 sm:p-10 bg-gray-50 dark:bg-dark-surface">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
-        className="w-full max-w-[440px] bg-white dark:bg-gray-800 rounded-2xl p-8 sm:p-11 shadow-sm"
+        className="w-full max-w-[440px] bg-white dark:bg-dark-card rounded-2xl p-8 sm:p-11 shadow-sm"
       >
         {/* Logo mark */}
         <div className="flex items-center gap-2.5 mb-8">
