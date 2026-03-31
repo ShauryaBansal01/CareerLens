@@ -26,20 +26,20 @@ const ScoreRing = ({ score, size = 80 }) => {
   const prog = circ - (score / 100) * circ;
   const color = score >= 75 ? '#34c759' : score >= 50 ? '#ff9500' : '#ff3b30';
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ flexShrink: 0 }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#f0f0f2" strokeWidth={8} />
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0">
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="currentColor" strokeWidth={8} className="text-gray-100 dark:text-gray-700" />
       <circle
         cx={size / 2} cy={size / 2} r={r}
         fill="none" stroke={color} strokeWidth={8}
         strokeDasharray={circ} strokeDashoffset={prog}
         strokeLinecap="round"
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+        className="transition-[stroke-dashoffset] duration-700 ease-in-out"
       />
       <text
         x={size / 2} y={size / 2 + 1}
         textAnchor="middle" dominantBaseline="middle"
-        style={{ fontSize: 18, fontWeight: 700, fill: '#1d1d1f', fontFamily: 'Inter, -apple-system, sans-serif' }}
+        className="text-lg font-bold fill-gray-900 dark:fill-white font-sans"
       >
         {score}
       </text>
@@ -53,84 +53,52 @@ const FeedbackCard = ({ item, type }) => {
 
   const config = {
     critical: {
-      bg: 'rgba(255,59,48,0.06)',
-      border: '#ff3b30',
-      iconBg: 'rgba(255,59,48,0.12)',
-      icon: <AlertCircle style={{ width: 16, height: 16, color: '#ff3b30' }} />,
+      container: 'bg-red-50/50 dark:bg-red-900/10 border-red-500/25 border-l-[3px] border-l-red-500',
+      iconBg: 'bg-red-500/10 dark:bg-red-500/20',
+      icon: <AlertCircle className="w-4 h-4 text-red-500" />,
       label: 'Critical',
-      labelColor: '#ff3b30',
+      labelColor: 'text-red-500 bg-red-500/10',
     },
     suggested: {
-      bg: 'rgba(255,149,0,0.06)',
-      border: '#ff9500',
-      iconBg: 'rgba(255,149,0,0.12)',
-      icon: <AlertTriangle style={{ width: 16, height: 16, color: '#ff9500' }} />,
+      container: 'bg-orange-50/50 dark:bg-orange-900/10 border-orange-500/25 border-l-[3px] border-l-orange-500',
+      iconBg: 'bg-orange-500/10 dark:bg-orange-500/20',
+      icon: <AlertTriangle className="w-4 h-4 text-orange-500" />,
       label: 'Suggested',
-      labelColor: '#ff9500',
+      labelColor: 'text-orange-500 bg-orange-500/10',
     },
     good: {
-      bg: 'rgba(52,199,89,0.06)',
-      border: '#34c759',
-      iconBg: 'rgba(52,199,89,0.12)',
-      icon: <CheckCircle style={{ width: 16, height: 16, color: '#34c759' }} />,
+      container: 'bg-green-50/50 dark:bg-green-900/10 border-green-500/25 border-l-[3px] border-l-green-500',
+      iconBg: 'bg-green-500/10 dark:bg-green-500/20',
+      icon: <CheckCircle className="w-4 h-4 text-green-500" />,
       label: 'Good',
-      labelColor: '#34c759',
+      labelColor: 'text-green-500 bg-green-500/10',
     },
   };
 
   const c = config[type];
 
   return (
-    <div
-      style={{
-        background: c.bg,
-        borderRadius: 14,
-        border: `1px solid ${c.border}25`,
-        borderLeft: `3px solid ${c.border}`,
-        overflow: 'hidden',
-        transition: 'box-shadow 0.2s',
-      }}
-    >
+    <div className={`rounded-xl border overflow-hidden transition-shadow duration-200 ${c.container}`}>
       <button
         onClick={() => setOpen(o => !o)}
-        style={{
-          width: '100%',
-          border: 'none',
-          background: 'none',
-          padding: '14px 18px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          cursor: 'pointer',
-          textAlign: 'left',
-        }}
+        className="w-full border-none bg-transparent px-4 py-3.5 flex items-center gap-3 cursor-pointer text-left"
       >
-        <div
-          style={{
-            width: 30,
-            height: 30,
-            borderRadius: 8,
-            background: c.iconBg,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
+        <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${c.iconBg}`}>
           {c.icon}
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 14, fontWeight: 600, color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 tracking-tight">
             {item.issue}
           </p>
         </div>
-        <span style={{ fontSize: 10, fontWeight: 600, color: c.labelColor, background: `${c.border}15`, padding: '2px 8px', borderRadius: 980, flexShrink: 0 }}>
+        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${c.labelColor}`}>
           {c.label}
         </span>
-        {open
-          ? <ChevronUp style={{ width: 16, height: 16, color: '#aeaeb2', flexShrink: 0 }} />
-          : <ChevronDown style={{ width: 16, height: 16, color: '#aeaeb2', flexShrink: 0 }} />
-        }
+        {open ? (
+          <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+        )}
       </button>
 
       <AnimatePresence>
@@ -140,25 +108,18 @@ const FeedbackCard = ({ item, type }) => {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            style={{ overflow: 'hidden' }}
+            className="overflow-hidden"
           >
-            <div style={{ padding: '0 18px 16px 60px' }}>
-              <p style={{ fontSize: 13, color: '#1d1d1f', lineHeight: 1.6, marginBottom: item.example ? 10 : 0 }}>
+            <div className="px-4 pb-4 pl-[52px]">
+              <p className={`text-[13px] text-gray-700 dark:text-gray-300 leading-relaxed ${item.example ? 'mb-2.5' : 'mb-0'}`}>
                 {item.detail}
               </p>
               {item.example && (
-                <div
-                  style={{
-                    background: 'rgba(0,113,227,0.06)',
-                    borderRadius: 10,
-                    padding: '10px 14px',
-                    borderLeft: '3px solid #0071e3',
-                  }}
-                >
-                  <p style={{ fontSize: 11, fontWeight: 700, color: '#0071e3', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+                <div className="bg-blue-50/50 dark:bg-blue-900/10 rounded-lg px-3.5 py-2.5 border-l-[3px] border-l-blue-600">
+                  <p className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">
                     Example
                   </p>
-                  <p style={{ fontSize: 13, color: '#1d1d1f', lineHeight: 1.5, fontStyle: 'italic' }}>
+                  <p className="text-[13px] text-gray-900 dark:text-gray-100 leading-relaxed italic">
                     "{item.example}"
                   </p>
                 </div>
@@ -177,72 +138,41 @@ const OptimizeCard = ({ item, type }) => {
 
   const config = {
     add: {
-      bg: 'rgba(52,199,89,0.06)',
-      border: '#34c759',
-      icon: <Plus style={{ width: 14, height: 14, color: '#34c759' }} />,
-      label: 'Add',
+      container: 'bg-green-50/50 dark:bg-green-900/10 border-green-500/20 border-l-[3px] border-l-green-500',
+      iconBg: 'bg-green-500/10 dark:bg-green-500/20',
+      icon: <Plus className="w-3.5 h-3.5 text-green-600 dark:text-green-500" />,
     },
     remove: {
-      bg: 'rgba(255,59,48,0.06)',
-      border: '#ff3b30',
-      icon: <Minus style={{ width: 14, height: 14, color: '#ff3b30' }} />,
-      label: 'Remove',
+      container: 'bg-red-50/50 dark:bg-red-900/10 border-red-500/20 border-l-[3px] border-l-red-500',
+      iconBg: 'bg-red-500/10 dark:bg-red-500/20',
+      icon: <Minus className="w-3.5 h-3.5 text-red-600 dark:text-red-500" />,
     },
     modify: {
-      bg: 'rgba(0,113,227,0.06)',
-      border: '#0071e3',
-      icon: <RefreshCw style={{ width: 14, height: 14, color: '#0071e3' }} />,
-      label: 'Modify',
+      container: 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-500/20 border-l-[3px] border-l-blue-600',
+      iconBg: 'bg-blue-500/10 dark:bg-blue-500/20',
+      icon: <RefreshCw className="w-3.5 h-3.5 text-blue-600 dark:text-blue-500" />,
     },
   };
 
   const c = config[type];
 
   return (
-    <div
-      style={{
-        background: c.bg,
-        borderRadius: 14,
-        border: `1px solid ${c.border}20`,
-        borderLeft: `3px solid ${c.border}`,
-        overflow: 'hidden',
-      }}
-    >
+    <div className={`rounded-xl border overflow-hidden ${c.container}`}>
       <button
         onClick={() => setOpen(o => !o)}
-        style={{
-          width: '100%',
-          border: 'none',
-          background: 'none',
-          padding: '13px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          cursor: 'pointer',
-          textAlign: 'left',
-        }}
+        className="w-full border-none bg-transparent px-4 py-3 flex items-center gap-3 cursor-pointer text-left"
       >
-        <div
-          style={{
-            width: 26,
-            height: 26,
-            borderRadius: 7,
-            background: `${c.border}18`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
+        <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${c.iconBg}`}>
           {c.icon}
         </div>
-        <p style={{ flex: 1, fontSize: 14, fontWeight: 600, color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+        <p className="flex-1 text-sm font-semibold text-gray-900 dark:text-gray-100 tracking-tight">
           {item.item}
         </p>
-        {open
-          ? <ChevronUp style={{ width: 15, height: 15, color: '#aeaeb2' }} />
-          : <ChevronDown style={{ width: 15, height: 15, color: '#aeaeb2' }} />
-        }
+        {open ? (
+          <ChevronUp className="w-4 h-4 text-gray-400" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-gray-400" />
+        )}
       </button>
 
       <AnimatePresence>
@@ -252,29 +182,29 @@ const OptimizeCard = ({ item, type }) => {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.18 }}
-            style={{ overflow: 'hidden' }}
+            className="overflow-hidden"
           >
-            <div style={{ padding: '0 16px 14px 52px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="px-4 pb-3.5 pl-[52px] flex flex-col gap-2">
               {item.reason && (
-                <p style={{ fontSize: 13, color: '#6e6e73', lineHeight: 1.6 }}>{item.reason}</p>
+                <p className="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">{item.reason}</p>
               )}
               {item.howTo && (
-                <div style={{ background: '#ffffff', borderRadius: 10, padding: '10px 14px', border: '1px solid #e8e8ea' }}>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+                <div className="bg-white dark:bg-gray-800 rounded-lg px-3.5 py-2.5 border border-gray-200 dark:border-gray-700">
+                  <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
                     How to add
                   </p>
-                  <p style={{ fontSize: 13, color: '#1d1d1f', lineHeight: 1.5 }}>{item.howTo}</p>
+                  <p className="text-[13px] text-gray-900 dark:text-gray-100 leading-relaxed">{item.howTo}</p>
                 </div>
               )}
               {item.before && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <div style={{ background: 'rgba(255,59,48,0.06)', borderRadius: 10, padding: '10px 14px', border: '1px solid rgba(255,59,48,0.15)' }}>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: '#ff3b30', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Before</p>
-                    <p style={{ fontSize: 13, color: '#1d1d1f', lineHeight: 1.5, fontStyle: 'italic' }}>"{item.before}"</p>
+                <div className="flex flex-col gap-1.5">
+                  <div className="bg-red-50/50 dark:bg-red-900/10 rounded-lg px-3.5 py-2.5 border border-red-500/15 dark:border-red-500/20">
+                    <p className="text-[11px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wider mb-1">Before</p>
+                    <p className="text-[13px] text-gray-900 dark:text-gray-100 leading-relaxed italic">"{item.before}"</p>
                   </div>
-                  <div style={{ background: 'rgba(52,199,89,0.06)', borderRadius: 10, padding: '10px 14px', border: '1px solid rgba(52,199,89,0.15)' }}>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: '#34c759', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>After</p>
-                    <p style={{ fontSize: 13, color: '#1d1d1f', lineHeight: 1.5, fontStyle: 'italic' }}>"{item.after}"</p>
+                  <div className="bg-green-50/50 dark:bg-green-900/10 rounded-lg px-3.5 py-2.5 border border-green-500/15 dark:border-green-500/20">
+                    <p className="text-[11px] font-bold text-green-600 dark:text-green-500 uppercase tracking-wider mb-1">After</p>
+                    <p className="text-[13px] text-gray-900 dark:text-gray-100 leading-relaxed italic">"{item.after}"</p>
                   </div>
                 </div>
               )}
@@ -288,18 +218,9 @@ const OptimizeCard = ({ item, type }) => {
 
 // ── Spinner ────────────────────────────────────────────────────────────────────
 const Spinner = ({ label }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: '48px 0' }}>
-    <div
-      style={{
-        width: 44,
-        height: 44,
-        borderRadius: '50%',
-        border: '3px solid #e8e8ea',
-        borderTopColor: '#0071e3',
-        animation: 'spin 0.8s linear infinite',
-      }}
-    />
-    <p style={{ fontSize: 14, color: '#6e6e73' }}>{label}</p>
+  <div className="flex flex-col items-center gap-3.5 py-12">
+    <div className="w-11 h-11 rounded-full border-[3px] border-gray-200 dark:border-gray-700 border-t-blue-600 animate-spin" />
+    <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
   </div>
 );
 
@@ -356,42 +277,32 @@ const ResumeAI = () => {
   // ── Not logged in ─────────────────────────────────────────────────────────────
   if (!user) {
     return (
-      <div style={{ minHeight: 'calc(100vh - 54px)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f7', padding: 24 }}>
-        <div style={{ background: '#fff', borderRadius: 20, padding: '48px 40px', textAlign: 'center', maxWidth: 400 }}>
-          <AlertCircle style={{ width: 40, height: 40, color: '#ff3b30', margin: '0 auto 20px' }} />
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: '#1d1d1f', letterSpacing: '-0.02em', marginBottom: 8 }}>Sign in required</h2>
-          <p style={{ color: '#6e6e73', fontSize: 15, marginBottom: 28 }}>Sign in and upload your resume to use AI Resume tools.</p>
-          <Link to="/login" className="btn-apple" style={{ textDecoration: 'none', padding: '12px 28px' }}>Sign In</Link>
+      <div className="min-h-[calc(100vh-54px)] flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-12 px-10 text-center max-w-[400px] shadow-sm">
+          <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-5" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight mb-2">Sign in required</h2>
+          <p className="text-gray-500 dark:text-gray-400 text-[15px] mb-7">Sign in and upload your resume to use AI Resume tools.</p>
+          <Link to="/login" className="btn-apple px-7 py-3 no-underline inline-block">Sign In</Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ background: '#f5f5f7', minHeight: 'calc(100vh - 54px)', padding: '56px 24px 80px' }}>
-      <div style={{ maxWidth: 900, margin: '0 auto' }}>
+    <div className="bg-gray-50 dark:bg-gray-900 min-h-[calc(100vh-54px)] px-6 py-14 pb-20">
+      <div className="max-w-[900px] mx-auto">
 
         {/* ── Page header ────────────────────────────────────────────────────── */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} style={{ marginBottom: 48 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }}>
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 13,
-                background: 'linear-gradient(135deg, #0071e3, #5856d6)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Sparkles style={{ width: 22, height: 22, color: '#fff' }} />
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="mb-12">
+          <div className="flex items-center gap-3.5 mb-2.5">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 style={{ fontSize: 36, fontWeight: 700, color: '#1d1d1f', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight">
                 Resume AI
               </h1>
-              <p style={{ fontSize: 15, color: '#6e6e73', marginTop: 4 }}>
+              <p className="text-[15px] text-gray-500 dark:text-gray-400 mt-1">
                 Get expert-level feedback. Tailor your resume for any role.
               </p>
             </div>
@@ -402,56 +313,44 @@ const ResumeAI = () => {
             SECTION 1 — Improve Your Resume
         ══════════════════════════════════════════════════════════════════════ */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}>
-          <div style={{ background: '#ffffff', borderRadius: 20, padding: '36px 40px', marginBottom: 24 }}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-9 px-10 mb-6 shadow-sm">
 
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 28, flexWrap: 'wrap' }}>
+            <div className="flex items-start justify-between gap-4 mb-7 flex-wrap">
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#0071e3' }} />
-                  <p style={{ fontSize: 11, fontWeight: 700, color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <div className="flex items-center gap-2.5 mb-1.5">
+                  <div className="w-2 h-2 rounded-full bg-blue-600" />
+                  <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
                     Section 1
                   </p>
                 </div>
-                <h2 style={{ fontSize: 24, fontWeight: 700, color: '#1d1d1f', letterSpacing: '-0.02em', marginBottom: 6 }}>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight mb-1.5">
                   Improve Your Resume
                 </h2>
-                <p style={{ fontSize: 14, color: '#6e6e73', maxWidth: 480 }}>
+                <p className="text-sm text-gray-500 dark:text-gray-400 max-w-[480px]">
                   Get a comprehensive AI audit of your resume — covering structure, impact, ATS optimization, and skill gaps.
                 </p>
               </div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <span className="apple-pill-gray" style={{ fontSize: 11 }}>🔴 Critical fixes</span>
-                <span className="apple-pill-gray" style={{ fontSize: 11 }}>🟡 Suggestions</span>
-                <span className="apple-pill-gray" style={{ fontSize: 11 }}>🟢 Strengths</span>
+              <div className="flex gap-2 items-center">
+                <span className="apple-pill-gray text-[11px]">🔴 Critical fixes</span>
+                <span className="apple-pill-gray text-[11px]">🟡 Suggestions</span>
+                <span className="apple-pill-gray text-[11px]">🟢 Strengths</span>
               </div>
             </div>
 
             {/* CTA */}
             {!improveFeedback && !improveLoading && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '32px 0 16px' }}>
-                <div
-                  style={{
-                    width: 64,
-                    height: 64,
-                    borderRadius: 18,
-                    background: 'linear-gradient(135deg, #f5f5f7, #ffffff)',
-                    border: '1px solid #e8e8ea',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 16,
-                  }}
-                >
-                  <Sparkles style={{ width: 28, height: 28, color: '#0071e3' }} />
+              <div className="flex flex-col items-center py-8 pb-4">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center mb-4">
+                  <Sparkles className="w-7 h-7 text-blue-600 dark:text-blue-400" />
                 </div>
-                <p style={{ fontSize: 16, fontWeight: 600, color: '#1d1d1f', marginBottom: 6 }}>Ready to analyze your resume</p>
-                <p style={{ fontSize: 14, color: '#6e6e73', marginBottom: 24, textAlign: 'center', maxWidth: 380 }}>
+                <p className="text-base font-semibold text-gray-900 dark:text-white mb-1.5">Ready to analyze your resume</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 text-center max-w-[380px]">
                   Our AI will review your resume like a senior recruiter at a top tech company.
                 </p>
-                <button onClick={handleImprove} className="btn-apple" style={{ padding: '13px 32px', fontSize: 15 }}>
+                <button onClick={handleImprove} className="btn-apple px-8 py-3.5 text-[15px] flex items-center gap-2">
                   Analyze My Resume
-                  <ArrowRight style={{ width: 16, height: 16, marginLeft: 8 }} />
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             )}
@@ -461,9 +360,9 @@ const ResumeAI = () => {
 
             {/* Error */}
             {improveError && (
-              <div style={{ background: 'rgba(255,59,48,0.07)', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <AlertCircle style={{ width: 16, height: 16, color: '#ff3b30', flexShrink: 0 }} />
-                <p style={{ fontSize: 14, color: '#c0392b' }}>{improveError}</p>
+              <div className="bg-red-50 dark:bg-red-900/10 rounded-xl px-4 py-3.5 flex items-center gap-2.5">
+                <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                <p className="text-sm text-red-600 dark:text-red-400">{improveError}</p>
               </div>
             )}
 
@@ -475,42 +374,33 @@ const ResumeAI = () => {
                   {/* Score banner */}
                   <motion.div
                     variants={fadeUp}
-                    style={{
-                      background: 'linear-gradient(135deg, #f5f5f7 0%, #ffffff 100%)',
-                      borderRadius: 16,
-                      padding: '20px 24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 20,
-                      marginBottom: 28,
-                      border: '1px solid #e8e8ea',
-                    }}
+                    className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-800/50 rounded-2xl p-5 px-6 flex items-center gap-5 mb-7 border border-gray-200 dark:border-gray-700"
                   >
                     <ScoreRing score={improveFeedback.score || 0} size={80} />
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 11, fontWeight: 700, color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
+                    <div className="flex-1">
+                      <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">
                         Resume Score
                       </p>
-                      <p style={{ fontSize: 18, fontWeight: 600, color: '#1d1d1f', lineHeight: 1.4, letterSpacing: '-0.01em', marginBottom: 8 }}>
+                      <p className="text-lg font-semibold text-gray-900 dark:text-white leading-snug tracking-tight mb-2">
                         {improveFeedback.summary}
                       </p>
                       <button
                         onClick={() => { setImproveFeedback(null); handleImprove(); }}
-                        style={{ fontSize: 12, color: '#0071e3', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}
+                        className="text-xs text-blue-600 dark:text-blue-400 bg-transparent border-none cursor-pointer p-0 flex items-center gap-1 hover:underline"
                       >
-                        <RefreshCw style={{ width: 12, height: 12 }} /> Re-analyze
+                        <RefreshCw className="w-3 h-3" /> Re-analyze
                       </button>
                     </div>
                   </motion.div>
 
                   {/* Critical */}
                   {improveFeedback.critical?.length > 0 && (
-                    <motion.div variants={fadeUp} style={{ marginBottom: 20 }}>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: '#ff3b30', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <AlertCircle style={{ width: 13, height: 13 }} />
+                    <motion.div variants={fadeUp} className="mb-5">
+                      <p className="text-xs font-bold text-red-500 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5" />
                         Critical — Fix Before Applying ({improveFeedback.critical.length})
                       </p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div className="flex flex-col gap-2">
                         {improveFeedback.critical.map((item, i) => (
                           <FeedbackCard key={i} item={item} type="critical" />
                         ))}
@@ -520,12 +410,12 @@ const ResumeAI = () => {
 
                   {/* Suggested */}
                   {improveFeedback.suggested?.length > 0 && (
-                    <motion.div variants={fadeUp} style={{ marginBottom: 20 }}>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: '#ff9500', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <AlertTriangle style={{ width: 13, height: 13 }} />
+                    <motion.div variants={fadeUp} className="mb-5">
+                      <p className="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5" />
                         Suggested Improvements ({improveFeedback.suggested.length})
                       </p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div className="flex flex-col gap-2">
                         {improveFeedback.suggested.map((item, i) => (
                           <FeedbackCard key={i} item={item} type="suggested" />
                         ))}
@@ -536,11 +426,11 @@ const ResumeAI = () => {
                   {/* Good */}
                   {improveFeedback.good?.length > 0 && (
                     <motion.div variants={fadeUp}>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: '#34c759', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <CheckCircle style={{ width: 13, height: 13 }} />
+                      <p className="text-xs font-bold text-green-500 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
+                        <CheckCircle className="w-3.5 h-3.5" />
                         What You're Doing Well ({improveFeedback.good.length})
                       </p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div className="flex flex-col gap-2">
                         {improveFeedback.good.map((item, i) => (
                           <FeedbackCard key={i} item={item} type="good" />
                         ))}
@@ -557,61 +447,44 @@ const ResumeAI = () => {
             SECTION 2 — Optimize Resume for Company
         ══════════════════════════════════════════════════════════════════════ */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
-          <div style={{ background: '#ffffff', borderRadius: 20, padding: '36px 40px' }}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-9 px-10 shadow-sm">
 
             {/* Header */}
-            <div style={{ marginBottom: 28 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#5856d6' }} />
-                <p style={{ fontSize: 11, fontWeight: 700, color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <div className="mb-7">
+              <div className="flex items-center gap-2.5 mb-1.5">
+                <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
                   Section 2
                 </p>
               </div>
-              <h2 style={{ fontSize: 24, fontWeight: 700, color: '#1d1d1f', letterSpacing: '-0.02em', marginBottom: 6 }}>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight mb-1.5">
                 Optimize Resume for Company
               </h2>
-              <p style={{ fontSize: 14, color: '#6e6e73', maxWidth: 520 }}>
+              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-[520px]">
                 Paste a job description or company overview — our AI cross-references it with your resume and gives you a precise tailoring plan.
               </p>
             </div>
 
             {/* Input area */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#1d1d1f', display: 'block', marginBottom: 8 }}>
-                <Building2 style={{ display: 'inline', width: 14, height: 14, marginRight: 6, verticalAlign: 'middle', color: '#5856d6' }} />
+            <div className="mb-4">
+              <label className="text-[13px] font-semibold text-gray-900 dark:text-white flex items-center gap-1.5 mb-2">
+                <Building2 className="w-3.5 h-3.5 text-indigo-500" />
                 Job Description / Company Requirements
               </label>
               <textarea
                 value={jobDesc}
                 onChange={e => { setJobDesc(e.target.value); setOptimizeError(''); }}
                 placeholder="Paste the full job description, role requirements, or company overview here…&#10;&#10;Example: 'We are looking for a React Developer with experience in TypeScript, Next.js, AWS, and GraphQL. The ideal candidate has 2+ years of frontend experience and has shipped production-grade applications...'"
-                style={{
-                  width: '100%',
-                  minHeight: 180,
-                  background: '#f5f5f7',
-                  border: '1px solid transparent',
-                  borderRadius: 14,
-                  padding: '16px 18px',
-                  fontSize: 14,
-                  fontFamily: '-apple-system, BlinkMacSystemFont, Inter, sans-serif',
-                  color: '#1d1d1f',
-                  lineHeight: 1.6,
-                  resize: 'vertical',
-                  outline: 'none',
-                  transition: 'border-color 0.2s, background 0.2s',
-                  boxSizing: 'border-box',
-                }}
-                onFocus={e => { e.target.style.borderColor = '#5856d6'; e.target.style.background = '#ffffff'; }}
-                onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = '#f5f5f7'; }}
+                className="w-full min-h-[180px] bg-gray-50 dark:bg-gray-900/50 border border-transparent rounded-xl p-4 px-4.5 text-sm text-gray-900 dark:text-gray-100 leading-relaxed resize-y outline-none transition-colors duration-200 focus:border-indigo-500 focus:bg-white dark:focus:bg-gray-800"
               />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-                <p style={{ fontSize: 12, color: jobDesc.length < 20 ? '#ff3b30' : '#aeaeb2' }}>
+              <div className="flex justify-between mt-1.5">
+                <p className={`text-xs ${jobDesc.length < 20 ? 'text-red-500' : 'text-gray-400'}`}>
                   {jobDesc.length} characters {jobDesc.length < 20 ? `(need ${20 - jobDesc.length} more)` : ''}
                 </p>
                 {jobDesc.length > 0 && (
                   <button
                     onClick={() => { setJobDesc(''); setOptimizeResult(null); setOptimizeError(''); }}
-                    style={{ fontSize: 12, color: '#6e6e73', background: 'none', border: 'none', cursor: 'pointer' }}
+                    className="text-xs text-gray-500 dark:text-gray-400 bg-transparent border-none cursor-pointer hover:underline"
                   >
                     Clear
                   </button>
@@ -620,25 +493,24 @@ const ResumeAI = () => {
             </div>
 
             {optimizeError && (
-              <div style={{ background: 'rgba(255,59,48,0.07)', borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <AlertCircle style={{ width: 15, height: 15, color: '#ff3b30', flexShrink: 0 }} />
-                <p style={{ fontSize: 13, color: '#c0392b' }}>{optimizeError}</p>
+              <div className="bg-red-50 dark:bg-red-900/10 rounded-xl p-3 px-4 flex items-center gap-2.5 mb-4">
+                <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                <p className="text-[13px] text-red-600 dark:text-red-400">{optimizeError}</p>
               </div>
             )}
 
             <button
               onClick={handleOptimize}
               disabled={optimizeLoading || jobDesc.trim().length < 20}
-              className="btn-apple-rect"
-              style={{ marginBottom: optimizeResult || optimizeLoading ? 32 : 0 }}
+              className={`btn-apple-rect mb-${optimizeResult || optimizeLoading ? '8' : '0'}`}
             >
               {optimizeLoading
-                ? <span style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
+                ? <span className="flex items-center justify-center gap-2.5">
                     <span className="apple-spinner" />
                     Analyzing & optimizing…
                   </span>
                 : <>
-                    <Zap style={{ width: 16, height: 16, marginRight: 8 }} />
+                    <Zap className="w-4 h-4 mr-2" />
                     Analyze &amp; Optimize
                   </>
               }
@@ -655,31 +527,23 @@ const ResumeAI = () => {
                   {/* Match score + summary */}
                   <motion.div
                     variants={fadeUp}
-                    style={{
-                      background: '#f5f5f7',
-                      borderRadius: 16,
-                      padding: '20px 24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 20,
-                      marginBottom: 28,
-                    }}
+                    className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-5 px-6 flex items-center gap-5 mb-7 border border-gray-200 dark:border-gray-700"
                   >
                     <ScoreRing score={optimizeResult.matchScore || 0} size={80} />
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 11, fontWeight: 700, color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
+                    <div className="flex-1">
+                      <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">
                         Current Match Score
                       </p>
-                      <p style={{ fontSize: 16, fontWeight: 600, color: '#1d1d1f', lineHeight: 1.4, letterSpacing: '-0.01em', marginBottom: 10 }}>
+                      <p className="text-base font-semibold text-gray-900 dark:text-white leading-snug tracking-tight mb-2.5">
                         {optimizeResult.companySummary}
                       </p>
                       {/* ATS Keywords */}
                       {optimizeResult.keywords?.length > 0 && (
                         <div>
-                          <p style={{ fontSize: 11, fontWeight: 600, color: '#6e6e73', marginBottom: 6 }}>Missing ATS keywords:</p>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                          <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Missing ATS keywords:</p>
+                          <div className="flex flex-wrap gap-1.5">
                             {optimizeResult.keywords.map((kw, i) => (
-                              <span key={i} className="apple-pill-error" style={{ fontSize: 11 }}>{kw}</span>
+                              <span key={i} className="apple-pill-error text-[11px]">{kw}</span>
                             ))}
                           </div>
                         </div>
@@ -689,12 +553,12 @@ const ResumeAI = () => {
 
                   {/* ADD */}
                   {optimizeResult.add?.length > 0 && (
-                    <motion.div variants={fadeUp} style={{ marginBottom: 20 }}>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: '#34c759', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Plus style={{ width: 13, height: 13 }} />
+                    <motion.div variants={fadeUp} className="mb-5">
+                      <p className="text-xs font-bold text-green-500 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
+                        <Plus className="w-3.5 h-3.5" />
                         Add These ({optimizeResult.add.length})
                       </p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div className="flex flex-col gap-2">
                         {optimizeResult.add.map((item, i) => (
                           <OptimizeCard key={i} item={item} type="add" />
                         ))}
@@ -704,12 +568,12 @@ const ResumeAI = () => {
 
                   {/* REMOVE */}
                   {optimizeResult.remove?.length > 0 && (
-                    <motion.div variants={fadeUp} style={{ marginBottom: 20 }}>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: '#ff3b30', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Minus style={{ width: 13, height: 13 }} />
+                    <motion.div variants={fadeUp} className="mb-5">
+                      <p className="text-xs font-bold text-red-500 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
+                        <Minus className="w-3.5 h-3.5" />
                         Remove These ({optimizeResult.remove.length})
                       </p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div className="flex flex-col gap-2">
                         {optimizeResult.remove.map((item, i) => (
                           <OptimizeCard key={i} item={item} type="remove" />
                         ))}
@@ -720,11 +584,11 @@ const ResumeAI = () => {
                   {/* MODIFY */}
                   {optimizeResult.modify?.length > 0 && (
                     <motion.div variants={fadeUp}>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: '#0071e3', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <RefreshCw style={{ width: 13, height: 13 }} />
+                      <p className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
+                        <RefreshCw className="w-3.5 h-3.5" />
                         Modify These ({optimizeResult.modify.length})
                       </p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div className="flex flex-col gap-2">
                         {optimizeResult.modify.map((item, i) => (
                           <OptimizeCard key={i} item={item} type="modify" />
                         ))}
@@ -733,12 +597,12 @@ const ResumeAI = () => {
                   )}
 
                   {/* Re-run */}
-                  <motion.div variants={fadeUp} style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #e8e8ea', display: 'flex', justifyContent: 'flex-end' }}>
+                  <motion.div variants={fadeUp} className="mt-6 pt-5 border-t border-gray-200 dark:border-gray-700 flex justify-end">
                     <button
                       onClick={() => { setOptimizeResult(null); setJobDesc(''); }}
-                      style={{ fontSize: 13, color: '#6e6e73', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                      className="text-[13px] text-gray-500 dark:text-gray-400 bg-transparent border-none cursor-pointer flex items-center gap-1.5 hover:underline"
                     >
-                      <RefreshCw style={{ width: 13, height: 13 }} /> Try another job description
+                      <RefreshCw className="w-3.5 h-3.5" /> Try another job description
                     </button>
                   </motion.div>
                 </motion.div>

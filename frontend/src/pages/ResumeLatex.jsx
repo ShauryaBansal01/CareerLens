@@ -227,27 +227,27 @@ const ResumeLatex = () => {
   const removeEducation = (index) => setResumeData({...resumeData, education: resumeData.education.filter((_, i) => i !== index)});
 
   return (
-    <div className="h-[calc(100vh-54px)] flex flex-col bg-[#f5f5f7] overflow-hidden relative">
+    <div className="h-[calc(100vh-54px)] flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden relative">
       
       {/* Wizard Modal */}
       <AnimatePresence>
         {showWizard && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700"
             >
-              <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
                     <Sparkles className="text-purple-500" size={20} />
                     AI Resume Wizard
                   </h2>
-                  <p className="text-sm text-gray-500 mt-1">Provide your details, and our AI will rewrite and format a brilliant LaTeX resume.</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Provide your details, and our AI will rewrite and format a brilliant LaTeX resume.</p>
                 </div>
-                <button onClick={() => setShowWizard(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
+                <button onClick={() => setShowWizard(false)} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors text-gray-500 dark:text-gray-400">
                   <X size={20} />
                 </button>
               </div>
@@ -255,38 +255,38 @@ const ResumeLatex = () => {
               <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
                 {/* Personal Info */}
                 <section>
-                  <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">Personal Information</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Personal Information</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    <input className="apple-input bg-gray-50 text-sm" placeholder="Full Name" value={resumeData.personalInfo.name} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, name: e.target.value}})} />
-                    <input className="apple-input bg-gray-50 text-sm" placeholder="Email" value={resumeData.personalInfo.email} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, email: e.target.value}})} />
-                    <input className="apple-input bg-gray-50 text-sm" placeholder="Phone" value={resumeData.personalInfo.phone} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, phone: e.target.value}})} />
-                    <input className="apple-input bg-gray-50 text-sm" placeholder="LinkedIn URL" value={resumeData.personalInfo.linkedin} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, linkedin: e.target.value}})} />
-                    <input className="apple-input bg-gray-50 text-sm col-span-2" placeholder="GitHub / Portfolio URL" value={resumeData.personalInfo.github} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, github: e.target.value}})} />
+                    <input className="apple-input bg-gray-50 dark:bg-gray-900 w-full text-sm" placeholder="Full Name" value={resumeData.personalInfo.name} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, name: e.target.value}})} />
+                    <input className="apple-input bg-gray-50 dark:bg-gray-900 w-full text-sm" placeholder="Email" value={resumeData.personalInfo.email} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, email: e.target.value}})} />
+                    <input className="apple-input bg-gray-50 dark:bg-gray-900 w-full text-sm" placeholder="Phone" value={resumeData.personalInfo.phone} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, phone: e.target.value}})} />
+                    <input className="apple-input bg-gray-50 dark:bg-gray-900 w-full text-sm" placeholder="LinkedIn URL" value={resumeData.personalInfo.linkedin} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, linkedin: e.target.value}})} />
+                    <input className="apple-input bg-gray-50 dark:bg-gray-900 w-full text-sm col-span-2" placeholder="GitHub / Portfolio URL" value={resumeData.personalInfo.github} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, github: e.target.value}})} />
                   </div>
                 </section>
 
                 {/* Skills */}
                 <section>
-                  <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">Skills</h3>
-                  <textarea className="apple-input bg-gray-50 text-sm min-h-[80px]" placeholder="React, Node.js, Python, AWS (comma separated)" value={resumeData.skills} onChange={e => setResumeData({...resumeData, skills: e.target.value})} />
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Skills</h3>
+                  <textarea className="apple-input bg-gray-50 dark:bg-gray-900 w-full text-sm min-h-[80px]" placeholder="React, Node.js, Python, AWS (comma separated)" value={resumeData.skills} onChange={e => setResumeData({...resumeData, skills: e.target.value})} />
                 </section>
 
                 {/* Experience */}
                 <section>
-                  <div className="flex justify-between items-end border-b pb-2 mb-4">
-                    <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Experience</h3>
-                    <button onClick={addExperience} className="text-blue-600 text-xs font-medium flex items-center gap-1 hover:text-blue-700"><Plus size={14}/> Add Job</button>
+                  <div className="flex justify-between items-end border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">Experience</h3>
+                    <button onClick={addExperience} className="text-blue-600 dark:text-blue-400 text-xs font-medium flex items-center gap-1 hover:text-blue-700 dark:hover:text-blue-300"><Plus size={14}/> Add Job</button>
                   </div>
                   <div className="space-y-6">
                     {resumeData.experience.map((exp, index) => (
-                      <div key={index} className="p-4 border border-gray-100 rounded-xl bg-gray-50/50 relative group">
-                        <button onClick={() => removeExperience(index)} className="absolute top-3 right-3 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
+                      <div key={index} className="p-4 border border-gray-100 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-900/50 relative group">
+                        <button onClick={() => removeExperience(index)} className="absolute top-3 right-3 text-red-400 hover:text-red-600 dark:hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
                         <div className="grid grid-cols-2 gap-3 mb-3">
-                          <input className="apple-input bg-white text-sm" placeholder="Company Name" value={exp.company} onChange={e => updateExperience(index, 'company', e.target.value)} />
-                          <input className="apple-input bg-white text-sm" placeholder="Role / Title" value={exp.role} onChange={e => updateExperience(index, 'role', e.target.value)} />
-                          <input className="apple-input bg-white text-sm col-span-2" placeholder="Dates (e.g., Jan 2021 - Present)" value={exp.dates} onChange={e => updateExperience(index, 'dates', e.target.value)} />
+                          <input className="apple-input bg-white dark:bg-gray-800 w-full text-sm" placeholder="Company Name" value={exp.company} onChange={e => updateExperience(index, 'company', e.target.value)} />
+                          <input className="apple-input bg-white dark:bg-gray-800 w-full text-sm" placeholder="Role / Title" value={exp.role} onChange={e => updateExperience(index, 'role', e.target.value)} />
+                          <input className="apple-input bg-white dark:bg-gray-800 w-full text-sm col-span-2" placeholder="Dates (e.g., Jan 2021 - Present)" value={exp.dates} onChange={e => updateExperience(index, 'dates', e.target.value)} />
                         </div>
-                        <textarea className="apple-input bg-white text-sm min-h-[100px]" placeholder="Rough notes on what you did... AI will enhance this into STAR bullet points!" value={exp.bulletPoints} onChange={e => updateExperience(index, 'bulletPoints', e.target.value)} />
+                        <textarea className="apple-input bg-white dark:bg-gray-800 w-full text-sm min-h-[100px]" placeholder="Rough notes on what you did... AI will enhance this into STAR bullet points!" value={exp.bulletPoints} onChange={e => updateExperience(index, 'bulletPoints', e.target.value)} />
                       </div>
                     ))}
                   </div>
@@ -294,19 +294,19 @@ const ResumeLatex = () => {
 
                 {/* Projects */}
                 <section>
-                  <div className="flex justify-between items-end border-b pb-2 mb-4">
-                    <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Projects</h3>
-                    <button onClick={addProject} className="text-blue-600 text-xs font-medium flex items-center gap-1 hover:text-blue-700"><Plus size={14}/> Add Project</button>
+                  <div className="flex justify-between items-end border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">Projects</h3>
+                    <button onClick={addProject} className="text-blue-600 dark:text-blue-400 text-xs font-medium flex items-center gap-1 hover:text-blue-700 dark:hover:text-blue-300"><Plus size={14}/> Add Project</button>
                   </div>
                   <div className="space-y-6">
                     {resumeData.projects.map((proj, index) => (
-                      <div key={index} className="p-4 border border-gray-100 rounded-xl bg-gray-50/50 relative group">
-                        <button onClick={() => removeProject(index)} className="absolute top-3 right-3 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
+                      <div key={index} className="p-4 border border-gray-100 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-900/50 relative group">
+                        <button onClick={() => removeProject(index)} className="absolute top-3 right-3 text-red-400 hover:text-red-600 dark:hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
                         <div className="grid grid-cols-2 gap-3 mb-3">
-                          <input className="apple-input bg-white text-sm" placeholder="Project Name" value={proj.name} onChange={e => updateProject(index, 'name', e.target.value)} />
-                          <input className="apple-input bg-white text-sm" placeholder="Tech Stack (e.g., React, Firebase)" value={proj.techStack} onChange={e => updateProject(index, 'techStack', e.target.value)} />
+                          <input className="apple-input bg-white dark:bg-gray-800 w-full text-sm" placeholder="Project Name" value={proj.name} onChange={e => updateProject(index, 'name', e.target.value)} />
+                          <input className="apple-input bg-white dark:bg-gray-800 w-full text-sm" placeholder="Tech Stack (e.g., React, Firebase)" value={proj.techStack} onChange={e => updateProject(index, 'techStack', e.target.value)} />
                         </div>
-                        <textarea className="apple-input bg-white text-sm min-h-[80px]" placeholder="Rough notes on the project... AI will enhance this!" value={proj.description} onChange={e => updateProject(index, 'description', e.target.value)} />
+                        <textarea className="apple-input bg-white dark:bg-gray-800 w-full text-sm min-h-[80px]" placeholder="Rough notes on the project... AI will enhance this!" value={proj.description} onChange={e => updateProject(index, 'description', e.target.value)} />
                       </div>
                     ))}
                   </div>
@@ -314,38 +314,38 @@ const ResumeLatex = () => {
                 
                 {/* Education */}
                 <section>
-                  <div className="flex justify-between items-end border-b pb-2 mb-4">
-                    <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Education</h3>
-                    <button onClick={addEducation} className="text-blue-600 text-xs font-medium flex items-center gap-1 hover:text-blue-700"><Plus size={14}/> Add Education</button>
+                  <div className="flex justify-between items-end border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">Education</h3>
+                    <button onClick={addEducation} className="text-blue-600 dark:text-blue-400 text-xs font-medium flex items-center gap-1 hover:text-blue-700 dark:hover:text-blue-300"><Plus size={14}/> Add Education</button>
                   </div>
                   <div className="space-y-4">
                     {resumeData.education.map((edu, index) => (
-                      <div key={index} className="p-4 border border-gray-100 rounded-xl bg-gray-50/50 relative group flex gap-3">
-                        <button onClick={() => removeEducation(index)} className="absolute top-3 right-3 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
-                        <input className="apple-input bg-white text-sm w-1/3" placeholder="School/University" value={edu.school} onChange={e => updateEducation(index, 'school', e.target.value)} />
-                        <input className="apple-input bg-white text-sm w-1/3" placeholder="Degree (e.g., BS Computer Science)" value={edu.degree} onChange={e => updateEducation(index, 'degree', e.target.value)} />
-                        <input className="apple-input bg-white text-sm w-1/3 mr-6" placeholder="Dates/Graduation" value={edu.dates} onChange={e => updateEducation(index, 'dates', e.target.value)} />
+                      <div key={index} className="p-4 border border-gray-100 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-900/50 relative group flex flex-col md:flex-row gap-3">
+                        <button onClick={() => removeEducation(index)} className="absolute top-3 right-3 text-red-400 hover:text-red-600 dark:hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
+                        <input className="apple-input bg-white dark:bg-gray-800 w-full md:w-1/3 text-sm" placeholder="School/University" value={edu.school} onChange={e => updateEducation(index, 'school', e.target.value)} />
+                        <input className="apple-input bg-white dark:bg-gray-800 w-full md:w-1/3 text-sm" placeholder="Degree (e.g., BS Computer Science)" value={edu.degree} onChange={e => updateEducation(index, 'degree', e.target.value)} />
+                        <input className="apple-input bg-white dark:bg-gray-800 w-full md:w-1/3 text-sm md:mr-6" placeholder="Dates/Graduation" value={edu.dates} onChange={e => updateEducation(index, 'dates', e.target.value)} />
                       </div>
                     ))}
                   </div>
                 </section>
               </div>
 
-              <div className="p-5 border-t border-gray-200 bg-white flex items-center justify-between">
+              <div className="p-5 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between">
                 <label className="flex items-center gap-3 cursor-pointer group">
                   <div className="relative flex items-center">
                     <input type="checkbox" className="sr-only" checked={resumeData.enhanceWithAI} onChange={(e) => setResumeData({...resumeData, enhanceWithAI: e.target.checked})} />
-                    <div className={`w-11 h-6 rounded-full transition-colors ${resumeData.enhanceWithAI ? 'bg-purple-500' : 'bg-gray-300'}`}></div>
+                    <div className={`w-11 h-6 rounded-full transition-colors ${resumeData.enhanceWithAI ? 'bg-purple-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
                     <div className={`absolute w-4 h-4 bg-white rounded-full transition-transform transform ${resumeData.enhanceWithAI ? 'translate-x-6' : 'translate-x-1'} top-1`}></div>
                   </div>
-                  <span className="text-sm font-medium text-gray-800 flex items-center gap-1.5">
-                    <Sparkles size={16} className={resumeData.enhanceWithAI ? "text-purple-500" : "text-gray-400"} />
+                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
+                    <Sparkles size={16} className={resumeData.enhanceWithAI ? "text-purple-500" : "text-gray-400 dark:text-gray-500"} />
                     Enhance bullet points with AI
                   </span>
                 </label>
                 
                 <div className="flex gap-3">
-                  <button onClick={() => setShowWizard(false)} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">Cancel</button>
+                  <button onClick={() => setShowWizard(false)} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Cancel</button>
                   <button onClick={handleGenerate} className="px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all shadow-md flex items-center gap-2">
                     Generate Resume
                   </button>
@@ -359,37 +359,37 @@ const ResumeLatex = () => {
       {/* Tailor to Job Modal */}
       <AnimatePresence>
         {showTailorWizard && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden"
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700"
             >
-              <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
                     <Target className="text-blue-500" size={20} />
                     Tailor to Job Description
                   </h2>
-                  <p className="text-sm text-gray-500 mt-1">Paste the JD. We'll extract keywords and rewrite your resume to match.</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Paste the JD. We'll extract keywords and rewrite your resume to match.</p>
                 </div>
-                <button onClick={() => setShowTailorWizard(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500">
+                <button onClick={() => setShowTailorWizard(false)} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors text-gray-500 dark:text-gray-400">
                   <X size={20} />
                 </button>
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
                 <textarea 
-                  className="apple-input bg-gray-50 text-sm min-h-[300px] w-full" 
+                  className="apple-input bg-gray-50 dark:bg-gray-900 text-sm min-h-[300px] w-full resize-none" 
                   placeholder="Paste the target Job Description or company requirements here..." 
                   value={jobDescriptionText} 
                   onChange={e => setJobDescriptionText(e.target.value)} 
                 />
               </div>
 
-              <div className="p-5 border-t border-gray-200 bg-white flex items-center justify-end gap-3">
-                <button onClick={() => setShowTailorWizard(false)} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">Cancel</button>
+              <div className="p-5 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-end gap-3">
+                <button onClick={() => setShowTailorWizard(false)} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Cancel</button>
                 <button onClick={handleTailorJob} className="px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md flex items-center gap-2">
                   <Target size={16} />
                   Tailor Resume
@@ -401,14 +401,14 @@ const ResumeLatex = () => {
       </AnimatePresence>
 
       {/* Top Toolbar */}
-      <header className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center z-10 shrink-0">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-3 flex justify-between items-center z-10 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
             <FileText size={18} strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="text-[17px] font-semibold text-[#1d1d1f] tracking-tight leading-none">LaTeX Editor</h1>
-            <p className="text-[12px] text-[#6e6e73] mt-0.5">Build ATS-friendly PDFs directly in your browser</p>
+            <h1 className="text-[17px] font-semibold text-gray-900 dark:text-white tracking-tight leading-none">LaTeX Editor</h1>
+            <p className="text-[12px] text-gray-500 dark:text-gray-400 mt-0.5">Build ATS-friendly PDFs directly in your browser</p>
           </div>
         </div>
 
@@ -419,7 +419,9 @@ const ResumeLatex = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0 }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium mr-2 ${
-                messageType === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                messageType === 'success' 
+                ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' 
+                : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
               }`}
             >
               {messageType === 'success' ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
@@ -430,10 +432,10 @@ const ResumeLatex = () => {
           <button 
             onClick={openWizard} 
             disabled={loading}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors disabled:opacity-50 border border-purple-100 shadow-sm"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors disabled:opacity-50 border border-purple-100 dark:border-purple-800 shadow-sm"
           >
             {loading ? (
-              <div className="w-3.5 h-3.5 border-2 border-purple-700 border-t-transparent rounded-full animate-spin" />
+              <div className="w-3.5 h-3.5 border-2 border-purple-700 dark:border-purple-400 border-t-transparent rounded-full animate-spin" />
             ) : (
               <Sparkles size={14} />
             )}
@@ -443,22 +445,22 @@ const ResumeLatex = () => {
           <button 
             onClick={() => setShowTailorWizard(true)} 
             disabled={tailoring || loading}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-50 border border-blue-100 shadow-sm ml-1"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors disabled:opacity-50 border border-blue-100 dark:border-blue-800 shadow-sm ml-1"
           >
             {tailoring ? (
-              <div className="w-3.5 h-3.5 border-2 border-blue-700 border-t-transparent rounded-full animate-spin" />
+              <div className="w-3.5 h-3.5 border-2 border-blue-700 dark:border-blue-400 border-t-transparent rounded-full animate-spin" />
             ) : (
               <Target size={14} />
             )}
             Tailor to Job
           </button>
           
-          <div className="w-px h-4 bg-gray-300 mx-1" />
+          <div className="w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1" />
 
           <button 
             onClick={saveLatex} 
             disabled={saving}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-[#f5f5f7] text-[#1d1d1f] hover:bg-[#e8e8ea] transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
           >
             <Save size={14} />
             {saving ? 'Saving...' : 'Save'}
@@ -466,7 +468,7 @@ const ResumeLatex = () => {
 
           <button 
             onClick={downloadTex} 
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-[#f5f5f7] text-[#1d1d1f] hover:bg-[#e8e8ea] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
           >
             <Download size={14} />
             .tex
@@ -475,7 +477,7 @@ const ResumeLatex = () => {
           <button 
             onClick={compilePdf} 
             disabled={compiling}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium bg-[#0071e3] text-white hover:bg-[#0077ed] transition-colors shadow-sm ml-1 disabled:opacity-80"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm ml-1 disabled:opacity-80"
           >
             {compiling ? (
               <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -488,9 +490,9 @@ const ResumeLatex = () => {
       </header>
 
       {/* Main Workspace */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Left Pane: Editor */}
-        <div className="w-1/2 h-full border-r border-gray-200 bg-[#1e1e1e] flex flex-col">
+        <div className="w-full md:w-1/2 h-1/2 md:h-full border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 bg-[#1e1e1e] flex flex-col">
           <div className="bg-[#2d2d2d] text-[#858585] text-[11px] px-4 py-1.5 font-mono border-b border-[#1e1e1e] flex justify-between">
             <span>resume.tex</span>
             <span>LaTeX</span>
@@ -518,8 +520,8 @@ const ResumeLatex = () => {
         </div>
 
         {/* Right Pane: Preview */}
-        <div className="w-1/2 h-full bg-[#525659] flex flex-col relative">
-          <div className="bg-[#323639] text-[#b3b3b3] text-[11px] px-4 py-1.5 font-sans border-b border-[#2b2b2b] shadow-sm z-10">
+        <div className="w-full md:w-1/2 h-1/2 md:h-full bg-gray-200 dark:bg-gray-800 flex flex-col relative">
+          <div className="bg-gray-300 dark:bg-gray-900 text-gray-600 dark:text-gray-400 text-[11px] px-4 py-1.5 font-sans border-b border-gray-200 dark:border-gray-700 shadow-sm z-10">
             Preview.pdf
           </div>
           
@@ -531,11 +533,11 @@ const ResumeLatex = () => {
             />
             
             {(!latexCode || (!pdfUrl && !compiling)) && (
-              <div className="text-[#a0a0a0] flex flex-col items-center max-w-xs text-center absolute">
-                <div className="w-16 h-16 mb-4 rounded-2xl bg-[#404346] flex items-center justify-center border border-[#5c5f62] shadow-inner">
-                  <Play size={24} className="text-[#8e8e8e] ml-1" />
+              <div className="text-gray-500 dark:text-gray-400 flex flex-col items-center max-w-xs text-center absolute">
+                <div className="w-16 h-16 mb-4 rounded-2xl bg-white dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600 shadow-sm">
+                  <Play size={24} className="text-gray-400 dark:text-gray-500 ml-1" />
                 </div>
-                <h3 className="text-white font-medium text-lg mb-1">No Preview Available</h3>
+                <h3 className="text-gray-700 dark:text-gray-200 font-medium text-lg mb-1">No Preview Available</h3>
                 <p className="text-[13px] leading-relaxed">
                   Write your LaTeX code on the left and click Compile to generate your PDF preview.
                 </p>
@@ -544,10 +546,10 @@ const ResumeLatex = () => {
             
             {/* Compiling Overlay Overlay */}
             {compiling && (
-              <div className="absolute inset-0 bg-[#525659]/80 backdrop-blur-sm flex flex-col items-center justify-center z-20">
-                 <div className="w-10 h-10 border-3 border-[#0071e3] border-t-transparent rounded-full animate-spin mb-4" />
-                 <p className="text-white font-medium text-sm">Compiling document...</p>
-                 <p className="text-[#b3b3b3] text-xs mt-1">Connecting to compiler engine</p>
+              <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex flex-col items-center justify-center z-20">
+                 <div className="w-10 h-10 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
+                 <p className="text-gray-900 dark:text-white font-medium text-sm">Compiling document...</p>
+                 <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">Connecting to compiler engine</p>
               </div>
             )}
           </div>

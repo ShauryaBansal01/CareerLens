@@ -16,15 +16,14 @@
   }
 
   body {
-    background-color: #f5f5f7;
-    color: #1d1d1f;
+    @apply bg-surface text-on-surface dark:bg-dark-surface dark:text-on-dark transition-colors duration-200;
     font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
     letter-spacing: -0.01em;
     line-height: 1.6;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    color: #1d1d1f;
+    @apply text-on-surface dark:text-on-dark transition-colors duration-200;
     font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
     letter-spacing: -0.02em;
     line-height: 1.15;
@@ -35,375 +34,111 @@
 @layer components {
   /* ─── Apple-style navbar ─── */
   .apple-nav {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    height: 54px;
-    background: rgba(245, 245, 247, 0.85);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-    display: flex;
-    align-items: center;
+    @apply fixed top-0 left-0 right-0 z-50 h-[54px] bg-surface/85 dark:bg-[#1c1c1e]/85 backdrop-blur-[20px] backdrop-saturate-[1.8] border-b border-black/10 dark:border-white/10 flex items-center transition-colors duration-200;
   }
 
   /* ─── Cards ─── */
   .apple-card {
-    background: #ffffff;
-    border-radius: 18px;
-    padding: 28px 32px;
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
-  }
-
-  .apple-card:hover {
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.07);
+    @apply bg-white dark:bg-dark-card rounded-[18px] p-6 md:p-8 transition-all duration-200 hover:shadow-[0_8px_40px_rgba(0,0,0,0.07)] dark:hover:shadow-[0_8px_40px_rgba(0,0,0,0.4)];
   }
 
   .apple-card-muted {
-    background: #f5f5f7;
-    border-radius: 18px;
-    padding: 28px 32px;
+    @apply bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-[18px] p-6 md:p-8 transition-colors duration-200;
   }
 
   .apple-card-sm {
-    background: #ffffff;
-    border-radius: 14px;
-    padding: 20px 24px;
-    transition: box-shadow 0.2s ease;
+    @apply bg-white dark:bg-dark-card rounded-2xl p-5 md:p-6 transition-all duration-200;
   }
 
   /* ─── Buttons ─── */
   .btn-apple {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: #0071e3;
-    color: #ffffff;
-    font-size: 15px;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    padding: 10px 22px;
-    border-radius: 980px;
-    border: none;
-    cursor: pointer;
-    transition: background 0.15s ease, transform 0.1s ease;
-    outline: none;
-    white-space: nowrap;
-  }
-
-  .btn-apple:hover {
-    background: #0077ed;
-  }
-
-  .btn-apple:active {
-    transform: scale(0.97);
-    background: #006edb;
-  }
-
-  .btn-apple:disabled {
-    background: #c7c7cc;
-    cursor: not-allowed;
-    transform: none;
+    @apply inline-flex items-center justify-center bg-primary-500 text-white text-[15px] font-medium tracking-tight px-[22px] py-[10px] rounded-full cursor-pointer transition-all duration-150 outline-none whitespace-nowrap hover:bg-primary-600 active:scale-95 disabled:bg-[#c7c7cc] dark:disabled:bg-dark-border disabled:cursor-not-allowed disabled:active:scale-100;
   }
 
   .btn-apple-secondary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: #e8e8ea;
-    color: #1d1d1f;
-    font-size: 15px;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    padding: 10px 22px;
-    border-radius: 980px;
-    border: none;
-    cursor: pointer;
-    transition: background 0.15s ease, transform 0.1s ease;
-    outline: none;
-    white-space: nowrap;
-  }
-
-  .btn-apple-secondary:hover {
-    background: #dcdce0;
-  }
-
-  .btn-apple-secondary:active {
-    transform: scale(0.97);
+    @apply inline-flex items-center justify-center bg-[#e8e8ea] dark:bg-[#2c2c2e] text-on-surface dark:text-on-dark text-[15px] font-medium tracking-tight px-[22px] py-[10px] rounded-full cursor-pointer transition-all duration-150 outline-none whitespace-nowrap hover:bg-[#dcdce0] dark:hover:bg-[#3a3a3c] active:scale-95;
   }
 
   .btn-apple-rect {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: #0071e3;
-    color: #ffffff;
-    font-size: 17px;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    padding: 15px 24px;
-    border-radius: 12px;
-    border: none;
-    cursor: pointer;
-    transition: background 0.15s ease, transform 0.1s ease;
-    outline: none;
-    width: 100%;
-  }
-
-  .btn-apple-rect:hover {
-    background: #0077ed;
-  }
-
-  .btn-apple-rect:active {
-    transform: scale(0.99);
-  }
-
-  .btn-apple-rect:disabled {
-    background: #c7c7cc;
-    cursor: not-allowed;
-    transform: none;
+    @apply inline-flex items-center justify-center w-full bg-primary-500 text-white text-[17px] font-medium tracking-tight px-6 py-[15px] rounded-xl cursor-pointer transition-all duration-150 outline-none hover:bg-primary-600 active:scale-[0.98] disabled:bg-[#c7c7cc] dark:disabled:bg-dark-border disabled:cursor-not-allowed disabled:active:scale-100;
   }
 
   /* ─── Inputs ─── */
   .apple-input {
-    width: 100%;
-    background: #f5f5f7;
-    border: 1px solid transparent;
-    border-radius: 12px;
-    padding: 13px 17px;
-    font-size: 17px;
+    @apply w-full bg-[#f5f5f7] dark:bg-[#2c2c2e] border border-transparent rounded-xl px-[17px] py-[13px] text-[17px] text-on-surface dark:text-on-dark outline-none transition-all duration-200 placeholder-[#aeaeb2] dark:placeholder-[#636366] focus:bg-white dark:focus:bg-[#3a3a3c] focus:border-primary-500;
     font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
-    color: #1d1d1f;
-    outline: none;
-    transition: background 0.2s ease, border-color 0.2s ease;
     -webkit-font-smoothing: antialiased;
   }
 
-  .apple-input::placeholder {
-    color: #aeaeb2;
-    font-weight: 400;
-  }
-
-  .apple-input:focus {
-    background: #ffffff;
-    border-color: #0071e3;
-  }
-
   .apple-select {
-    width: 100%;
-    appearance: none;
-    background: #f5f5f7;
-    border: 1px solid transparent;
-    border-radius: 12px;
-    padding: 13px 40px 13px 17px;
-    font-size: 15px;
+    @apply w-full appearance-none bg-[#f5f5f7] dark:bg-[#2c2c2e] border border-transparent rounded-xl px-[17px] py-[13px] pr-10 text-[15px] text-on-surface dark:text-on-dark outline-none cursor-pointer transition-all duration-200 focus:bg-white dark:focus:bg-[#3a3a3c] focus:border-primary-500;
     font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
-    color: #1d1d1f;
-    outline: none;
-    cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease;
-  }
-
-  .apple-select:focus {
-    background: #ffffff;
-    border-color: #0071e3;
   }
 
   /* ─── Labels ─── */
   .apple-label {
-    display: block;
-    font-size: 13px;
-    font-weight: 500;
-    color: #1d1d1f;
-    margin-bottom: 6px;
-    letter-spacing: -0.01em;
+    @apply block text-[13px] font-medium text-on-surface dark:text-[#a1a1a6] mb-1.5 tracking-tight transition-colors duration-200;
   }
 
   /* ─── Pills / Chips ─── */
   .apple-pill {
-    display: inline-flex;
-    align-items: center;
-    background: rgba(0, 113, 227, 0.1);
-    color: #0071e3;
-    font-size: 12px;
-    font-weight: 500;
-    padding: 4px 12px;
-    border-radius: 980px;
-    letter-spacing: -0.01em;
+    @apply inline-flex items-center bg-primary-500/10 dark:bg-primary-500/20 text-primary-500 dark:text-[#5e9eff] text-xs font-medium px-3 py-1 rounded-full tracking-tight transition-colors duration-200;
   }
 
   .apple-pill-gray {
-    display: inline-flex;
-    align-items: center;
-    background: #f0f0f2;
-    color: #1d1d1f;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 5px 14px;
-    border-radius: 980px;
-    letter-spacing: -0.01em;
-    transition: background 0.15s ease;
-  }
-
-  .apple-pill-gray:hover {
-    background: #e8e8ea;
+    @apply inline-flex items-center bg-[#f0f0f2] dark:bg-[#2c2c2e] text-on-surface dark:text-[#d1d1d6] text-[13px] font-medium px-3.5 py-1.5 rounded-full tracking-tight transition-colors duration-200 hover:bg-[#e8e8ea] dark:hover:bg-[#3a3a3c];
   }
 
   .apple-pill-success {
-    display: inline-flex;
-    align-items: center;
-    background: rgba(52, 199, 89, 0.12);
-    color: #248a3d;
-    font-size: 12px;
-    font-weight: 600;
-    padding: 4px 12px;
-    border-radius: 980px;
+    @apply inline-flex items-center bg-[#34c759]/10 dark:bg-[#34c759]/20 text-[#248a3d] dark:text-[#32d74b] text-xs font-semibold px-3 py-1 rounded-full transition-colors duration-200;
   }
 
   .apple-pill-error {
-    display: inline-flex;
-    align-items: center;
-    background: rgba(255, 59, 48, 0.10);
-    color: #ff3b30;
-    font-size: 12px;
-    font-weight: 600;
-    padding: 4px 12px;
-    border-radius: 980px;
+    @apply inline-flex items-center bg-[#ff3b30]/10 dark:bg-[#ff3b30]/20 text-[#ff3b30] dark:text-[#ff453a] text-xs font-semibold px-3 py-1 rounded-full transition-colors duration-200;
   }
 
   /* ─── Stat cards ─── */
   .stat-card {
-    background: #f5f5f7;
-    border-radius: 18px;
-    padding: 24px 28px;
+    @apply bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-[18px] p-6 lg:p-7 transition-colors duration-200;
   }
 
   .stat-value {
-    font-size: 40px;
-    font-weight: 700;
-    color: #0071e3;
-    letter-spacing: -0.03em;
-    line-height: 1;
+    @apply text-4xl font-bold text-primary-500 tracking-tighter leading-none transition-colors duration-200;
   }
 
   .stat-label {
-    font-size: 13px;
-    color: #6e6e73;
-    margin-top: 6px;
-    font-weight: 400;
-  }
-
-  /* ─── Insight card with accent bar ─── */
-  .insight-card {
-    background: #ffffff;
-    border-radius: 14px;
-    padding: 20px 24px;
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-    transition: box-shadow 0.2s ease;
-  }
-
-  .insight-card:hover {
-    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-  }
-
-  .insight-bar {
-    width: 4px;
-    min-height: 48px;
-    border-radius: 4px;
-    flex-shrink: 0;
-    align-self: stretch;
+    @apply text-[13px] text-[#6e6e73] dark:text-[#8e8e93] mt-1.5 font-normal transition-colors duration-200;
   }
 
   /* ─── Skill tags ─── */
   .skill-tag {
-    background: #f5f5f7;
-    color: #1d1d1f;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 6px 14px;
-    border-radius: 8px;
-    display: inline-block;
-    transition: background 0.15s ease;
-  }
-
-  .skill-tag:hover {
-    background: #e8e8ea;
+    @apply bg-[#f5f5f7] dark:bg-[#2c2c2e] text-on-surface dark:text-[#d1d1d6] text-[13px] font-medium px-3.5 py-1.5 rounded-lg inline-block transition-colors duration-150 hover:bg-[#e8e8ea] dark:hover:bg-[#3a3a3c];
   }
 
   .skill-tag-matched {
-    background: rgba(52, 199, 89, 0.1);
-    color: #248a3d;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 6px 14px;
-    border-radius: 8px;
-    display: inline-block;
+    @apply bg-[#34c759]/10 dark:bg-[#34c759]/20 text-[#248a3d] dark:text-[#32d74b] text-[13px] font-medium px-3.5 py-1.5 rounded-lg inline-block transition-colors duration-200;
   }
 
   .skill-tag-missing {
-    background: rgba(255, 59, 48, 0.09);
-    color: #c0392b;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 6px 14px;
-    border-radius: 8px;
-    display: inline-block;
+    @apply bg-[#ff3b30]/10 dark:bg-[#ff3b30]/20 text-[#c0392b] dark:text-[#ff6961] text-[13px] font-medium px-3.5 py-1.5 rounded-lg inline-block transition-colors duration-200;
   }
 
   /* ─── Section title ─── */
   .section-title {
-    font-size: 21px;
-    font-weight: 600;
-    color: #1d1d1f;
-    letter-spacing: -0.02em;
-    margin-bottom: 20px;
-  }
-
-  /* ─── Separator ─── */
-  .apple-sep {
-    height: 1px;
-    background: #d2d2d7;
-    opacity: 0.6;
-    border: none;
-    margin: 0;
+    @apply text-[21px] font-semibold text-on-surface dark:text-on-dark tracking-tight mb-5 transition-colors duration-200;
   }
 
   /* ─── Upload drop zone ─── */
   .drop-zone {
-    background: #f5f5f7;
-    border: 1.5px dashed #c7c7cc;
-    border-radius: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 48px 32px;
-    cursor: pointer;
-    transition: border-color 0.2s ease, background 0.2s ease;
+    @apply bg-[#f5f5f7] dark:bg-[#1c1c1e] border-[1.5px] border-dashed border-[#c7c7cc] dark:border-[#48484a] rounded-[20px] flex flex-col items-center justify-center p-8 md:p-12 cursor-pointer transition-all duration-200 hover:border-primary-500 hover:bg-primary-500/5 dark:hover:bg-primary-500/10;
   }
-
-  .drop-zone:hover, .drop-zone.drag-over {
-    border-color: #0071e3;
-    background: rgba(0, 113, 227, 0.03);
+  .drop-zone.drag-over {
+    @apply border-primary-500 bg-primary-500/5 dark:bg-primary-500/10;
   }
 
   /* ─── Spinner ─── */
   .apple-spinner {
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: #ffffff;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    flex-shrink: 0;
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
+    @apply w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin flex-shrink-0;
   }
 }
 
@@ -412,23 +147,10 @@
   .tracking-apple-tight { letter-spacing: -0.03em; }
 
   /* Scrollbar */
-  .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+  .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
   .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-  .custom-scrollbar::-webkit-scrollbar-thumb { background: #d2d2d7; border-radius: 4px; }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #aeaeb2; }
-
-  /* Pill variants */
-  .apple-pill-gray {
-    display: inline-flex;
-    align-items: center;
-    padding: 3px 10px;
-    border-radius: 980px;
-    font-size: 12px;
-    font-weight: 500;
-    background: #e8e8ea;
-    color: #6e6e73;
-    white-space: nowrap;
-  }
+  .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-[#d2d2d7] dark:bg-[#48484a] rounded-full; }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover { @apply bg-[#aeaeb2] dark:bg-[#636366]; }
 
   /* Page content push for fixed navbar */
   .page-top { padding-top: 54px; }

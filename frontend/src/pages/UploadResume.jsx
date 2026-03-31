@@ -68,33 +68,16 @@ const UploadResume = () => {
 
   if (!user) {
     return (
-      <div
-        style={{
-          minHeight: 'calc(100vh - 54px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 24,
-          background: '#f5f5f7',
-        }}
-      >
-        <div
-          style={{
-            background: '#fff',
-            borderRadius: 20,
-            padding: '48px 40px',
-            textAlign: 'center',
-            maxWidth: 400,
-          }}
-        >
-          <AlertCircle style={{ width: 40, height: 40, color: '#ff3b30', margin: '0 auto 20px' }} />
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: '#1d1d1f', letterSpacing: '-0.02em', marginBottom: 8 }}>
+      <div className="min-h-[calc(100vh-54px)] flex items-center justify-center p-6 bg-surface dark:bg-dark-surface transition-colors duration-200">
+        <div className="bg-white dark:bg-dark-card rounded-[20px] p-10 md:p-12 text-center max-w-[400px] w-full shadow-ambient dark:shadow-none">
+          <AlertCircle className="w-10 h-10 text-error mx-auto mb-5" />
+          <h2 className="text-2xl font-bold text-on-surface dark:text-on-dark tracking-tight mb-2">
             Sign in required
           </h2>
-          <p style={{ color: '#6e6e73', fontSize: 15, marginBottom: 28 }}>
+          <p className="text-[15px] text-on-surface-variant dark:text-dark-muted mb-7">
             You need to be signed in to upload your resume.
           </p>
-          <Link to="/login" className="btn-apple" style={{ textDecoration: 'none', padding: '12px 28px' }}>
+          <Link to="/login" className="btn-apple px-7 py-3">
             Sign In
           </Link>
         </div>
@@ -103,34 +86,20 @@ const UploadResume = () => {
   }
 
   return (
-    <div
-      style={{
-        minHeight: 'calc(100vh - 54px)',
-        background: '#f5f5f7',
-        padding: '64px 24px',
-      }}
-    >
-      <div style={{ maxWidth: 680, margin: '0 auto' }}>
+    <div className="min-h-[calc(100vh-54px)] bg-surface dark:bg-dark-surface px-4 py-12 md:py-16 transition-colors duration-200">
+      <div className="max-w-[680px] mx-auto w-full">
 
         {/* ─── Hero ─── */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          style={{ marginBottom: 48 }}
+          className="mb-10 md:mb-12"
         >
-          <h1
-            style={{
-              fontSize: 40,
-              fontWeight: 700,
-              color: '#1d1d1f',
-              letterSpacing: '-0.03em',
-              marginBottom: 10,
-            }}
-          >
+          <h1 className="text-4xl md:text-[40px] font-bold text-on-surface dark:text-on-dark tracking-tighter mb-2.5">
             Upload Your Resume
           </h1>
-          <p style={{ fontSize: 17, color: '#6e6e73', fontWeight: 400 }}>
+          <p className="text-[17px] text-on-surface-variant dark:text-dark-muted">
             Our AI analyzes your resume and gives you actionable career insights in seconds.
           </p>
         </motion.div>
@@ -140,29 +109,23 @@ const UploadResume = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.05 }}
-          style={{
-            background: '#ffffff',
-            borderRadius: 20,
-            padding: '36px 40px',
-            marginBottom: 24,
-          }}
+          className="apple-card mb-6"
         >
           <form onSubmit={handleUpload}>
             {/* Drop zone */}
             <div
-              className={`drop-zone ${dragOver ? 'drag-over' : ''}`}
+              className={`drop-zone ${dragOver ? 'drag-over' : ''} mb-6`}
               onClick={() => fileInputRef.current?.click()}
               onDragOver={e => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onDrop={handleDrop}
-              style={{ marginBottom: 24 }}
             >
               <input
                 type="file"
                 accept="application/pdf,.docx,.doc"
                 ref={fileInputRef}
                 onChange={handleFileChange}
-                style={{ display: 'none' }}
+                className="hidden"
               />
               <AnimatePresence mode="wait">
                 {!file ? (
@@ -171,22 +134,14 @@ const UploadResume = () => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    style={{ textAlign: 'center' }}
+                    className="text-center"
                   >
-                    <UploadCloud
-                      style={{
-                        width: 40,
-                        height: 40,
-                        color: '#aeaeb2',
-                        margin: '0 auto 16px',
-                        strokeWidth: 1.5,
-                      }}
-                    />
-                    <p style={{ fontSize: 16, fontWeight: 600, color: '#1d1d1f', letterSpacing: '-0.01em', marginBottom: 4 }}>
+                    <UploadCloud className="w-10 h-10 text-[#aeaeb2] dark:text-[#636366] mx-auto mb-4 stroke-[1.5]" />
+                    <p className="text-[16px] font-semibold text-on-surface dark:text-on-dark tracking-tight mb-1">
                       Drag &amp; drop your resume here
                     </p>
-                    <p style={{ fontSize: 14, color: '#6e6e73' }}>or click to browse files</p>
-                    <p style={{ fontSize: 12, color: '#aeaeb2', marginTop: 16 }}>Max 5 MB</p>
+                    <p className="text-[14px] text-on-surface-variant dark:text-dark-muted">or click to browse files</p>
+                    <p className="text-[12px] text-[#aeaeb2] dark:text-[#636366] mt-4">Max 5 MB</p>
                   </motion.div>
                 ) : (
                   <motion.div
@@ -194,34 +149,19 @@ const UploadResume = () => {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0 }}
-                    style={{ textAlign: 'center' }}
+                    className="text-center"
                   >
-                    <FileText
-                      style={{
-                        width: 40,
-                        height: 40,
-                        color: '#0071e3',
-                        margin: '0 auto 14px',
-                        strokeWidth: 1.5,
-                      }}
-                    />
-                    <p style={{ fontSize: 15, fontWeight: 600, color: '#1d1d1f', marginBottom: 4 }}>
+                    <FileText className="w-10 h-10 text-primary-500 mx-auto mb-3.5 stroke-[1.5]" />
+                    <p className="text-[15px] font-semibold text-on-surface dark:text-on-dark mb-1">
                       {file.name}
                     </p>
-                    <p style={{ fontSize: 13, color: '#6e6e73', marginBottom: 16 }}>
+                    <p className="text-[13px] text-on-surface-variant dark:text-dark-muted mb-4">
                       {(file.size / 1024 / 1024).toFixed(2)} MB
                     </p>
                     <button
                       type="button"
                       onClick={e => { e.stopPropagation(); setFile(null); }}
-                      style={{
-                        fontSize: 13,
-                        color: '#ff3b30',
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontWeight: 500,
-                      }}
+                      className="text-[13px] text-error font-medium bg-transparent border-none cursor-pointer hover:underline"
                     >
                       Remove file
                     </button>
@@ -231,9 +171,9 @@ const UploadResume = () => {
             </div>
 
             {/* File format pills */}
-            <div style={{ display: 'flex', gap: 8, marginBottom: 32, flexWrap: 'wrap' }}>
+            <div className="flex gap-2 flex-wrap mb-8">
               {['PDF', 'DOCX', 'DOC'].map(fmt => (
-                <span key={fmt} className="apple-pill-gray" style={{ fontSize: 12 }}>{fmt}</span>
+                <span key={fmt} className="apple-pill-gray text-[12px]">{fmt}</span>
               ))}
             </div>
 
@@ -242,19 +182,9 @@ const UploadResume = () => {
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  fontSize: 14,
-                  color: '#c0392b',
-                  marginBottom: 16,
-                  background: 'rgba(255,59,48,0.07)',
-                  padding: '10px 14px',
-                  borderRadius: 10,
-                }}
+                className="flex items-center gap-2 text-[14px] text-error mb-4 bg-error/10 dark:bg-error/20 p-3 rounded-xl"
               >
-                <AlertCircle style={{ width: 15, height: 15, flexShrink: 0 }} />
+                <AlertCircle className="w-4 h-4 shrink-0" />
                 {error}
               </motion.p>
             )}
@@ -266,7 +196,7 @@ const UploadResume = () => {
               className="btn-apple-rect"
             >
               {loading ? (
-                <span style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
+                <span className="flex items-center justify-center gap-2.5">
                   <span className="apple-spinner" />
                   Analyzing your resume…
                 </span>
@@ -282,80 +212,62 @@ const UploadResume = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35 }}
-              style={{
-                background: '#ffffff',
-                borderRadius: 20,
-                padding: '36px 40px',
-              }}
+              className="apple-card"
             >
               {/* Success header */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: '50%',
-                    background: 'rgba(52,199,89,0.12)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <CheckCircle style={{ width: 20, height: 20, color: '#34c759' }} />
+              <div className="flex items-center gap-3 mb-7">
+                <div className="w-9 h-9 rounded-full bg-success/10 dark:bg-success/20 flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-success" />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: 21, fontWeight: 600, color: '#1d1d1f', letterSpacing: '-0.02em' }}>
+                  <h3 className="text-[21px] font-semibold text-on-surface dark:text-on-dark tracking-tight">
                     Analysis complete
                   </h3>
-                  <p style={{ fontSize: 13, color: '#6e6e73', marginTop: 2 }}>
+                  <p className="text-[13px] text-on-surface-variant dark:text-dark-muted mt-0.5">
                     Your resume has been successfully processed.
                   </p>
                 </div>
               </div>
 
-              <hr className="apple-sep" style={{ marginBottom: 28 }} />
+              <hr className="apple-sep mb-7" />
 
               {/* Skills */}
-              <div style={{ marginBottom: 28 }}>
-                <p style={{ fontSize: 12, fontWeight: 600, color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>
+              <div className="mb-7">
+                <p className="text-[12px] font-semibold text-on-surface-variant dark:text-dark-muted uppercase tracking-[0.06em] mb-3.5">
                   Detected Skills
                 </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                <div className="flex flex-wrap gap-2">
                   {resumeData.extractedSkills?.length > 0
                     ? resumeData.extractedSkills.map((skill, i) => (
                         <span key={i} className="skill-tag">{skill}</span>
                       ))
-                    : <span style={{ fontSize: 14, color: '#aeaeb2' }}>No specific skills detected.</span>
+                    : <span className="text-[14px] text-[#aeaeb2] dark:text-[#636366]">No specific skills detected.</span>
                   }
                 </div>
               </div>
 
               {/* Education & Experience */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 32 }}>
-                <div style={{ background: '#f5f5f7', borderRadius: 14, padding: '20px 22px' }}>
-                  <p style={{ fontSize: 12, fontWeight: 600, color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                <div className="bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-[14px] p-5">
+                  <p className="text-[12px] font-semibold text-on-surface-variant dark:text-dark-muted uppercase tracking-[0.06em] mb-2.5">
                     Education
                   </p>
-                  <p style={{ fontSize: 14, color: '#1d1d1f', lineHeight: 1.6 }}>
+                  <p className="text-[14px] text-on-surface dark:text-on-dark leading-[1.6]">
                     {resumeData.education || 'Not detected'}
                   </p>
                 </div>
-                <div style={{ background: '#f5f5f7', borderRadius: 14, padding: '20px 22px' }}>
-                  <p style={{ fontSize: 12, fontWeight: 600, color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+                <div className="bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-[14px] p-5">
+                  <p className="text-[12px] font-semibold text-on-surface-variant dark:text-dark-muted uppercase tracking-[0.06em] mb-2.5">
                     Experience
                   </p>
-                  <p style={{ fontSize: 14, color: '#1d1d1f', lineHeight: 1.6 }}>
+                  <p className="text-[14px] text-on-surface dark:text-on-dark leading-[1.6]">
                     {resumeData.experience || 'Not detected'}
                   </p>
                 </div>
               </div>
 
               {/* CTA */}
-              <Link
-                to="/"
-                className="btn-apple"
-                style={{ textDecoration: 'none', padding: '12px 28px', fontSize: 15 }}
-              >
+              <Link to="/" className="btn-apple px-7 py-3 text-[15px]">
                 Go to Dashboard →
               </Link>
             </motion.div>

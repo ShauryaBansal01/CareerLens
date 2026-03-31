@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       fontFamily: {
@@ -11,13 +12,20 @@ export default {
         display: ['-apple-system', 'BlinkMacSystemFont', 'Inter', 'sans-serif'],
       },
       colors: {
-        // Apple-inspired surface layers
+        // Light Mode Apple-inspired
         surface: '#f5f5f7',
         'surface-low': '#f0f0f2',
         'surface-lowest': '#ffffff',
         'surface-variant': '#e8e8ea',
         'surface-high': '#e2e2e4',
-        // Apple Blue system
+        
+        // Dark Mode Apple-inspired
+        'dark-surface': '#000000',
+        'dark-card': '#1c1c1e',
+        'dark-border': '#38383a',
+        'dark-hover': '#2c2c2e',
+        'dark-muted': '#8e8e93',
+        
         primary: {
           400: '#47a3f5',
           500: '#0071e3',
@@ -26,6 +34,8 @@ export default {
         // Text
         'on-surface': '#1d1d1f',
         'on-surface-variant': '#6e6e73',
+        'on-dark': '#f5f5f7',
+        
         // System colors
         error: '#ff3b30',
         success: '#34c759',

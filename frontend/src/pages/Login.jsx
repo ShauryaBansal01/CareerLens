@@ -26,63 +26,28 @@ const Login = () => {
   };
 
   return (
-    <div
-      style={{
-        minHeight: 'calc(100vh - 54px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '40px 16px',
-        background: '#f5f5f7',
-      }}
-    >
+    <div className="min-h-[calc(100vh-54px)] flex items-center justify-center p-4 sm:p-10 bg-gray-50 dark:bg-gray-900">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
-        style={{
-          width: '100%',
-          maxWidth: 440,
-          background: '#ffffff',
-          borderRadius: 20,
-          padding: '48px 44px',
-          boxShadow: '0 2px 24px rgba(0,0,0,0.06)',
-        }}
+        className="w-full max-w-[440px] bg-white dark:bg-gray-800 rounded-2xl p-8 sm:p-11 shadow-sm"
       >
         {/* Logo mark */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 9,
-              background: 'linear-gradient(135deg, #0071e3, #0059b5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <span style={{ color: '#fff', fontWeight: 700, fontSize: 16, letterSpacing: '-0.02em' }}>C</span>
+        <div className="flex items-center gap-2.5 mb-8">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center shrink-0">
+            <span className="text-white font-bold text-base tracking-tight">C</span>
           </div>
-          <span style={{ fontSize: 17, fontWeight: 600, color: '#1d1d1f', letterSpacing: '-0.02em' }}>
+          <span className="text-[17px] font-semibold text-gray-900 dark:text-white tracking-tight">
             CareerLens
           </span>
         </div>
 
         {/* Heading */}
-        <h1
-          style={{
-            fontSize: 32,
-            fontWeight: 700,
-            color: '#1d1d1f',
-            letterSpacing: '-0.03em',
-            marginBottom: 6,
-          }}
-        >
+        <h1 className="text-[32px] font-bold text-gray-900 dark:text-white tracking-tight mb-1.5">
           Welcome back.
         </h1>
-        <p style={{ fontSize: 15, color: '#6e6e73', marginBottom: 32 }}>
+        <p className="text-[15px] text-gray-500 dark:text-gray-400 mb-8">
           Sign in to your CareerLens account.
         </p>
 
@@ -91,15 +56,7 @@ const Login = () => {
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            style={{
-              background: 'rgba(255,59,48,0.08)',
-              color: '#c0392b',
-              padding: '12px 16px',
-              borderRadius: 10,
-              fontSize: 14,
-              marginBottom: 20,
-              fontWeight: 500,
-            }}
+            className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm mb-5 font-medium"
           >
             {error}
           </motion.div>
@@ -108,12 +65,12 @@ const Login = () => {
         {/* Form */}
         <form onSubmit={handleSubmit}>
           {/* Email */}
-          <div style={{ marginBottom: 16 }}>
+          <div className="mb-4">
             <label className="apple-label" htmlFor="login-email">Email address</label>
             <input
               id="login-email"
               type="email"
-              className="apple-input"
+              className="apple-input w-full"
               placeholder="you@example.com"
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -122,12 +79,12 @@ const Login = () => {
           </div>
 
           {/* Password */}
-          <div style={{ marginBottom: 8 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <label className="apple-label" htmlFor="login-password" style={{ marginBottom: 0 }}>Password</label>
+          <div className="mb-2">
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="apple-label !mb-0" htmlFor="login-password">Password</label>
               <a
                 href="#"
-                style={{ fontSize: 13, color: '#0071e3', textDecoration: 'none', fontWeight: 400 }}
+                className="text-[13px] text-blue-600 dark:text-blue-400 no-underline font-normal hover:underline"
               >
                 Forgot password?
               </a>
@@ -135,7 +92,7 @@ const Login = () => {
             <input
               id="login-password"
               type="password"
-              className="apple-input"
+              className="apple-input w-full"
               placeholder="••••••••"
               value={password}
               onChange={e => setPassword(e.target.value)}
@@ -147,11 +104,10 @@ const Login = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="btn-apple-rect"
-            style={{ marginTop: 24 }}
+            className="btn-apple-rect w-full mt-6"
           >
             {isLoading ? (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
+              <span className="flex items-center justify-center gap-2.5">
                 <span className="apple-spinner" />
                 Signing in…
               </span>
@@ -159,18 +115,11 @@ const Login = () => {
           </button>
 
           {/* Link */}
-          <p
-            style={{
-              textAlign: 'center',
-              fontSize: 14,
-              color: '#6e6e73',
-              marginTop: 24,
-            }}
-          >
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
             Don't have an account?{' '}
             <Link
               to="/register"
-              style={{ color: '#0071e3', textDecoration: 'none', fontWeight: 500 }}
+              className="text-blue-600 dark:text-blue-400 no-underline font-medium hover:underline"
             >
               Create one
             </Link>

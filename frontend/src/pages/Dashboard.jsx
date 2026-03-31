@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Label } from 'recharts';
 import AuthContext from '../context/AuthContext';
+import { ThemeContext } from '../context/ThemeContext';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -24,12 +25,12 @@ const fadeUp = {
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-const StatCard = ({ label, value, caption, captionColor }) => (
+const StatCard = ({ label, value, caption, captionClass }) => (
   <div className="stat-card">
-    <p style={{ fontSize: 13, color: '#6e6e73', fontWeight: 400, marginBottom: 8 }}>{label}</p>
+    <p className="text-[13px] text-on-surface-variant dark:text-dark-muted font-normal mb-2">{label}</p>
     <p className="stat-value">{value}</p>
     {caption && (
-      <p style={{ fontSize: 12, color: captionColor || '#6e6e73', marginTop: 6, fontWeight: 500 }}>
+      <p className={`text-[12px] mt-1.5 font-medium ${captionClass || 'text-on-surface-variant dark:text-dark-muted'}`}>
         {caption}
       </p>
     )}
@@ -38,6 +39,7 @@ const StatCard = ({ label, value, caption, captionColor }) => (
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
+  const { theme } = useContext(ThemeContext);
   const [resumeData, setResumeData]   = useState(null);
   const [roles, setRoles]             = useState([]);
   const [selectedRole, setSelectedRole] = useState('');
@@ -119,54 +121,26 @@ const Dashboard = () => {
   // ── Not authenticated ──────────────────────────────────────────────────────
   if (!user) {
     return (
-      <div
-        style={{
-          minHeight: 'calc(100vh - 54px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 24,
-          background: '#f5f5f7',
-        }}
-      >
+      <div className="min-h-[calc(100vh-54px)] flex items-center justify-center p-6 bg-surface dark:bg-dark-surface transition-colors duration-200">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          style={{ textAlign: 'center', maxWidth: 480 }}
+          className="text-center max-w-[480px]"
         >
-          <div
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: 18,
-              background: 'linear-gradient(135deg, #0071e3, #0059b5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 28px',
-            }}
-          >
-            <Zap style={{ width: 32, height: 32, color: '#fff' }} />
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center mx-auto mb-7">
+            <Zap className="w-8 h-8 text-white" />
           </div>
-          <h1
-            style={{
-              fontSize: 40,
-              fontWeight: 700,
-              color: '#1d1d1f',
-              letterSpacing: '-0.03em',
-              marginBottom: 12,
-            }}
-          >
+          <h1 className="text-4xl font-bold text-on-surface dark:text-on-dark tracking-tighter mb-3">
             Navigate your career with AI.
           </h1>
-          <p style={{ fontSize: 17, color: '#6e6e73', marginBottom: 36 }}>
+          <p className="text-[17px] text-on-surface-variant dark:text-dark-muted mb-9">
             Sign in to unlock skill gap analysis, personalized roadmaps, and job-fit scoring.
           </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to="/login" className="btn-apple" style={{ textDecoration: 'none', padding: '13px 32px', fontSize: 16 }}>
+          <div className="flex gap-3 justify-center flex-wrap">
+            <Link to="/login" className="btn-apple px-8 py-3.5 text-[16px]">
               Sign In
             </Link>
-            <Link to="/register" className="btn-apple-secondary" style={{ textDecoration: 'none', padding: '13px 32px', fontSize: 16 }}>
+            <Link to="/register" className="btn-apple-secondary px-8 py-3.5 text-[16px]">
               Create Account
             </Link>
           </div>
@@ -176,8 +150,8 @@ const Dashboard = () => {
   }
 
   const chartData = analysis ? [
-    { name: 'Matched', value: analysis.analysis.matchedSkills.length, color: '#34c759' },
-    { name: 'Missing', value: analysis.analysis.missingSkills.length, color: '#ff3b30' },
+    { name: 'Matched', value: analysis.analysis.matchedSkills.length, color: theme === 'dark' ? '#32d74b' : '#34c759' },
+    { name: 'Missing', value: analysis.analysis.missingSkills.length, color: theme === 'dark' ? '#ff453a' : '#ff3b30' },
   ] : [];
 
   const firstName = user?.name?.split(' ')[0] || 'there';
@@ -185,41 +159,27 @@ const Dashboard = () => {
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
   return (
-    <div
-      style={{
-        background: '#f5f5f7',
-        minHeight: 'calc(100vh - 54px)',
-        padding: '56px 24px 80px',
-      }}
-    >
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+    <div className="bg-surface dark:bg-dark-surface min-h-[calc(100vh-54px)] px-4 md:px-6 pt-10 pb-20 transition-colors duration-200">
+      <div className="max-w-[1100px] mx-auto w-full">
 
         {/* ── Hero greeting ──────────────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          style={{ marginBottom: 48 }}
+          className="mb-12"
         >
-          <h1
-            style={{
-              fontSize: 44,
-              fontWeight: 700,
-              color: '#1d1d1f',
-              letterSpacing: '-0.03em',
-              marginBottom: 10,
-            }}
-          >
+          <h1 className="text-4xl md:text-5xl font-bold text-on-surface dark:text-on-dark tracking-tighter mb-3">
             {greeting}, {firstName}.
           </h1>
-          <p style={{ fontSize: 17, color: '#6e6e73', marginBottom: 24 }}>
+          <p className="text-[17px] text-on-surface-variant dark:text-dark-muted mb-6">
             {resumeData
               ? 'Your resume is loaded. Select a target role to run a full analysis.'
               : 'Upload your resume to get started with AI-powered career insights.'}
           </p>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div className="flex gap-3 flex-wrap">
             {!resumeData ? (
-              <Link to="/upload" className="btn-apple" style={{ textDecoration: 'none', padding: '11px 24px' }}>
+              <Link to="/upload" className="btn-apple px-6 py-3">
                 Upload Resume
               </Link>
             ) : (
@@ -228,23 +188,22 @@ const Dashboard = () => {
                   <button
                     onClick={handleAnalyze}
                     disabled={loading}
-                    className="btn-apple"
-                    style={{ padding: '11px 24px', cursor: loading ? 'wait' : 'pointer' }}
+                    className="btn-apple px-6 py-3"
                   >
                     {loading ? (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span className="apple-spinner" style={{ width: 16, height: 16 }} />
+                      <span className="flex items-center gap-2">
+                        <span className="apple-spinner w-4 h-4" />
                         Analyzing…
                       </span>
                     ) : 'Analyze Profile'}
                   </button>
                 )}
-                <Link to="/upload" className="btn-apple-secondary" style={{ textDecoration: 'none', padding: '11px 24px' }}>
+                <Link to="/upload" className="btn-apple-secondary px-6 py-3">
                   Re-upload Resume
                 </Link>
                 {roles.length === 0 && (
-                  <button onClick={seedDatabase} className="btn-apple-secondary" style={{ padding: '11px 24px' }}>
-                    <AlertTriangle style={{ width: 14, height: 14, marginRight: 8 }} />
+                  <button onClick={seedDatabase} className="btn-apple-secondary px-6 py-3">
+                    <AlertTriangle className="w-4 h-4 mr-2" />
                     Populate Data
                   </button>
                 )}
@@ -259,96 +218,42 @@ const Dashboard = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            style={{
-              background: 'linear-gradient(135deg, #0071e3 0%, #0059b5 100%)',
-              borderRadius: 20,
-              padding: '40px 44px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 24,
-              flexWrap: 'wrap',
-            }}
+            className="bg-gradient-to-br from-primary-500 to-primary-600 rounded-[20px] p-8 md:p-11 flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
           >
             <div>
-              <p
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: 'rgba(255,255,255,0.7)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  marginBottom: 10,
-                }}
-              >
+              <p className="text-[11px] font-semibold text-white/70 uppercase tracking-[0.08em] mb-2.5">
                 Step 1 — Get started
               </p>
-              <h2
-                style={{
-                  fontSize: 26,
-                  fontWeight: 700,
-                  color: '#ffffff',
-                  letterSpacing: '-0.02em',
-                  marginBottom: 8,
-                }}
-              >
+              <h2 className="text-2xl md:text-[26px] font-bold text-white tracking-tight mb-2">
                 Upload your resume
               </h2>
-              <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.8)' }}>
+              <p className="text-[15px] text-white/80">
                 Our AI extracts your skills and builds a personalized career roadmap.
               </p>
             </div>
             <Link
               to="/upload"
-              style={{
-                background: 'rgba(255,255,255,0.15)',
-                backdropFilter: 'blur(8px)',
-                border: '1px solid rgba(255,255,255,0.25)',
-                color: '#ffffff',
-                fontSize: 15,
-                fontWeight: 500,
-                padding: '13px 28px',
-                borderRadius: 980,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                whiteSpace: 'nowrap',
-                transition: 'background 0.2s',
-                flexShrink: 0,
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+              className="bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/25 text-white text-[15px] font-medium px-7 py-3.5 rounded-full no-underline flex items-center gap-2 whitespace-nowrap transition-colors flex-shrink-0"
             >
-              Get started <ChevronRight style={{ width: 16, height: 16 }} />
+              Get started <ChevronRight className="w-4 h-4" />
             </Link>
           </motion.div>
         )}
 
         {/* ── Resume loaded — role selector + skills ────────────────────────── */}
         {resumeData && (
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            animate="show"
-          >
+          <motion.div variants={stagger} initial="hidden" animate="show">
             {/* Role selector */}
-            <motion.div variants={fadeUp} style={{ marginBottom: 24 }}>
-              <div
-                style={{
-                  background: '#ffffff',
-                  borderRadius: 18,
-                  padding: '28px 32px',
-                }}
-              >
-                <p className="section-title" style={{ marginBottom: 6 }}>
-                  <Briefcase style={{ display: 'inline', width: 18, height: 18, marginRight: 8, verticalAlign: 'middle', color: '#0071e3' }} />
+            <motion.div variants={fadeUp} className="mb-6">
+              <div className="apple-card">
+                <p className="section-title flex items-center mb-1.5">
+                  <Briefcase className="w-[18px] h-[18px] mr-2 text-primary-500" />
                   Choose a target role
                 </p>
-                <p style={{ fontSize: 14, color: '#6e6e73', marginBottom: 20 }}>
+                <p className="text-[14px] text-on-surface-variant dark:text-dark-muted mb-5">
                   We'll cross-reference your resume against real-world job requirements.
                 </p>
-                <div style={{ position: 'relative', maxWidth: 400 }}>
+                <div className="relative max-w-[400px]">
                   <select
                     value={selectedRole}
                     onChange={e => setSelectedRole(e.target.value)}
@@ -359,17 +264,9 @@ const Dashboard = () => {
                       <option key={r._id} value={r._id}>{r.roleName}</option>
                     ))}
                   </select>
-                  <div
-                    style={{
-                      position: 'absolute',
-                      right: 16,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      pointerEvents: 'none',
-                    }}
-                  >
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                     <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
-                      <path d="M1 1l5 5 5-5" stroke="#6e6e73" strokeWidth="1.5" strokeLinecap="round" />
+                      <path d="M1 1l5 5 5-5" stroke="currentColor" className="text-on-surface-variant dark:text-dark-muted" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
                   </div>
                 </div>
@@ -378,29 +275,22 @@ const Dashboard = () => {
 
             {/* Extracted skills */}
             <motion.div variants={fadeUp}>
-              <div
-                style={{
-                  background: '#ffffff',
-                  borderRadius: 18,
-                  padding: '28px 32px',
-                  marginBottom: 24,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                  <p className="section-title" style={{ marginBottom: 0 }}>
-                    <Zap style={{ display: 'inline', width: 18, height: 18, marginRight: 8, verticalAlign: 'middle', color: '#0071e3' }} />
+              <div className="apple-card mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+                  <p className="section-title flex items-center mb-0">
+                    <Zap className="w-[18px] h-[18px] mr-2 text-primary-500" />
                     Your skills
                   </p>
-                  <span className="apple-pill">{resumeData.extractedSkills?.length || 0} detected</span>
+                  <span className="apple-pill self-start sm:self-auto">{resumeData.extractedSkills?.length || 0} detected</span>
                 </div>
                 {resumeData.extractedSkills?.length > 0 ? (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  <div className="flex flex-wrap gap-2">
                     {resumeData.extractedSkills.map((s, i) => (
                       <span key={i} className="skill-tag">{s}</span>
                     ))}
                   </div>
                 ) : (
-                  <p style={{ fontSize: 14, color: '#aeaeb2' }}>No specific skills detected.</p>
+                  <p className="text-[14px] text-[#aeaeb2] dark:text-dark-muted">No specific skills detected.</p>
                 )}
               </div>
             </motion.div>
@@ -414,17 +304,12 @@ const Dashboard = () => {
               variants={stagger}
               initial="hidden"
               animate="show"
-              style={{ marginTop: 8 }}
+              className="mt-2"
             >
               {/* ── Stats row ── */}
               <motion.div
                 variants={fadeUp}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: 16,
-                  marginBottom: 24,
-                }}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
               >
                 <StatCard
                   label="Job Readiness Score"
@@ -440,7 +325,7 @@ const Dashboard = () => {
                   label="Skill Gaps"
                   value={analysis.analysis.missingSkills.length}
                   caption="to close for this role"
-                  captionColor="#ff3b30"
+                  captionClass="text-error"
                 />
                 <StatCard
                   label="Match Rate"
@@ -450,37 +335,22 @@ const Dashboard = () => {
                       100,
                   )}%`}
                   caption="skill alignment"
-                  captionColor="#34c759"
+                  captionClass="text-success"
                 />
               </motion.div>
 
               {/* ── Score chart + gap analysis ── */}
               <motion.div
                 variants={fadeUp}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 2fr',
-                  gap: 16,
-                  marginBottom: 24,
-                }}
+                className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6"
               >
                 {/* Score chart */}
-                <div
-                  style={{
-                    background: '#ffffff',
-                    borderRadius: 18,
-                    padding: '28px 32px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <p className="section-title" style={{ alignSelf: 'flex-start', marginBottom: 20 }}>
-                    <Award style={{ display: 'inline', width: 18, height: 18, marginRight: 8, verticalAlign: 'middle', color: '#0071e3' }} />
+                <div className="apple-card flex flex-col items-center justify-center lg:col-span-1">
+                  <p className="section-title self-start flex items-center w-full mb-5">
+                    <Award className="w-[18px] h-[18px] mr-2 text-primary-500" />
                     Job Fit
                   </p>
-                  <div style={{ width: '100%', height: 180 }}>
+                  <div className="w-full h-[180px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -511,7 +381,7 @@ const Dashboard = () => {
                                     y={cy - 6}
                                     textAnchor="middle"
                                     dominantBaseline="middle"
-                                    style={{ fontSize: 26, fontWeight: 700, fill: '#1d1d1f', fontFamily: 'Inter, -apple-system, sans-serif', letterSpacing: '-0.03em' }}
+                                    className="text-[26px] font-bold fill-on-surface dark:fill-on-dark font-sans tracking-tight"
                                   >
                                     {matchPct}%
                                   </text>
@@ -520,7 +390,7 @@ const Dashboard = () => {
                                     y={cy + 16}
                                     textAnchor="middle"
                                     dominantBaseline="middle"
-                                    style={{ fontSize: 11, fontWeight: 500, fill: '#6e6e73', fontFamily: 'Inter, -apple-system, sans-serif' }}
+                                    className="text-[11px] font-medium fill-on-surface-variant dark:fill-dark-muted font-sans"
                                   >
                                     match
                                   </text>
@@ -531,86 +401,65 @@ const Dashboard = () => {
                         </Pie>
                         <Tooltip
                           contentStyle={{
-                            borderRadius: 12,
+                            borderRadius: '12px',
                             border: 'none',
+                            backgroundColor: theme === 'dark' ? '#2c2c2e' : '#ffffff',
+                            color: theme === 'dark' ? '#ffffff' : '#1d1d1f',
                             boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                            fontSize: 13,
+                            fontSize: '13px',
                             fontWeight: 600,
                           }}
+                          itemStyle={{ color: theme === 'dark' ? '#ffffff' : '#1d1d1f' }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  <div style={{ display: 'flex', gap: 16, marginTop: 4 }}>
-                    <span style={{ fontSize: 12, color: '#248a3d', display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#34c759', display: 'inline-block' }} />
+                  <div className="flex gap-4 mt-1">
+                    <span className="text-[12px] text-success flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-success inline-block" />
                       Matched
                     </span>
-                    <span style={{ fontSize: 12, color: '#c0392b', display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff3b30', display: 'inline-block' }} />
+                    <span className="text-[12px] text-error flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-error inline-block" />
                       Missing
                     </span>
                   </div>
                 </div>
 
                 {/* Skill gap detail */}
-                <div style={{ background: '#ffffff', borderRadius: 18, padding: '28px 32px' }}>
-                  <p className="section-title">
-                    <Target style={{ display: 'inline', width: 18, height: 18, marginRight: 8, verticalAlign: 'middle', color: '#0071e3' }} />
+                <div className="apple-card lg:col-span-2">
+                  <p className="section-title flex items-center">
+                    <Target className="w-[18px] h-[18px] mr-2 text-primary-500" />
                     Skill Gap Analysis — {analysis.role}
                   </p>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Matched */}
-                    <div style={{ background: '#f5f5f7', borderRadius: 14, padding: '20px 22px' }}>
-                      <p
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 700,
-                          color: '#248a3d',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.07em',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 6,
-                          marginBottom: 14,
-                        }}
-                      >
-                        <CheckCircle style={{ width: 14, height: 14 }} />
+                    <div className="bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-2xl p-5 transition-colors duration-200">
+                      <p className="text-[11px] font-bold text-[#248a3d] dark:text-[#32d74b] uppercase tracking-[0.07em] flex items-center gap-1.5 mb-3.5">
+                        <CheckCircle className="w-3.5 h-3.5" />
                         Verified matches
                       </p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      <div className="flex flex-wrap gap-2">
                         {analysis.analysis.matchedSkills.length > 0
                           ? analysis.analysis.matchedSkills.map(s => (
                               <span key={s} className="skill-tag-matched">{s}</span>
                             ))
-                          : <span style={{ fontSize: 13, color: '#aeaeb2' }}>None found.</span>
+                          : <span className="text-[13px] text-[#aeaeb2] dark:text-dark-muted">None found.</span>
                         }
                       </div>
                     </div>
                     {/* Missing */}
-                    <div style={{ background: '#f5f5f7', borderRadius: 14, padding: '20px 22px' }}>
-                      <p
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 700,
-                          color: '#c0392b',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.07em',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 6,
-                          marginBottom: 14,
-                        }}
-                      >
-                        <XCircle style={{ width: 14, height: 14 }} />
+                    <div className="bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-2xl p-5 transition-colors duration-200">
+                      <p className="text-[11px] font-bold text-error uppercase tracking-[0.07em] flex items-center gap-1.5 mb-3.5">
+                        <XCircle className="w-3.5 h-3.5" />
                         Skill gaps
                       </p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      <div className="flex flex-wrap gap-2">
                         {analysis.analysis.missingSkills.length > 0
                           ? analysis.analysis.missingSkills.map(s => (
                               <span key={s} className="skill-tag-missing">{s}</span>
                             ))
-                          : <span style={{ fontSize: 13, color: '#34c759', fontWeight: 600 }}>🎉 100% match!</span>
+                          : <span className="text-[13px] text-success font-semibold">🎉 100% match!</span>
                         }
                       </div>
                     </div>
@@ -619,106 +468,68 @@ const Dashboard = () => {
               </motion.div>
 
               {/* ── Roadmap ── */}
-              <motion.div
-                variants={fadeUp}
-                style={{ gap: 16 }}
-              >
-                {/* Roadmap */}
+              <motion.div variants={fadeUp} className="gap-4">
                 {roadmap && (
-                  <div style={{ background: '#ffffff', borderRadius: 18, padding: '28px 32px' }}>
-                    <p className="section-title">
-                      <Map style={{ display: 'inline', width: 18, height: 18, marginRight: 8, verticalAlign: 'middle', color: '#0071e3' }} />
+                  <div className="apple-card">
+                    <p className="section-title flex items-center">
+                      <Map className="w-[18px] h-[18px] mr-2 text-primary-500" />
                       Learning Roadmap
                     </p>
                     {/* Phase labels and time */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                       {['beginner', 'intermediate', 'advanced'].map((level, i) => {
                         const phaseColors = ['#34c759', '#ff9500', '#0071e3'];
                         const phaseLabels = ['Foundation', 'Intermediate', 'Advanced'];
                         const phaseWeeks = ['Week 1–4', 'Week 5–10', 'Week 11–16'];
                         return (
-                          <div
-                            key={level}
-                            style={{
-                              background: '#f5f5f7',
-                              borderRadius: 14,
-                              padding: '20px 18px',
-                            }}
-                          >
+                          <div key={level} className="bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-[14px] p-5 transition-colors duration-200">
                             {/* Phase header */}
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div className="flex items-center justify-between mb-3.5">
+                              <div className="flex items-center gap-2">
                                 <div
-                                  style={{
-                                    width: 22,
-                                    height: 22,
-                                    borderRadius: '50%',
-                                    background: phaseColors[i],
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: 10,
-                                    fontWeight: 700,
-                                    color: '#ffffff',
-                                    flexShrink: 0,
-                                  }}
+                                  className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                                  style={{ background: phaseColors[i] }}
                                 >
                                   {i + 1}
                                 </div>
-                                <p style={{ fontSize: 13, fontWeight: 600, color: '#1d1d1f' }}>
+                                <p className="text-[13px] font-semibold text-on-surface dark:text-on-dark">
                                   {phaseLabels[i]}
                                 </p>
                               </div>
-                              <span style={{ fontSize: 10, color: '#6e6e73', background: '#ffffff', padding: '2px 8px', borderRadius: 980, fontWeight: 500 }}>
+                              <span className="text-[10px] text-on-surface-variant dark:text-dark-muted bg-white dark:bg-dark-card px-2 py-0.5 rounded-full font-medium">
                                 {phaseWeeks[i]}
                               </span>
                             </div>
 
                             {/* Skills list */}
-                            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            <ul className="list-none p-0 m-0 flex flex-col gap-2.5">
                               {roadmap[level].map((item, idx) => (
                                 <li key={idx}>
-                                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 3 }}>
+                                  <div className="flex items-start gap-2 mb-1">
                                     {item.isMissing ? (
                                       <div
-                                        style={{
-                                          width: 6,
-                                          height: 6,
-                                          borderRadius: '50%',
-                                          background: phaseColors[i],
-                                          marginTop: 5,
-                                          flexShrink: 0,
-                                        }}
+                                        className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0"
+                                        style={{ background: phaseColors[i] }}
                                       />
                                     ) : (
-                                      <CheckCircle
-                                        style={{ width: 14, height: 14, color: '#34c759', marginTop: 1, flexShrink: 0 }}
-                                      />
+                                      <CheckCircle className="w-3.5 h-3.5 text-[#34c759] dark:text-[#32d74b] mt-[3px] shrink-0" />
                                     )}
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                      <span
-                                        style={{
-                                          fontSize: 13,
-                                          color: item.isMissing ? '#1d1d1f' : '#aeaeb2',
-                                          fontWeight: item.isMissing ? 600 : 400,
-                                          textDecoration: item.isMissing ? 'none' : 'line-through',
-                                          display: 'block',
-                                        }}
-                                      >
+                                    <div className="flex-1 min-w-0">
+                                      <span className={`text-[13px] block ${item.isMissing ? 'text-on-surface dark:text-on-dark font-semibold' : 'text-[#aeaeb2] dark:text-[#636366] font-normal line-through'}`}>
                                         {item.skill}
                                       </span>
                                       {/* Time + Resource row */}
                                       {item.isMissing && (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3, flexWrap: 'wrap' }}>
+                                        <div className="flex items-center gap-2 mt-1 flex-wrap">
                                           {item.timeEstimate && (
-                                            <span style={{ fontSize: 10, color: '#6e6e73', fontWeight: 500 }}>⏱ {item.timeEstimate}</span>
+                                            <span className="text-[10px] text-on-surface-variant dark:text-dark-muted font-medium">⏱ {item.timeEstimate}</span>
                                           )}
                                           {item.resource && item.resource !== 'https://...' && (
                                             <a
                                               href={item.resource}
                                               target="_blank"
                                               rel="noopener noreferrer"
-                                              style={{ fontSize: 10, color: '#0071e3', fontWeight: 500, textDecoration: 'none' }}
+                                              className="text-[10px] text-primary-500 font-medium no-underline hover:underline"
                                             >
                                               Learn →
                                             </a>
@@ -736,12 +547,10 @@ const Dashboard = () => {
                     </div>
                   </div>
                 )}
-
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
-
       </div>
     </div>
   );
