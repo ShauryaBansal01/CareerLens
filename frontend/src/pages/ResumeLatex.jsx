@@ -34,22 +34,61 @@ const ResumeLatex = () => {
   const [jobDescriptionText, setJobDescriptionText] = useState('');
   const [tailoring, setTailoring] = useState(false);
 
-  useEffect(() => {
-    const fetchLatex = async () => {
-      if (!user) return;
-      try {
-        const config = { headers: { Authorization: `Bearer ${user.token}` } };
-        const { data } = await axios.get('http://localhost:5000/api/resume/latex', config);
-        if (data.rawLatexCode) {
-            setLatexCode(data.rawLatexCode);
-          } else {
-            setLatexCode('% Start writing your LaTeX resume here!\n\\documentclass{article}\n\\begin{document}\nHello World\n\\end{document}');
-          }
-      } catch (error) {
-        console.error('Failed to fetch LaTeX code', error);
+  // Versioning State
+  const [versions, setVersions] = useState([]);
+  const [activeVersionId, setActiveVersionId] = useState('');
+  const [showSaveAsModal, setShowSaveAsModal] = useState(false);
+  const [saveAsTitle, setSaveAsTitle] = useState('');
+  
+  // Tailor Extra Fields
+  const [tailorVersionTitle, setTailorVersionTitle] = useState('');
+  const [targetCompany, setTargetCompany] = useState('');
+
+  const fetchVersions = async () => {
+    if (!user) return;
+    try {
+      const config = { headers: { Authorization: `Bearer ${user.token}` } };
+      const { data } = await axios.get('http://localhost:5000/api/resume/versions', config);
+      
+      if (data && data.length > 0) {
+        setVersions(data);
+        await loadVersion(data[0]._id, config);
+      } else {
+        // Fallback to legacy GET /latex
+        const legacy = await axios.get('http://localhost:5000/api/resume/latex', config);
+        if (legacy.data.rawLatexCode) {
+          // Auto migrate
+          const res = await axios.post('http://localhost:5000/api/resume/versions', {
+            title: 'Base Resume',
+            rawLatexCode: legacy.data.rawLatexCode,
+            isBaseResume: true
+          }, config);
+          setVersions([res.data]);
+          setLatexCode(res.data.rawLatexCode);
+          setActiveVersionId(res.data._id);
+        } else {
+          setLatexCode('% Start writing your LaTeX resume here!\n\\documentclass{article}\n\\begin{document}\nHello World\n\\end{document}');
+        }
       }
-    };
-    fetchLatex();
+    } catch (error) {
+      console.error('Failed to fetch versions', error);
+    }
+  };
+
+  const loadVersion = async (id, configObj = null) => {
+    try {
+      const config = configObj || { headers: { Authorization: `Bearer ${user.token}` } };
+      const { data } = await axios.get(`http://localhost:5000/api/resume/versions/${id}`, config);
+      setLatexCode(data.rawLatexCode);
+      setActiveVersionId(id);
+      setPdfUrl(''); // reset preview
+    } catch (error) {
+      showToast('Failed to load version', 'error');
+    }
+  };
+
+  useEffect(() => {
+    fetchVersions();
   }, [user]);
 
   const handleEditorChange = (value) => {
@@ -67,12 +106,60 @@ const ResumeLatex = () => {
     setSaving(true);
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      await axios.post('http://localhost:5000/api/resume/latex', { rawLatexCode: latexCode }, config);
-      showToast('Code saved successfully');
+      if (activeVersionId) {
+        await axios.put(`http://localhost:5000/api/resume/versions/${activeVersionId}`, { rawLatexCode: latexCode }, config);
+        const updatedVersions = versions.map(v => v._id === activeVersionId ? { ...v, rawLatexCode: latexCode } : v);
+        setVersions(updatedVersions);
+        showToast('Version saved successfully');
+      } else {
+        const { data } = await axios.post('http://localhost:5000/api/resume/versions', { title: 'Untitled Version', rawLatexCode: latexCode }, config);
+        setVersions([data, ...versions]);
+        setActiveVersionId(data._id);
+        showToast('Created and saved successfully');
+      }
     } catch (error) {
       showToast('Failed to save code', 'error');
     }
     setSaving(false);
+  };
+
+  const saveAsNewVersion = async () => {
+    if (!user || !saveAsTitle.trim()) return;
+    try {
+      const config = { headers: { Authorization: `Bearer ${user.token}` } };
+      const { data } = await axios.post('http://localhost:5000/api/resume/versions', { 
+        title: saveAsTitle, 
+        rawLatexCode: latexCode 
+      }, config);
+      setVersions([data, ...versions]);
+      setActiveVersionId(data._id);
+      setShowSaveAsModal(false);
+      setSaveAsTitle('');
+      showToast(`Saved as "${data.title}"`);
+    } catch (error) {
+      showToast('Failed to save as new version', 'error');
+    }
+  };
+
+  const deleteVersion = async (id, e) => {
+    e.stopPropagation();
+    if (!window.confirm("Are you sure you want to delete this version?")) return;
+    try {
+      const config = { headers: { Authorization: `Bearer ${user.token}` } };
+      await axios.delete(`http://localhost:5000/api/resume/versions/${id}`, config);
+      const newVersions = versions.filter(v => v._id !== id);
+      setVersions(newVersions);
+      if (activeVersionId === id) {
+         if (newVersions.length > 0) loadVersion(newVersions[0]._id, config);
+         else {
+           setActiveVersionId('');
+           setLatexCode('');
+         }
+      }
+      showToast('Version deleted');
+    } catch (error) {
+      showToast('Failed to delete', 'error');
+    }
   };
 
   const openWizard = async () => {
@@ -117,13 +204,31 @@ const ResumeLatex = () => {
       showToast('Please provide a valid job description (min 20 chars)', 'error');
       return;
     }
+    if (!tailorVersionTitle.trim()) {
+      showToast('Please provide a version title', 'error');
+      return;
+    }
     setTailoring(true);
-    setShowTailorWizard(false); // Close modal while loading
+    setShowTailorWizard(false);
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
       const { data } = await axios.post('http://localhost:5000/api/resume/latex/tailor', { jobDescription: jobDescriptionText }, config);
       setLatexCode(data.rawLatexCode);
-      showToast('Resume successfully tailored to JD!');
+      
+      const res = await axios.post('http://localhost:5000/api/resume/versions', { 
+        title: tailorVersionTitle, 
+        targetCompany: targetCompany,
+        targetJobDescription: jobDescriptionText,
+        rawLatexCode: data.rawLatexCode 
+      }, config);
+      
+      setVersions([res.data, ...versions]);
+      setActiveVersionId(res.data._id);
+
+      showToast('Tailored and saved as new version!');
+      setJobDescriptionText('');
+      setTailorVersionTitle('');
+      setTargetCompany('');
     } catch (error) {
       showToast(error.response?.data?.message || 'Failed to tailor resume.', 'error');
     }
@@ -380,8 +485,19 @@ const ResumeLatex = () => {
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Version Title (Required)</label>
+                    <input className="apple-input bg-gray-50 dark:bg-gray-900 w-full text-sm" placeholder="e.g. Frontend Dev - Meta" value={tailorVersionTitle} onChange={e => setTailorVersionTitle(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Target Company (Optional)</label>
+                    <input className="apple-input bg-gray-50 dark:bg-gray-900 w-full text-sm" placeholder="e.g. Meta" value={targetCompany} onChange={e => setTargetCompany(e.target.value)} />
+                  </div>
+                </div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Job Description</label>
                 <textarea 
-                  className="apple-input bg-gray-50 dark:bg-gray-900 text-sm min-h-[300px] w-full resize-none" 
+                  className="apple-input bg-gray-50 dark:bg-gray-900 text-sm min-h-[200px] w-full resize-none" 
                   placeholder="Paste the target Job Description or company requirements here..." 
                   value={jobDescriptionText} 
                   onChange={e => setJobDescriptionText(e.target.value)} 
@@ -393,6 +509,47 @@ const ResumeLatex = () => {
                 <button onClick={handleTailorJob} className="px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md flex items-center gap-2">
                   <Target size={16} />
                   Tailor Resume
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      
+      {/* Save As Modal */}
+      <AnimatePresence>
+        {showSaveAsModal && (
+          <div className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-200 dark:border-gray-700"
+            >
+              <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
+                  <Save className="text-blue-500" size={20} />
+                  Save as New Version
+                </h2>
+                <button onClick={() => setShowSaveAsModal(false)} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors text-gray-500 dark:text-gray-400">
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="p-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Version Title</label>
+                <input 
+                  className="apple-input bg-gray-50 dark:bg-gray-900 w-full text-sm" 
+                  placeholder="e.g. Software Engineer - Google" 
+                  value={saveAsTitle} 
+                  onChange={e => setSaveAsTitle(e.target.value)} 
+                  autoFocus
+                />
+              </div>
+              <div className="p-5 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-end gap-3">
+                <button onClick={() => setShowSaveAsModal(false)} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Cancel</button>
+                <button onClick={saveAsNewVersion} disabled={!saveAsTitle.trim()} className="px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-md disabled:opacity-50">
+                  Save Version
                 </button>
               </div>
             </motion.div>
@@ -412,7 +569,24 @@ const ResumeLatex = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mr-2 border-r border-gray-200 dark:border-gray-700 pr-4">
+            <select 
+              className="apple-input bg-gray-50 dark:bg-gray-900 text-[13px] py-1.5 px-3 rounded-lg min-w-[200px]"
+              value={activeVersionId || ''}
+              onChange={(e) => loadVersion(e.target.value)}
+            >
+              <option value="" disabled>Select Version</option>
+              {versions.map(v => (
+                <option key={v._id} value={v._id}>{v.title}</option>
+              ))}
+            </select>
+            {activeVersionId && (
+               <button onClick={(e) => deleteVersion(activeVersionId, e)} className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Delete Version">
+                 <Trash2 size={16} />
+               </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
           {message && (
             <motion.div 
               initial={{ opacity: 0, x: 20 }}
@@ -464,6 +638,14 @@ const ResumeLatex = () => {
           >
             <Save size={14} />
             {saving ? 'Saving...' : 'Save'}
+          </button>
+          
+          <button 
+            onClick={() => setShowSaveAsModal(true)} 
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          >
+            <Plus size={14} />
+            Save As
           </button>
 
           <button 

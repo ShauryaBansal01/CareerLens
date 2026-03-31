@@ -8,6 +8,7 @@
 
 
 const Resume = require('../models/Resume');
+const ResumeVersion = require('../models/ResumeVersion');
 const pdfParse = require('pdf-parse');
 const { GoogleGenAI } = require('@google/genai');
 
@@ -394,12 +395,6 @@ Ensure it compiles directly with pdflatex without any errors. Only return the ra
 
     let latexCode = response.text.replace(/^```(latex)?/im, '').replace(/```$/im, '').trim();
 
-    let resume = await Resume.findOne({ user: req.user.id });
-    if (resume) {
-      resume.rawLatexCode = latexCode;
-      await resume.save();
-    }
-
     res.status(200).json({ rawLatexCode: latexCode });
   } catch (error) {
     console.error('LaTeX Generation Error:', error);
@@ -468,14 +463,116 @@ Only return the raw, compiling LaTeX code.`;
 
     let latexCode = response.text.replace(/^```(latex)?/im, '').replace(/```$/im, '').trim();
 
-    resume.rawLatexCode = latexCode;
-    await resume.save();
-
     res.status(200).json({ rawLatexCode: latexCode });
   } catch (error) {
     console.error('Tailor LaTeX Error:', error);
     res.status(500).json({ message: 'Failed to generate tailored LaTeX resume.' });
   }
 };
+
+// @desc    Get all resume versions for a user
+// @route   GET /api/resume/versions
+// @access  Private
+exports.getVersions = async (req, res) => {
+  try {
+    const versions = await ResumeVersion.find({ user: req.user.id })
+      .select('-rawLatexCode') // Don't send huge latex payload for list
+      .sort({ updatedAt: -1 });
+
+    res.status(200).json(versions);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get specific resume version by ID
+// @route   GET /api/resume/versions/:id
+// @access  Private
+exports.getVersionById = async (req, res) => {
+  try {
+    const version = await ResumeVersion.findOne({ _id: req.params.id, user: req.user.id });
+    if (!version) {
+      return res.status(404).json({ message: 'Version not found' });
+    }
+    res.status(200).json(version);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Create a new resume version
+// @route   POST /api/resume/versions
+// @access  Private
+exports.createVersion = async (req, res) => {
+  try {
+    const { title, targetCompany, targetJobDescription, rawLatexCode, isBaseResume } = req.body;
+    
+    if (isBaseResume) {
+      await ResumeVersion.updateMany({ user: req.user.id }, { isBaseResume: false });
+    }
+
+    const version = await ResumeVersion.create({
+      user: req.user.id,
+      title: title || 'Untitled Version',
+      targetCompany,
+      targetJobDescription,
+      rawLatexCode,
+      isBaseResume: isBaseResume || false
+    });
+
+    res.status(201).json(version);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update a resume version
+// @route   PUT /api/resume/versions/:id
+// @access  Private
+exports.updateVersion = async (req, res) => {
+  try {
+    const { title, targetCompany, targetJobDescription, rawLatexCode, isBaseResume } = req.body;
+    
+    let version = await ResumeVersion.findOne({ _id: req.params.id, user: req.user.id });
+    if (!version) {
+      return res.status(404).json({ message: 'Version not found' });
+    }
+
+    if (isBaseResume) {
+      await ResumeVersion.updateMany({ user: req.user.id }, { isBaseResume: false });
+    }
+
+    if (title !== undefined) version.title = title;
+    if (targetCompany !== undefined) version.targetCompany = targetCompany;
+    if (targetJobDescription !== undefined) version.targetJobDescription = targetJobDescription;
+    if (rawLatexCode !== undefined) version.rawLatexCode = rawLatexCode;
+    if (isBaseResume !== undefined) version.isBaseResume = isBaseResume;
+
+    await version.save();
+
+    res.status(200).json(version);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Delete a resume version
+// @route   DELETE /api/resume/versions/:id
+// @access  Private
+exports.deleteVersion = async (req, res) => {
+  try {
+    const version = await ResumeVersion.findOne({ _id: req.params.id, user: req.user.id });
+    if (!version) {
+      return res.status(404).json({ message: 'Version not found' });
+    }
+
+    await version.deleteOne();
+
+    res.status(200).json({ message: 'Version removed' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 
 

@@ -9,7 +9,12 @@ const {
   getLatexCode,
   saveLatexCode,
   generateLatexTemplate,
-  tailorLatexToJob
+  tailorLatexToJob,
+  getVersions,
+  getVersionById,
+  createVersion,
+  updateVersion,
+  deleteVersion
 } = require('../controllers/resumeController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -36,6 +41,16 @@ router.get('/latex', protect, getLatexCode);
 router.post('/latex', protect, saveLatexCode);
 router.post('/latex/generate', protect, generateLatexTemplate);
 router.post('/latex/tailor', protect, tailorLatexToJob);
+
+// Versioning Routes
+router.route('/versions')
+  .get(protect, getVersions)
+  .post(protect, createVersion);
+
+router.route('/versions/:id')
+  .get(protect, getVersionById)
+  .put(protect, updateVersion)
+  .delete(protect, deleteVersion);
 
 module.exports = router;
 
