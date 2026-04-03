@@ -61,16 +61,16 @@ const Dashboard = () => {
       } catch (e) {
         if (e.response?.status === 404) setResumeData(null);
       }
-      const rolesRes = await axios.get(`${import.meta.env.VITE_API_URL}/analysis/roles`);
-      if (rolesRes.data && rolesRes.data.length > 0) {
+      const rolesRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/analysis/roles`);
+      if (rolesRes.data && Array.isArray(rolesRes.data) && rolesRes.data.length > 0) {
         setRoles(rolesRes.data);
       } else {
         // DB is empty (first launch or fresh deploy) — seed automatically
-        await axios.post(`${import.meta.env.VITE_API_URL}/analysis/seed`);
-        await axios.post(`${import.meta.env.VITE_API_URL}/roadmap/seed`);
-        await axios.post(`${import.meta.env.VITE_API_URL}/projects/seed`);
-        const seeded = await axios.get(`${import.meta.env.VITE_API_URL}/analysis/roles`);
-        setRoles(seeded.data);
+        await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/analysis/seed`);
+        await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/roadmap/seed`);
+        await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/projects/seed`);
+        const seeded = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/analysis/roles`);
+        setRoles(Array.isArray(seeded.data) ? seeded.data : []);
       }
     } catch (err) {
       console.error(err);
@@ -260,7 +260,7 @@ const Dashboard = () => {
                     className="apple-select"
                   >
                     <option value="" disabled>Select a role…</option>
-                    {roles.map(r => (
+                    {Array.isArray(roles) && roles.map(r => (
                       <option key={r._id} value={r._id}>{r.roleName}</option>
                     ))}
                   </select>
