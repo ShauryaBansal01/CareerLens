@@ -247,7 +247,7 @@ const ResumeAI = () => {
     setImproveError('');
     setImproveFeedback(null);
     try {
-      const res = await axios.post('http://localhost:5000/api/resume/improve', {}, cfg);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/resume/improve`, {}, cfg);
       setImproveFeedback(res.data);
     } catch (err) {
       setImproveError(err.response?.data?.message || 'Could not generate feedback. Please try again.');
@@ -265,7 +265,7 @@ const ResumeAI = () => {
     setOptimizeError('');
     setOptimizeResult(null);
     try {
-      const res = await axios.post('http://localhost:5000/api/resume/optimize', { jobDescription: jobDesc }, cfg);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/resume/optimize`, { jobDescription: jobDesc }, cfg);
       setOptimizeResult(res.data);
     } catch (err) {
       setOptimizeError(err.response?.data?.message || 'Could not generate optimization. Please try again.');

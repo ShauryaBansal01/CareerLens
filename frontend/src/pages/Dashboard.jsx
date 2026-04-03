@@ -56,20 +56,20 @@ const Dashboard = () => {
     try {
       const cfg = { headers: { Authorization: `Bearer ${user.token}` } };
       try {
-        const r = await axios.get('http://localhost:5000/api/resume', cfg);
+        const r = await axios.get(`${import.meta.env.VITE_API_URL}/resume`, cfg);
         setResumeData(r.data);
       } catch (e) {
         if (e.response?.status === 404) setResumeData(null);
       }
-      const rolesRes = await axios.get('http://localhost:5000/api/analysis/roles');
+      const rolesRes = await axios.get(`${import.meta.env.VITE_API_URL}/analysis/roles`);
       if (rolesRes.data && rolesRes.data.length > 0) {
         setRoles(rolesRes.data);
       } else {
         // DB is empty (first launch or fresh deploy) — seed automatically
-        await axios.post('http://localhost:5000/api/analysis/seed');
-        await axios.post('http://localhost:5000/api/roadmap/seed');
-        await axios.post('http://localhost:5000/api/projects/seed');
-        const seeded = await axios.get('http://localhost:5000/api/analysis/roles');
+        await axios.post(`${import.meta.env.VITE_API_URL}/analysis/seed`);
+        await axios.post(`${import.meta.env.VITE_API_URL}/roadmap/seed`);
+        await axios.post(`${import.meta.env.VITE_API_URL}/projects/seed`);
+        const seeded = await axios.get(`${import.meta.env.VITE_API_URL}/analysis/roles`);
         setRoles(seeded.data);
       }
     } catch (err) {
@@ -79,9 +79,9 @@ const Dashboard = () => {
 
   const seedDatabase = async () => {
     try {
-      await axios.post('http://localhost:5000/api/analysis/seed');
-      await axios.post('http://localhost:5000/api/roadmap/seed');
-      await axios.post('http://localhost:5000/api/projects/seed');
+      await axios.post(`${import.meta.env.VITE_API_URL}/analysis/seed`);
+      await axios.post(`${import.meta.env.VITE_API_URL}/roadmap/seed`);
+      await axios.post(`${import.meta.env.VITE_API_URL}/projects/seed`);
       fetchDashboardData();
     } catch (e) { console.error(e); }
   };
@@ -92,7 +92,7 @@ const Dashboard = () => {
     try {
       const cfg = { headers: { Authorization: `Bearer ${user.token}` } };
       const analysisRes = await axios.post(
-        'http://localhost:5000/api/analysis/analyze',
+        `${import.meta.env.VITE_API_URL}/analysis/analyze`,
         { roleId: selectedRole },
         cfg,
       );
@@ -100,7 +100,7 @@ const Dashboard = () => {
       const { role: targetRoleName, analysis: { missingSkills } } = analysisRes.data;
       try {
         const roadmapRes = await axios.post(
-          'http://localhost:5000/api/roadmap/generate',
+          `${import.meta.env.VITE_API_URL}/roadmap/generate`,
           { roleName: targetRoleName, missingSkills },
           cfg,
         );
@@ -108,7 +108,7 @@ const Dashboard = () => {
       } catch { setRoadmap(null); }
       try {
         const projectsRes = await axios.post(
-          'http://localhost:5000/api/projects/recommend',
+          `${import.meta.env.VITE_API_URL}/projects/recommend`,
           { missingSkills },
           cfg,
         );

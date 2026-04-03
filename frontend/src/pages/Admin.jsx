@@ -28,7 +28,7 @@ const Admin = () => {
   const fetchStats = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const res = await axios.get('http://localhost:5000/api/admin/stats', config);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/admin/stats`, config);
       setStats(res.data);
     } catch (error) {
       console.error(error);
@@ -39,7 +39,7 @@ const Admin = () => {
     e.preventDefault();
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      await axios.post('http://localhost:5000/api/admin/role', {
+      await axios.post(`${import.meta.env.VITE_API_URL}/admin/role`, {
         roleName,
         requiredSkills: roleSkills.split(',').map(s => s.trim())
       }, config);
@@ -56,7 +56,7 @@ const Admin = () => {
     e.preventDefault();
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      await axios.post('http://localhost:5000/api/admin/project', {
+      await axios.post(`${import.meta.env.VITE_API_URL}/admin/project`, {
         title: projectTitle,
         description: projectDesc,
         requiredSkills: projectSkills.split(',').map(s => s.trim())

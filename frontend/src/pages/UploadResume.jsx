@@ -42,7 +42,7 @@ const UploadResume = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await axios.post('http://localhost:5000/api/resume/upload', formData, {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/resume/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${user.token}`,
