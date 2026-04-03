@@ -104,6 +104,7 @@ const FeedbackCard = ({ item, type }) => {
       <AnimatePresence>
         {open && (
           <motion.div
+            key="improve-content"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -178,6 +179,7 @@ const OptimizeCard = ({ item, type }) => {
       <AnimatePresence>
         {open && (
           <motion.div
+            key="optimize-content"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -369,7 +371,7 @@ const ResumeAI = () => {
             {/* Results */}
             <AnimatePresence>
               {improveFeedback && (
-                <motion.div variants={stagger} initial="hidden" animate="show">
+                <motion.div key="improve-results" variants={stagger} initial="hidden" animate="show">
 
                   {/* Score banner */}
                   <motion.div
@@ -522,7 +524,7 @@ const ResumeAI = () => {
             {/* Results */}
             <AnimatePresence>
               {optimizeResult && (
-                <motion.div variants={stagger} initial="hidden" animate="show">
+                <motion.div key="optimize-results" variants={stagger} initial="hidden" animate="show">
 
                   {/* Match score + summary */}
                   <motion.div

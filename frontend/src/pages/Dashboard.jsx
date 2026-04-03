@@ -301,6 +301,7 @@ const Dashboard = () => {
         <AnimatePresence>
           {analysis && (
             <motion.div
+              key="analysis-results"
               variants={stagger}
               initial="hidden"
               animate="show"
