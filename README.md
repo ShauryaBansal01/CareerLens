@@ -2,6 +2,7 @@
 
 <div align="center">
   <p><strong>An AI-powered career optimization platform built to help software engineers navigate the modern hiring landscape.</strong></p>
+  <p>🚀 <strong>Live Demo: <a href="https://career-lens-vert.vercel.app" target="_blank">CareerLens</a></strong></p>
 </div>
 
 ---
@@ -73,6 +74,14 @@ By leveraging the **Google Gemini API**, CareerLens intelligently parses uploade
 - **Database**: MongoDB (Mongoose ORM)
 - **AI Integration**: `@google/genai` (Google Gemini 2.5 Flash/Pro)
 - **Authentication**: JWT (JSON Web Tokens) & bcryptjs
+
+**Hosting & Deployment:**
+- **Frontend**: Vercel
+- **Backend**: Render
+- **Database**: MongoDB Atlas
+
+> **⚡ Keeping the Backend Awake (Overcoming Free-Tier Limits):**
+> Because the backend is hosted on Render's free tier, it spins down after 15 minutes of inactivity, which causes a 30-50 second "cold start" delay for the next user. To ensure a seamless and instant user experience, I integrated **[UptimeRobot](https://uptimerobot.com/)**. It automatically pings the backend's root health-check endpoint every 5 minutes, preventing the server from ever going to sleep and keeping the API awake 24/7.
 
 ---
 
