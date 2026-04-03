@@ -75,22 +75,69 @@ exports.uploadResume = async (req, res) => {
       experience = 'Analysis deferred (AI Key missing or error)';
     }
 
-    let resume = await Resume.findOne({ user: req.user.id });
-    if (resume) {
-      resume.extractedSkills = extractedSkills;
-      resume.education = education;
-      resume.experience = experience;
-      resume.rawText = rawText;
-      resume = await resume.save();
-    } else {
-      resume = await Resume.create({
-        user: req.user.id,
-        extractedSkills,
-        education,
-        experience,
-        rawText
-      });
-    }
+      let resume = await Resume.findOne({ user: req.user.id });
+      
+      let rawLatexCode = '';
+      try {
+        const latexPrompt = `You are an expert LaTeX developer and a Senior Technical Recruiter.
+Your task is to generate a beautiful, modern, ATS-friendly software engineering resume in strict LaTeX code based on the provided extracted resume text.
+
+CRITICAL LATEX & DESIGN REQUIREMENTS:
+- Use the standard "article" class with 11pt font.
+- You MUST INCLUDE these required packages: \\usepackage[letterpaper, margin=0.5in]{geometry}, \\usepackage{hyperref}, \\usepackage{enumitem}, \\usepackage{titlesec}, \\usepackage{xcolor}, \\usepackage{tgtermes}, \\usepackage[T1]{fontenc}.
+- The font must be a highly professional serif font (TeX Gyre Termes).
+- Disable page numbers with \\pagestyle{empty}.
+- Configure list formatting globally: \\setlist[itemize]{leftmargin=0.15in, label={--}, itemsep=2pt, parsep=0pt, topsep=2pt, partopsep=0pt}
+- Escape LaTeX special characters (e.g. &, %, $, #, _) directly in the text.
+- Header: Name large, centered, bold. Contact info centered below it on a single line, separated by pipes (|).
+- Sections (Education, Experience, Projects, Skills): Use a strict 4-corner layout for headers.
+- Use bullet points (\\begin{itemize} \\item ... \\end{itemize}) ONLY for the descriptions/accomplishments.
+- Start output immediately with \\documentclass. Do NOT output any markdown blocks.
+
+USER RESUME TEXT:
+${rawText.substring(0, 10000)}
+
+Only return the raw, compiling LaTeX code.`;
+
+        const latexResponse = await callGeminiWithRetry({
+          model: 'gemini-2.5-flash',
+          contents: latexPrompt
+        });
+        rawLatexCode = latexResponse.text.replace(/^```(latex)?/im, '').replace(/```$/im, '').trim();
+      } catch(err) {
+        console.error("Gemini Latex Generation Error:", err);
+      }
+
+      if (resume) {
+        resume.extractedSkills = extractedSkills;
+        resume.education = education;
+        resume.experience = experience;
+        resume.rawText = rawText;
+        if(rawLatexCode) {
+           resume.rawLatexCode = rawLatexCode;
+        }
+        resume = await resume.save();
+      } else {
+        resume = await Resume.create({
+          user: req.user.id,
+          extractedSkills,
+          education,
+          experience,
+          rawText,
+          rawLatexCode
+        });
+      }
+      
+      // Overwrite the Base Resume Version with the new LaTeX
+      if(rawLatexCode) {
+         await ResumeVersion.deleteMany({ user: req.user.id, isBaseResume: true });
+         await ResumeVersion.create({
+           user: req.user.id,
+           title: 'Base Resume (Auto-generated)',
+           rawLatexCode,
+           isBaseResume: true
+         });
+      }
 
     res.status(200).json(resume);
   } catch (error) {

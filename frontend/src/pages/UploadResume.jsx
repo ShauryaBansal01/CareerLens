@@ -198,7 +198,7 @@ const UploadResume = () => {
               {loading ? (
                 <span className="flex items-center justify-center gap-2.5">
                   <span className="apple-spinner" />
-                  Analyzing your resume…
+                  Analyzing & Generating LaTeX...
                 </span>
               ) : 'Analyze My Resume'}
             </button>
@@ -267,9 +267,20 @@ const UploadResume = () => {
               </div>
 
               {/* CTA */}
-              <Link to="/" className="btn-apple px-7 py-3 text-[15px]">
-                Go to Dashboard →
-              </Link>
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <Link 
+                  to="/resume-latex" 
+                  className="btn-apple px-7 py-3 text-[15px] flex-1 text-center w-full sm:w-auto"
+                >
+                  Go to LaTeX Builder →
+                </Link>
+                <Link 
+                  to="/" 
+                  className="px-7 py-3 text-[15px] font-medium rounded-xl border border-gray-200 dark:border-[#38383a] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2c2c2e] transition-colors duration-200 flex-1 text-center w-full sm:w-auto"
+                >
+                  Go to Dashboard
+                </Link>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
