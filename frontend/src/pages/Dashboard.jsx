@@ -178,36 +178,10 @@ const Dashboard = () => {
               : 'Upload your resume to get started with AI-powered career insights.'}
           </p>
           <div className="flex gap-3 flex-wrap">
-            {!resumeData ? (
+            {!resumeData && (
               <Link to="/upload" className="btn-apple px-6 py-3">
                 Upload Resume
               </Link>
-            ) : (
-              <>
-                {selectedRole && (
-                  <button
-                    onClick={handleAnalyze}
-                    disabled={loading}
-                    className="btn-apple px-6 py-3"
-                  >
-                    {loading ? (
-                      <span className="flex items-center gap-2">
-                        <span className="apple-spinner w-4 h-4" />
-                        Analyzing…
-                      </span>
-                    ) : 'Analyze Profile'}
-                  </button>
-                )}
-                <Link to="/upload" className="btn-apple-secondary px-6 py-3">
-                  Re-upload Resume
-                </Link>
-                {roles.length === 0 && (
-                  <button onClick={seedDatabase} className="btn-apple-secondary px-6 py-3">
-                    <AlertTriangle className="w-4 h-4 mr-2" />
-                    Populate Data
-                  </button>
-                )}
-              </>
             )}
           </div>
         </motion.div>
@@ -245,29 +219,79 @@ const Dashboard = () => {
           <motion.div variants={stagger} initial="hidden" animate="show">
             {/* Role selector */}
             <motion.div variants={fadeUp} className="mb-6">
-              <div className="apple-card">
-                <p className="section-title flex items-center mb-1.5">
+              <div className="apple-card relative overflow-hidden group border border-transparent hover:border-primary-500/20 transition-colors duration-500">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                
+                <p className="section-title flex items-center mb-1.5 relative z-10">
                   <Briefcase className="w-[18px] h-[18px] mr-2 text-primary-500" />
                   Choose a target role
                 </p>
-                <p className="text-[14px] text-gray-500 dark:text-on-dark-muted mb-5">
-                  We'll cross-reference your resume against real-world job requirements.
+                <p className="text-[14px] text-gray-500 dark:text-on-dark-muted mb-6 relative z-10">
+                  We'll cross-reference your resume against real-world job requirements to generate your personalized career plan.
                 </p>
-                <div className="relative max-w-[400px]">
-                  <select
-                    value={selectedRole}
-                    onChange={e => setSelectedRole(e.target.value)}
-                    className="apple-select"
-                  >
-                    <option value="" disabled>Select a role…</option>
-                    {Array.isArray(roles) && roles.map(r => (
-                      <option key={r._id} value={r._id}>{r.roleName}</option>
-                    ))}
-                  </select>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
-                      <path d="M1 1l5 5 5-5" stroke="currentColor" className="text-gray-500 dark:text-on-dark-muted" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
+                
+                <div className="flex flex-col gap-5 relative z-10">
+                  <div className="relative max-w-[400px]">
+                    <select
+                      value={selectedRole}
+                      onChange={e => setSelectedRole(e.target.value)}
+                      className="apple-select w-full bg-white/60 dark:bg-[#1c1c1e]/60 backdrop-blur-md shadow-sm hover:border-primary-400 focus:ring-4 focus:ring-primary-500/20 transition-all duration-300"
+                    >
+                      <option value="" disabled>Select a role…</option>
+                      {Array.isArray(roles) && roles.map(r => (
+                        <option key={r._id} value={r._id}>{r.roleName}</option>
+                      ))}
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-primary-500">
+                      <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+                        <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-3 flex-wrap items-center">
+                    {selectedRole ? (
+                      <button
+                        onClick={handleAnalyze}
+                        disabled={loading}
+                        className="btn-apple px-6 py-3 shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 hover:-translate-y-0.5 transition-all duration-300"
+                      >
+                        {loading ? (
+                          <span className="flex items-center gap-2">
+                            <span className="apple-spinner w-4 h-4" />
+                            Analyzing…
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-2">
+                            <Zap className="w-[18px] h-[18px]" />
+                            Analyze Profile
+                          </span>
+                        )}
+                      </button>
+                    ) : (
+                      <button
+                        disabled
+                        className="px-6 py-3 rounded-full font-semibold text-[15px] bg-[#f5f5f7] dark:bg-[#2c2c2e] text-[#aeaeb2] dark:text-[#636366] cursor-not-allowed transition-colors"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Zap className="w-[18px] h-[18px]" />
+                          Analyze Profile
+                        </span>
+                      </button>
+                    )}
+                    <Link to="/upload" className="btn-apple-secondary px-6 py-3 transition-colors duration-300">
+                      <span className="flex items-center gap-2">
+                        <UploadCloud className="w-[18px] h-[18px]" />
+                        Re-upload Resume
+                      </span>
+                    </Link>
+                    
+                    {roles.length === 0 && (
+                      <button onClick={seedDatabase} className="btn-apple-secondary px-6 py-3">
+                        <AlertTriangle className="w-[18px] h-[18px] mr-2 inline" />
+                        Populate Data
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
