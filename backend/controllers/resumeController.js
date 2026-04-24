@@ -1,6 +1,7 @@
 
 const Resume = require('../models/Resume');
 const ResumeVersion = require('../models/ResumeVersion');
+const UserProfile = require('../models/UserProfile');
 const pdfParse = require('pdf-parse');
 const { GoogleGenAI } = require('@google/genai');
 
@@ -9,21 +10,18 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const callGeminiWithRetry = async (params, maxRetries = 4) => {
+  const model = 'gemini-2.5-flash';
   for (let i = 0; i < maxRetries; i++) {
     try {
-      return await ai.models.generateContent(params);
+      return await ai.models.generateContent({ ...params, model });
     } catch (error) {
       if ((error.status === 503 || error.status === 429) && i < maxRetries - 1) {
-        // Default backoff: 5s, 15s, 30s
         let delayMs = [5000, 15000, 30000][i] || 30000;
-        
-        // Try to extract exact requested wait time from Google's error message
         const match = String(error).match(/retry in ([\d\.]+)s/);
         if (match && match[1]) {
-          delayMs = Math.ceil(parseFloat(match[1]) * 1000) + 2000; // Add 2s buffer
+          delayMs = Math.ceil(parseFloat(match[1]) * 1000) + 2000;
         }
-
-        console.warn(`Gemini API Error 429/503. Retrying in ${Math.round(delayMs / 1000)} seconds...`);
+        console.warn(`Gemini 429/503. Retrying in ${Math.round(delayMs / 1000)}s... (attempt ${i + 1}/${maxRetries})`);
         await sleep(delayMs);
       } else {
         throw error;
@@ -47,17 +45,25 @@ exports.uploadResume = async (req, res) => {
     let extractedSkills = [];
     let education = 'Not explicitly found';
     let experience = 'Not explicitly found';
+    let detailedProfile = null;
 
     try {
       const response = await callGeminiWithRetry({
         model: 'gemini-2.5-flash',
-        contents: `You are an expert technical recruiter AI. Extract the candidate's core technical skills, education summary, and experience summary from the following resume. 
+        contents: `You are an expert technical recruiter AI. Extract the candidate's core technical skills, education, experience, and projects from the following resume. 
         Return EXACTLY a valid JSON object with the following schema:
         {
           "skills": ["skill1", "skill2"],
-          "education": "2-3 sentences summarizing their highest degrees",
-          "experience": "2-3 sentences summarizing their work experience"
+          "educationSummary": "2-3 sentences summarizing their highest degrees",
+          "experienceSummary": "2-3 sentences summarizing their work experience",
+          "detailedProfile": {
+            "basics": { "name": "...", "email": "...", "phone": "...", "location": "...", "summary": "...", "linkedin": "...", "github": "...", "portfolio": "..." },
+            "experience": [{ "company": "...", "role": "...", "duration": "...", "description": "..." }],
+            "education": [{ "institution": "...", "degree": "...", "duration": "..." }],
+            "projects": [{ "name": "...", "description": "...", "techStack": ["..."] }]
+          }
         }
+        For the 'detailedProfile', extract everything you can find. If a value is missing, return an empty string. 
         Do not include markdown blocks, just the raw JSON.
         
         Resume Text:
@@ -67,13 +73,45 @@ exports.uploadResume = async (req, res) => {
 
       const parsedData = JSON.parse(response.text);
       extractedSkills = parsedData.skills ? parsedData.skills.map(s => s.toLowerCase()) : [];
-      education = parsedData.education || education;
-      experience = parsedData.experience || experience;
+      education = parsedData.educationSummary || education;
+      experience = parsedData.experienceSummary || experience;
+      detailedProfile = parsedData.detailedProfile || null;
     } catch (aiError) {
       console.error("Gemini Extraction Error:", aiError);
       education = 'Analysis deferred (AI Key missing or error)';
       experience = 'Analysis deferred (AI Key missing or error)';
     }
+
+      // Upsert UserProfile if we got detailed data
+      if (detailedProfile) {
+        try {
+          // Keep existing email if they have it from auth
+          await UserProfile.findOneAndUpdate(
+            { user: req.user.id },
+            {
+              $set: {
+                skills: extractedSkills,
+                experience: detailedProfile.experience || [],
+                education: detailedProfile.education || [],
+                projects: detailedProfile.projects || [],
+              }
+            },
+            { upsert: true, returnDocument: 'after' }
+          );
+          
+          // Only update basic fields if they are not already set/meaningfully extracted
+          const profile = await UserProfile.findOne({ user: req.user.id });
+          if (detailedProfile.basics) {
+            profile.basics = { ...profile.basics, ...detailedProfile.basics };
+            // Ensure we don't accidentally overwrite email with emptiness
+            profile.basics.name = profile.basics.name || req.user.name;
+            profile.basics.email = profile.basics.email || req.user.email;
+            await profile.save();
+          }
+        } catch (error) {
+          console.error("Error upserting UserProfile:", error);
+        }
+      }
 
       let resume = await Resume.findOne({ user: req.user.id });
       

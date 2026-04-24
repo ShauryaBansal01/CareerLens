@@ -24,9 +24,9 @@ const ScoreRing = ({ score, size = 80 }) => {
   const r = (size - 8) / 2;
   const circ = 2 * Math.PI * r;
   const prog = circ - (score / 100) * circ;
-  const color = score >= 75 ? '#34c759' : score >= 50 ? '#ff9500' : '#ff3b30';
+  const color = score >= 75 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444';
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0">
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0 drop-shadow-[0_0_8px_rgba(16,185,129,0.25)]">
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="currentColor" strokeWidth={8} className="text-gray-100 dark:text-gray-700" />
       <circle
         cx={size / 2} cy={size / 2} r={r}
@@ -78,7 +78,7 @@ const FeedbackCard = ({ item, type }) => {
   const c = config[type];
 
   return (
-    <div className={`rounded-xl border overflow-hidden transition-shadow duration-200 ${c.container}`}>
+    <div className={`rounded-xl border overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-ambient ${c.container}`}>
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full border-none bg-transparent px-4 py-3.5 flex items-center gap-3 cursor-pointer text-left"
@@ -158,7 +158,7 @@ const OptimizeCard = ({ item, type }) => {
   const c = config[type];
 
   return (
-    <div className={`rounded-xl border overflow-hidden ${c.container}`}>
+    <div className={`rounded-xl border overflow-hidden transition-all duration-300 hover:shadow-ambient ${c.container}`}>
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full border-none bg-transparent px-4 py-3 flex items-center gap-3 cursor-pointer text-left"
@@ -284,7 +284,7 @@ const ResumeAI = () => {
           <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-5" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight mb-2">Sign in required</h2>
           <p className="text-gray-500 dark:text-gray-400 text-[15px] mb-7">Sign in and upload your resume to use AI Resume tools.</p>
-          <Link to="/login" className="btn-apple px-7 py-3 no-underline inline-block">Sign In</Link>
+          <Link to="/login" className="btn-premium px-7 py-3 no-underline inline-block">Sign In</Link>
         </div>
       </div>
     );
@@ -315,7 +315,7 @@ const ResumeAI = () => {
             SECTION 1 — Improve Your Resume
         ══════════════════════════════════════════════════════════════════════ */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}>
-          <div className="bg-white dark:bg-dark-card rounded-2xl p-9 px-10 mb-6 shadow-sm">
+          <div className="glass-card mb-6">
 
             {/* Header */}
             <div className="flex items-start justify-between gap-4 mb-7 flex-wrap">
@@ -334,9 +334,9 @@ const ResumeAI = () => {
                 </p>
               </div>
               <div className="flex gap-2 items-center">
-                <span className="apple-pill-gray text-[11px]">🔴 Critical fixes</span>
-                <span className="apple-pill-gray text-[11px]">🟡 Suggestions</span>
-                <span className="apple-pill-gray text-[11px]">🟢 Strengths</span>
+                <span className="premium-pill-gray text-[11px]">🔴 Critical fixes</span>
+                <span className="premium-pill-gray text-[11px]">🟡 Suggestions</span>
+                <span className="premium-pill-gray text-[11px]">🟢 Strengths</span>
               </div>
             </div>
 
@@ -350,7 +350,7 @@ const ResumeAI = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 text-center max-w-[380px]">
                   Our AI will review your resume like a senior recruiter at a top tech company.
                 </p>
-                <button onClick={handleImprove} className="btn-apple px-8 py-3.5 text-[15px] flex items-center gap-2">
+                <button onClick={handleImprove} className="btn-premium px-8 py-3.5 text-[15px] flex items-center gap-2">
                   Analyze My Resume
                   <ArrowRight className="w-4 h-4" />
                 </button>
@@ -376,7 +376,7 @@ const ResumeAI = () => {
                   {/* Score banner */}
                   <motion.div
                     variants={fadeUp}
-                    className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-800/50 rounded-2xl p-5 px-6 flex items-center gap-5 mb-7 border border-white/10 dark:border-white/5"
+                    className="glass-panel flex items-center gap-5 mb-7"
                   >
                     <ScoreRing score={improveFeedback.score || 0} size={80} />
                     <div className="flex-1">
@@ -449,7 +449,7 @@ const ResumeAI = () => {
             SECTION 2 — Optimize Resume for Company
         ══════════════════════════════════════════════════════════════════════ */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
-          <div className="bg-white dark:bg-dark-card rounded-2xl p-9 px-10 shadow-sm">
+          <div className="glass-card">
 
             {/* Header */}
             <div className="mb-7">
@@ -477,7 +477,7 @@ const ResumeAI = () => {
                 value={jobDesc}
                 onChange={e => { setJobDesc(e.target.value); setOptimizeError(''); }}
                 placeholder="Paste the full job description, role requirements, or company overview here…&#10;&#10;Example: 'We are looking for a React Developer with experience in TypeScript, Next.js, AWS, and GraphQL. The ideal candidate has 2+ years of frontend experience and has shipped production-grade applications...'"
-                className="w-full min-h-[180px] bg-gray-50 dark:bg-dark-surface/50 border border-transparent rounded-xl p-4 px-4.5 text-sm text-gray-900 dark:text-gray-100 leading-relaxed resize-y outline-none transition-colors duration-200 focus:border-indigo-500 focus:bg-white dark:focus:bg-dark-card"
+                className="premium-input min-h-[180px] resize-y"
               />
               <div className="flex justify-between mt-1.5">
                 <p className={`text-xs ${jobDesc.length < 20 ? 'text-red-500' : 'text-gray-400'}`}>
@@ -504,11 +504,11 @@ const ResumeAI = () => {
             <button
               onClick={handleOptimize}
               disabled={optimizeLoading || jobDesc.trim().length < 20}
-              className={`btn-apple-rect mb-${optimizeResult || optimizeLoading ? '8' : '0'}`}
+              className={`btn-premium w-full py-3.5 rounded-xl mb-${optimizeResult || optimizeLoading ? '8' : '0'}`}
             >
               {optimizeLoading
                 ? <span className="flex items-center justify-center gap-2.5">
-                    <span className="apple-spinner" />
+                    <span className="premium-spinner border-white/20 border-t-white" />
                     Analyzing & optimizing…
                   </span>
                 : <>
@@ -529,7 +529,7 @@ const ResumeAI = () => {
                   {/* Match score + summary */}
                   <motion.div
                     variants={fadeUp}
-                    className="bg-gray-50 dark:bg-dark-card/50 rounded-2xl p-5 px-6 flex items-center gap-5 mb-7 border border-white/10 dark:border-white/5"
+                    className="glass-panel flex items-center gap-5 mb-7"
                   >
                     <ScoreRing score={optimizeResult.matchScore || 0} size={80} />
                     <div className="flex-1">
@@ -545,7 +545,7 @@ const ResumeAI = () => {
                           <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Missing ATS keywords:</p>
                           <div className="flex flex-wrap gap-1.5">
                             {optimizeResult.keywords.map((kw, i) => (
-                              <span key={i} className="apple-pill-error text-[11px]">{kw}</span>
+                              <span key={i} className="premium-pill-error text-[11px]">{kw}</span>
                             ))}
                           </div>
                         </div>

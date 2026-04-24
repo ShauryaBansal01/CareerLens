@@ -68,8 +68,8 @@ const UploadResume = () => {
 
   if (!user) {
     return (
-      <div className="min-h-[calc(100vh-54px)] flex items-center justify-center p-6 bg-surface dark:bg-dark-surface transition-colors duration-200">
-        <div className="bg-white dark:bg-dark-card rounded-[20px] p-10 md:p-12 text-center max-w-[400px] w-full shadow-ambient dark:shadow-none">
+      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-6 bg-transparent transition-colors duration-300">
+        <div className="glass-card text-center max-w-[400px] w-full">
           <AlertCircle className="w-10 h-10 text-error mx-auto mb-5" />
           <h2 className="text-2xl font-bold text-on-surface dark:text-on-dark tracking-tight mb-2">
             Sign in required
@@ -77,7 +77,7 @@ const UploadResume = () => {
           <p className="text-[15px] text-gray-500 dark:text-on-dark-muted mb-7">
             You need to be signed in to upload your resume.
           </p>
-          <Link to="/login" className="btn-apple px-7 py-3">
+          <Link to="/login" className="btn-premium px-7 py-3">
             Sign In
           </Link>
         </div>
@@ -86,7 +86,7 @@ const UploadResume = () => {
   }
 
   return (
-    <div className="min-h-[calc(100vh-54px)] bg-surface dark:bg-dark-surface px-4 py-12 md:py-16 transition-colors duration-200">
+    <div className="min-h-[calc(100vh-64px)] px-4 py-12 md:py-16 transition-colors duration-300 relative z-10">
       <div className="max-w-[680px] mx-auto w-full">
 
         {/* ─── Hero ─── */}
@@ -96,10 +96,10 @@ const UploadResume = () => {
           transition={{ duration: 0.3 }}
           className="mb-10 md:mb-12"
         >
-          <h1 className="text-4xl md:text-[40px] font-bold text-on-surface dark:text-on-dark tracking-tighter mb-2.5">
+          <h1 className="text-4xl md:text-[40px] font-bold tracking-tighter mb-2.5 text-gradient">
             Upload Your Resume
           </h1>
-          <p className="text-[17px] text-gray-500 dark:text-on-dark-muted">
+          <p className="text-[17px] text-gray-500 dark:text-dark-muted">
             Our AI analyzes your resume and gives you actionable career insights in seconds.
           </p>
         </motion.div>
@@ -109,12 +109,12 @@ const UploadResume = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.05 }}
-          className="apple-card mb-6"
+          className="glass-card mb-6"
         >
           <form onSubmit={handleUpload}>
             {/* Drop zone */}
             <div
-              className={`drop-zone ${dragOver ? 'drag-over' : ''} mb-6`}
+              className={`premium-drop-zone group ${dragOver ? 'drag-over' : ''} mb-6`}
               onClick={() => fileInputRef.current?.click()}
               onDragOver={e => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
@@ -136,7 +136,7 @@ const UploadResume = () => {
                     exit={{ opacity: 0 }}
                     className="text-center"
                   >
-                    <UploadCloud className="w-10 h-10 text-[#aeaeb2] dark:text-[#636366] mx-auto mb-4 stroke-[1.5]" />
+                    <UploadCloud className="w-12 h-12 text-primary-400 dark:text-primary-500 mx-auto mb-4 stroke-1 group-hover:scale-110 transition-transform duration-300 drop-shadow-lg" />
                     <p className="text-[16px] font-semibold text-on-surface dark:text-on-dark tracking-tight mb-1">
                       Drag &amp; drop your resume here
                     </p>
@@ -173,7 +173,7 @@ const UploadResume = () => {
             {/* File format pills */}
             <div className="flex gap-2 flex-wrap mb-8">
               {['PDF', 'DOCX', 'DOC'].map(fmt => (
-                <span key={fmt} className="apple-pill-gray text-[12px]">{fmt}</span>
+                <span key={fmt} className="premium-pill-gray">{fmt}</span>
               ))}
             </div>
 
@@ -193,11 +193,11 @@ const UploadResume = () => {
             <button
               type="submit"
               disabled={!file || loading}
-              className="btn-apple-rect"
+              className="btn-premium w-full py-4 rounded-xl text-[16px]"
             >
               {loading ? (
-                <span className="flex items-center justify-center gap-2.5">
-                  <span className="apple-spinner" />
+                <span className="flex items-center justify-center gap-2.5 text-white">
+                  <span className="premium-spinner border-white/20 border-t-white" />
                   Analyzing & Generating LaTeX...
                 </span>
               ) : 'Analyze My Resume'}
@@ -213,7 +213,7 @@ const UploadResume = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35 }}
-              className="apple-card"
+              className="glass-card shadow-card"
             >
               {/* Success header */}
               <div className="flex items-center gap-3 mb-7">
@@ -240,9 +240,9 @@ const UploadResume = () => {
                 <div className="flex flex-wrap gap-2">
                   {resumeData.extractedSkills?.length > 0
                     ? resumeData.extractedSkills.map((skill, i) => (
-                        <span key={i} className="skill-tag">{skill}</span>
+                        <span key={i} className="premium-pill-gray">{skill}</span>
                       ))
-                    : <span className="text-[14px] text-[#aeaeb2] dark:text-[#636366]">No specific skills detected.</span>
+                    : <span className="text-[14px] text-dark-muted">No specific skills detected.</span>
                   }
                 </div>
               </div>
@@ -268,16 +268,24 @@ const UploadResume = () => {
               </div>
 
               {/* CTA */}
-              <div className="flex flex-col sm:flex-row items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-center gap-3 mb-4 mt-6">
                 <Link 
                   to="/resume-latex" 
-                  className="btn-apple px-7 py-3 text-[15px] flex-1 text-center w-full sm:w-auto"
+                  className="btn-premium px-7 py-3 text-[15px] flex-1 text-center w-full sm:w-auto"
                 >
                   Go to LaTeX Builder →
                 </Link>
                 <Link 
+                  to="/profile" 
+                  className="btn-secondary px-7 py-3 text-[15px] flex-1 text-center w-full sm:w-auto"
+                >
+                  View Profile
+                </Link>
+              </div>
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <Link 
                   to="/" 
-                  className="px-7 py-3 text-[15px] font-medium rounded-xl border border-gray-200 dark:border-[#38383a] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2c2c2e] transition-colors duration-200 flex-1 text-center w-full sm:w-auto"
+                  className="btn-secondary px-7 py-3 text-[15px] flex-1 text-center w-full sm:w-auto"
                 >
                   Go to Dashboard
                 </Link>

@@ -3,6 +3,23 @@ const UserAnalysis = require('../models/UserAnalysis');
 const { GoogleGenAI } = require('@google/genai');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const callGemini = async (params, maxRetries = 4) => {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await ai.models.generateContent({ ...params, model: 'gemini-2.5-flash' });
+    } catch (err) {
+      if ((err.status === 503 || err.status === 429) && i < maxRetries - 1) {
+        let delay = [5000, 15000, 30000][i] || 30000;
+        const m = String(err).match(/retry in ([\d\.]+)s/);
+        if (m) delay = Math.ceil(parseFloat(m[1]) * 1000) + 2000;
+        console.warn(`[Roadmap] Gemini ${err.status}, retrying in ${Math.round(delay/1000)}s...`);
+        await sleep(delay);
+      } else throw err;
+    }
+  }
+};
 
 // @desc    Get dynamic roadmap based on role and missing skills
 // @route   POST /api/roadmap/generate
@@ -36,8 +53,7 @@ exports.generateRoadmap = async (req, res) => {
       }
       Do not include markdown blocks, just raw JSON.`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+      const response = await callGemini({
         contents: prompt,
         config: { responseMimeType: "application/json" }
       });
@@ -49,7 +65,7 @@ exports.generateRoadmap = async (req, res) => {
         await UserAnalysis.findOneAndUpdate(
           { user: req.user.id },
           { $set: { roadmap: parsedRoadmap } },
-          { new: true }
+          { returnDocument: 'after' }
         );
       }
 

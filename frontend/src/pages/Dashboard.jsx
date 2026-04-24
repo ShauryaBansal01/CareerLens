@@ -26,11 +26,12 @@ const fadeUp = {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const StatCard = ({ label, value, caption, captionClass }) => (
-  <div className="stat-card">
-    <p className="text-[13px] text-gray-500 dark:text-on-dark-muted font-normal mb-2">{label}</p>
-    <p className="stat-value">{value}</p>
+  <div className="glass-panel group relative overflow-hidden">
+    <div className="absolute inset-0 bg-gradient-to-br from-primary-500/0 to-primary-500/5 group-hover:to-primary-500/10 transition-colors duration-500 pointer-events-none" />
+    <p className="text-[13px] text-gray-500 dark:text-on-dark-muted font-medium mb-3 uppercase tracking-wider relative z-10">{label}</p>
+    <p className="stat-value relative z-10">{value}</p>
     {caption && (
-      <p className={`text-[12px] mt-1.5 font-medium ${captionClass || 'text-gray-500 dark:text-on-dark-muted'}`}>
+      <p className={`text-[12px] mt-2 font-medium relative z-10 ${captionClass || 'text-gray-500 dark:text-dark-muted'}`}>
         {caption}
       </p>
     )}
@@ -137,10 +138,10 @@ const Dashboard = () => {
             Sign in to unlock skill gap analysis, personalized roadmaps, and job-fit scoring.
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
-            <Link to="/login" className="btn-apple px-8 py-3.5 text-[16px]">
+            <Link to="/login" className="btn-premium px-8 py-3.5 text-[16px]">
               Sign In
             </Link>
-            <Link to="/register" className="btn-apple-secondary px-8 py-3.5 text-[16px]">
+            <Link to="/register" className="btn-secondary px-8 py-3.5 text-[16px]">
               Create Account
             </Link>
           </div>
@@ -150,8 +151,8 @@ const Dashboard = () => {
   }
 
   const chartData = analysis ? [
-    { name: 'Matched', value: analysis.analysis.matchedSkills.length, color: theme === 'dark' ? '#32d74b' : '#34c759' },
-    { name: 'Missing', value: analysis.analysis.missingSkills.length, color: theme === 'dark' ? '#ff453a' : '#ff3b30' },
+    { name: 'Matched', value: analysis.analysis.matchedSkills.length, color: theme === 'dark' ? '#10b981' : '#059669' },
+    { name: 'Missing', value: analysis.analysis.missingSkills.length, color: theme === 'dark' ? '#ef4444' : '#dc2626' },
   ] : [];
 
   const firstName = user?.name?.split(' ')[0] || 'there';
@@ -179,7 +180,7 @@ const Dashboard = () => {
           </p>
           <div className="flex gap-3 flex-wrap">
             {!resumeData && (
-              <Link to="/upload" className="btn-apple px-6 py-3">
+              <Link to="/upload" className="btn-premium px-6 py-3">
                 Upload Resume
               </Link>
             )}
@@ -207,7 +208,7 @@ const Dashboard = () => {
             </div>
             <Link
               to="/upload"
-              className="bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/25 text-white text-[15px] font-medium px-7 py-3.5 rounded-full no-underline flex items-center gap-2 whitespace-nowrap transition-colors flex-shrink-0"
+              className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white text-[15px] font-semibold px-7 py-3.5 rounded-pill no-underline flex items-center gap-2 whitespace-nowrap transition-all flex-shrink-0 hover:shadow-ambient hover:-translate-y-0.5"
             >
               Get started <ChevronRight className="w-4 h-4" />
             </Link>
@@ -219,8 +220,8 @@ const Dashboard = () => {
           <motion.div variants={stagger} initial="hidden" animate="show">
             {/* Role selector */}
             <motion.div variants={fadeUp} className="mb-6">
-              <div className="apple-card relative overflow-hidden group border border-transparent hover:border-primary-500/20 transition-colors duration-500">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+              <div className="glass-card relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-500/0 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                 
                 <p className="section-title flex items-center mb-1.5 relative z-10">
                   <Briefcase className="w-[18px] h-[18px] mr-2 text-primary-500" />
@@ -232,11 +233,11 @@ const Dashboard = () => {
                 
                 <div className="flex flex-col gap-5 relative z-10">
                   <div className="relative max-w-[400px]">
-                    <select
-                      value={selectedRole}
-                      onChange={e => setSelectedRole(e.target.value)}
-                      className="apple-select w-full bg-white/60 dark:bg-[#1c1c1e]/60 backdrop-blur-md shadow-sm hover:border-primary-400 focus:ring-4 focus:ring-primary-500/20 transition-all duration-300"
-                    >
+                      <select
+                        value={selectedRole}
+                        onChange={e => setSelectedRole(e.target.value)}
+                        className="premium-input appearance-none w-full bg-white/60 dark:bg-white/5 backdrop-blur-md hover:border-primary-400 focus:ring-4 focus:ring-primary-500/20 shadow-inner"
+                      >
                       <option value="" disabled>Select a role…</option>
                       {Array.isArray(roles) && roles.map(r => (
                         <option key={r._id} value={r._id}>{r.roleName}</option>
@@ -254,11 +255,11 @@ const Dashboard = () => {
                       <button
                         onClick={handleAnalyze}
                         disabled={loading}
-                        className="btn-apple px-6 py-3 shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 hover:-translate-y-0.5 transition-all duration-300"
+                        className="btn-premium px-6 py-3"
                       >
                         {loading ? (
-                          <span className="flex items-center gap-2">
-                            <span className="apple-spinner w-4 h-4" />
+                          <span className="flex items-center gap-2 text-white">
+                            <span className="premium-spinner border-white/30 border-t-white w-4 h-4" />
                             Analyzing…
                           </span>
                         ) : (
@@ -279,7 +280,7 @@ const Dashboard = () => {
                         </span>
                       </button>
                     )}
-                    <Link to="/upload" className="btn-apple-secondary px-6 py-3 transition-colors duration-300">
+                    <Link to="/upload" className="btn-secondary px-6 py-3">
                       <span className="flex items-center gap-2">
                         <UploadCloud className="w-[18px] h-[18px]" />
                         Re-upload Resume
@@ -287,7 +288,7 @@ const Dashboard = () => {
                     </Link>
                     
                     {roles.length === 0 && (
-                      <button onClick={seedDatabase} className="btn-apple-secondary px-6 py-3">
+                      <button onClick={seedDatabase} className="btn-secondary px-6 py-3">
                         <AlertTriangle className="w-[18px] h-[18px] mr-2 inline" />
                         Populate Data
                       </button>
@@ -299,18 +300,18 @@ const Dashboard = () => {
 
             {/* Extracted skills */}
             <motion.div variants={fadeUp}>
-              <div className="apple-card mb-6">
+              <div className="glass-card mb-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
                   <p className="section-title flex items-center mb-0">
                     <Zap className="w-[18px] h-[18px] mr-2 text-primary-500" />
                     Your skills
                   </p>
-                  <span className="apple-pill self-start sm:self-auto">{resumeData.extractedSkills?.length || 0} detected</span>
+                  <span className="premium-pill self-start sm:self-auto">{resumeData.extractedSkills?.length || 0} detected</span>
                 </div>
                 {resumeData.extractedSkills?.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {resumeData.extractedSkills.map((s, i) => (
-                      <span key={i} className="skill-tag">{s}</span>
+                      <span key={i} className="premium-pill-gray">{s}</span>
                     ))}
                   </div>
                 ) : (
@@ -370,7 +371,7 @@ const Dashboard = () => {
                 className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6"
               >
                 {/* Score chart */}
-                <div className="apple-card flex flex-col items-center justify-center lg:col-span-1">
+                <div className="glass-card flex flex-col items-center justify-center lg:col-span-1 shadow-card">
                   <p className="section-title self-start flex items-center w-full mb-5">
                     <Award className="w-[18px] h-[18px] mr-2 text-primary-500" />
                     Job Fit
@@ -452,29 +453,29 @@ const Dashboard = () => {
                 </div>
 
                 {/* Skill gap detail */}
-                <div className="apple-card lg:col-span-2">
+                <div className="glass-card lg:col-span-2 shadow-card">
                   <p className="section-title flex items-center">
                     <Target className="w-[18px] h-[18px] mr-2 text-primary-500" />
                     Skill Gap Analysis — {analysis.role}
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Matched */}
-                    <div className="bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-2xl p-5 transition-colors duration-200">
-                      <p className="text-[11px] font-bold text-[#248a3d] dark:text-[#32d74b] uppercase tracking-[0.07em] flex items-center gap-1.5 mb-3.5">
+                    <div className="bg-success/5 dark:bg-success/10 border border-success/10 dark:border-success/20 rounded-2xl p-5 transition-colors duration-200">
+                      <p className="text-[11px] font-bold text-success uppercase tracking-[0.07em] flex items-center gap-1.5 mb-3.5">
                         <CheckCircle className="w-3.5 h-3.5" />
                         Verified matches
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {analysis.analysis.matchedSkills.length > 0
                           ? analysis.analysis.matchedSkills.map(s => (
-                              <span key={s} className="skill-tag-matched">{s}</span>
+                              <span key={s} className="premium-pill-success">{s}</span>
                             ))
-                          : <span className="text-[13px] text-[#aeaeb2] dark:text-on-dark-muted">None found.</span>
+                          : <span className="text-[13px] text-dark-muted">None found.</span>
                         }
                       </div>
                     </div>
                     {/* Missing */}
-                    <div className="bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-2xl p-5 transition-colors duration-200">
+                    <div className="bg-error/5 dark:bg-error/10 border border-error/10 dark:border-error/20 rounded-2xl p-5 transition-colors duration-200">
                       <p className="text-[11px] font-bold text-error uppercase tracking-[0.07em] flex items-center gap-1.5 mb-3.5">
                         <XCircle className="w-3.5 h-3.5" />
                         Skill gaps
@@ -482,7 +483,7 @@ const Dashboard = () => {
                       <div className="flex flex-wrap gap-2">
                         {analysis.analysis.missingSkills.length > 0
                           ? analysis.analysis.missingSkills.map(s => (
-                              <span key={s} className="skill-tag-missing">{s}</span>
+                              <span key={s} className="premium-pill-error">{s}</span>
                             ))
                           : <span className="text-[13px] text-success font-semibold">🎉 100% match!</span>
                         }
@@ -495,7 +496,7 @@ const Dashboard = () => {
               {/* ── Roadmap ── */}
               <motion.div variants={fadeUp} className="gap-4">
                 {roadmap && (
-                  <div className="apple-card">
+                  <div className="glass-card shadow-card">
                     <p className="section-title flex items-center">
                       <Map className="w-[18px] h-[18px] mr-2 text-primary-500" />
                       Learning Roadmap
@@ -503,11 +504,11 @@ const Dashboard = () => {
                     {/* Phase labels and time */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                       {['beginner', 'intermediate', 'advanced'].map((level, i) => {
-                        const phaseColors = ['#34c759', '#ff9500', '#0071e3'];
+                        const phaseColors = ['#10b981', '#f59e0b', '#06b6d4']; // Emerald, Amber, Cyan
                         const phaseLabels = ['Foundation', 'Intermediate', 'Advanced'];
                         const phaseWeeks = ['Week 1–4', 'Week 5–10', 'Week 11–16'];
                         return (
-                          <div key={level} className="bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-[14px] p-5 transition-colors duration-200">
+                          <div key={level} className="glass-panel border-t-[3px]" style={{ borderTopColor: phaseColors[i] }}>
                             {/* Phase header */}
                             <div className="flex items-center justify-between mb-3.5">
                               <div className="flex items-center gap-2">
@@ -537,10 +538,10 @@ const Dashboard = () => {
                                         style={{ background: phaseColors[i] }}
                                       />
                                     ) : (
-                                      <CheckCircle className="w-3.5 h-3.5 text-[#34c759] dark:text-[#32d74b] mt-[3px] shrink-0" />
+                                      <CheckCircle className="w-3.5 h-3.5 text-success mt-[3px] shrink-0" />
                                     )}
                                     <div className="flex-1 min-w-0">
-                                      <span className={`text-[13px] block ${item.isMissing ? 'text-on-surface dark:text-on-dark font-semibold' : 'text-[#aeaeb2] dark:text-[#636366] font-normal line-through'}`}>
+                                      <span className={`text-[13px] block ${item.isMissing ? 'text-on-surface dark:text-on-dark font-medium' : 'text-on-surface-variant dark:text-dark-muted font-normal line-through'}`}>
                                         {item.skill}
                                       </span>
                                       {/* Time + Resource row */}

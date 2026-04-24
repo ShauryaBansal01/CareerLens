@@ -33,7 +33,7 @@ exports.analyzeSkills = async (req, res) => {
     await UserAnalysis.findOneAndUpdate(
       { user: req.user.id },
       { user: req.user.id, roleId: roleId.toString(), roleName: role.roleName, analysis, scoring, roadmap: {} },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
     );
 
     res.status(200).json({ role: role.roleName, roleId: roleId.toString(), analysis, scoring });

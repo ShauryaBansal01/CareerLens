@@ -1,5 +1,24 @@
 const { GoogleGenAI } = require('@google/genai');
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const callGemini = async (params, maxRetries = 4) => {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await ai.models.generateContent({ ...params, model: 'gemini-2.5-flash' });
+    } catch (err) {
+      if ((err.status === 503 || err.status === 429) && i < maxRetries - 1) {
+        let delay = [5000, 15000, 30000][i] || 30000;
+        const m = String(err).match(/retry in ([\d\.]+)s/);
+        if (m) delay = Math.ceil(parseFloat(m[1]) * 1000) + 2000;
+        console.warn(`[Analysis] Gemini ${err.status}, retrying in ${Math.round(delay/1000)}s...`);
+        await sleep(delay);
+      } else throw err;
+    }
+  }
+};
+
 /**
  * Compares user skills to required skills intelligently via AI.
  * @param {Array<String>} userSkills 
@@ -17,7 +36,6 @@ exports.calculateSkillGapAI = async (userSkills, requiredSkills) => {
   let missingSkills = [...normalizedRequiredSkills];
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const prompt = `You are a strict technical recruiter AI. 
     The Target Role REQUIRES exactly these core skills: ${normalizedRequiredSkills.join(', ')}.
     The Candidate HAS exactly these skills: ${userSkills.join(', ')}.
@@ -29,8 +47,7 @@ exports.calculateSkillGapAI = async (userSkills, requiredSkills) => {
     }
     NOTE: The items in the arrays MUST EXACTLY MATCH the strings from the Target Role REQUIRED list. Do not use the candidate's alias spelling. Do not include markdown.`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+    const response = await callGemini({
       contents: prompt,
       config: { responseMimeType: "application/json" }
     });

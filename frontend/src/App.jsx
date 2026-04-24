@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import ResumeAI from './pages/ResumeAI';
 import ResumeLatex from './pages/ResumeLatex';
 import Admin from './pages/Admin';
+import Profile from './pages/Profile';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Moon, Sun, Menu, X } from 'lucide-react';
 
@@ -32,7 +33,7 @@ const Navbar = () => {
   const closeMenu = () => setMobileMenuOpen(false);
 
   return (
-    <nav className="apple-nav">
+    <nav className="glass-nav shadow-ambient">
       <div className="max-w-6xl mx-auto px-4 md:px-6 w-full flex items-center justify-between">
         {/* Logo */}
         <Link
@@ -40,10 +41,10 @@ const Navbar = () => {
           className="flex items-center gap-2.5 no-underline z-50"
           onClick={closeMenu}
         >
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shrink-0">
-            <span className="text-white font-bold text-[14px] tracking-tight">C</span>
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center shrink-0 shadow-glow-primary">
+            <span className="text-white font-bold text-[15px] tracking-tight">C</span>
           </div>
-          <span className="font-semibold text-[17px] text-on-surface dark:text-on-dark tracking-tight">
+          <span className="font-bold text-[18px] text-transparent bg-clip-text bg-gradient-to-r from-on-surface to-on-surface-variant dark:from-on-dark dark:to-outline-variant tracking-tight hover:animate-pulse">
             CareerLens
           </span>
         </Link>
@@ -57,6 +58,9 @@ const Navbar = () => {
               </Link>
               <Link to="/upload" className={navLinkClass('/upload')}>
                 Upload Resume
+              </Link>
+              <Link to="/profile" className={navLinkClass('/profile')}>
+                Profile
               </Link>
               <Link to="/resume-ai" className={navLinkClass('/resume-ai')}>
                 <Sparkles size={13} />
@@ -90,7 +94,7 @@ const Navbar = () => {
               </Link>
               <Link
                 to="/register"
-                className="btn-apple text-[14px] px-[18px] py-2"
+                className="btn-premium text-[14px] px-[20px] py-2"
               >
                 Get Started
               </Link>
@@ -131,7 +135,7 @@ const Navbar = () => {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="absolute top-[54px] left-0 right-0 bg-surface dark:bg-dark-surface border-b border-outline-variant dark:border-white/5 p-4 flex flex-col gap-2 shadow-lg md:hidden"
+              className="absolute top-[64px] left-0 right-0 bg-white/90 dark:bg-[#0a0a0c]/95 backdrop-blur-glass border-b border-black/5 dark:border-white/5 p-4 flex flex-col gap-2 shadow-ambient-hover md:hidden"
             >
               {user ? (
                 <>
@@ -140,6 +144,9 @@ const Navbar = () => {
                   </Link>
                   <Link to="/upload" onClick={closeMenu} className={navLinkClass('/upload')}>
                     Upload Resume
+                  </Link>
+                  <Link to="/profile" onClick={closeMenu} className={navLinkClass('/profile')}>
+                    Profile
                   </Link>
                   <Link to="/resume-ai" onClick={closeMenu} className={navLinkClass('/resume-ai')}>
                     <Sparkles size={16} /> Resume AI
@@ -172,7 +179,7 @@ const Navbar = () => {
                   <Link
                     to="/register"
                     onClick={closeMenu}
-                    className="btn-apple text-[15px] py-3 w-full"
+                    className="btn-premium text-[15px] py-3 w-full"
                   >
                     Get Started
                   </Link>
@@ -196,8 +203,8 @@ const PageWrapper = ({ children }) => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.2, ease: 'easeOut' }}
-        className="w-full flex flex-col min-h-[calc(100vh-54px)]"
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        className="w-full flex flex-col min-h-[calc(100vh-64px)]"
       >
         {children}
       </motion.div>
@@ -211,7 +218,7 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <Router>
-          <div className="min-h-screen bg-surface dark:bg-dark-surface transition-colors duration-200">
+          <div className="min-h-screen bg-transparent transition-colors duration-300">
             <Navbar />
             <div className="page-top">
               <Routes>
@@ -219,6 +226,7 @@ function App() {
                 <Route path="/login"      element={<PageWrapper><Login /></PageWrapper>} />
                 <Route path="/register"   element={<PageWrapper><Register /></PageWrapper>} />
                 <Route path="/upload"     element={<PageWrapper><UploadResume /></PageWrapper>} />
+                <Route path="/profile"    element={<PageWrapper><Profile /></PageWrapper>} />
                 <Route path="/resume-ai"  element={<PageWrapper><ResumeAI /></PageWrapper>} />
                 <Route path="/resume-latex" element={<PageWrapper><ResumeLatex /></PageWrapper>} />
                 <Route path="/admin"      element={<PageWrapper><Admin /></PageWrapper>} />
