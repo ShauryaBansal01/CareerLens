@@ -11,8 +11,9 @@ import ResumeAI from './pages/ResumeAI';
 import ResumeLatex from './pages/ResumeLatex';
 import Admin from './pages/Admin';
 import Profile from './pages/Profile';
+import CoverLetter from './pages/CoverLetter';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Moon, Sun, Menu, X } from 'lucide-react';
+import { Sparkles, Moon, Sun, Menu, X, FileText } from 'lucide-react';
 
 // ─── Apple-style Navbar ───────────────────────────────────────────────────────
 const Navbar = () => {
@@ -65,6 +66,10 @@ const Navbar = () => {
               <Link to="/resume-ai" className={navLinkClass('/resume-ai')}>
                 <Sparkles size={13} />
                 Resume AI
+              </Link>
+              <Link to="/cover-letter" className={navLinkClass('/cover-letter')}>
+                <FileText size={13} />
+                Cover Letter
               </Link>
               <Link to="/resume-latex" className={navLinkClass('/resume-latex')}>
                 LaTeX Builder
@@ -151,6 +156,9 @@ const Navbar = () => {
                   <Link to="/resume-ai" onClick={closeMenu} className={navLinkClass('/resume-ai')}>
                     <Sparkles size={16} /> Resume AI
                   </Link>
+                  <Link to="/cover-letter" onClick={closeMenu} className={navLinkClass('/cover-letter')}>
+                    <FileText size={16} /> Cover Letter
+                  </Link>
                   <Link to="/resume-latex" onClick={closeMenu} className={navLinkClass('/resume-latex')}>
                     LaTeX Builder
                   </Link>
@@ -228,6 +236,7 @@ function App() {
                 <Route path="/upload"     element={<PageWrapper><UploadResume /></PageWrapper>} />
                 <Route path="/profile"    element={<PageWrapper><Profile /></PageWrapper>} />
                 <Route path="/resume-ai"  element={<PageWrapper><ResumeAI /></PageWrapper>} />
+                <Route path="/cover-letter" element={<PageWrapper><CoverLetter /></PageWrapper>} />
                 <Route path="/resume-latex" element={<PageWrapper><ResumeLatex /></PageWrapper>} />
                 <Route path="/admin"      element={<PageWrapper><Admin /></PageWrapper>} />
               </Routes>

@@ -14,7 +14,8 @@ const {
   getVersionById,
   createVersion,
   updateVersion,
-  deleteVersion
+  deleteVersion,
+  generateCoverLetter
 } = require('../controllers/resumeController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -35,6 +36,7 @@ router.post('/upload', protect, upload.single('resume'), uploadResume);
 router.get('/', protect, getResume);
 router.post('/improve', protect, improveResume);
 router.post('/optimize', protect, optimizeForCompany);
+router.post('/cover-letter', protect, generateCoverLetter);
 
 // LaTeX Routes
 router.get('/latex', protect, getLatexCode);

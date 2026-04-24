@@ -651,5 +651,72 @@ exports.deleteVersion = async (req, res) => {
   }
 };
 
+// @desc    Generate a tailored cover letter
+// @route   POST /api/resume/cover-letter
+// @access  Private
+exports.generateCoverLetter = async (req, res) => {
+  try {
+    const { jobDescription, tone = "Professional" } = req.body;
+    
+    if (!jobDescription || jobDescription.trim().length < 20) {
+      return res.status(400).json({ message: 'Please provide a valid job description (minimum 20 characters).' });
+    }
 
+    const profile = await UserProfile.findOne({ user: req.user.id });
+    const resume = await Resume.findOne({ user: req.user.id });
 
+    if (!profile && !resume) {
+      return res.status(404).json({ message: 'No profile or resume found. Please upload your resume first.' });
+    }
+
+    let profileContext = '';
+    if (profile) {
+      profileContext = `
+      Name: ${profile.basics?.name || req.user.name || ''}
+      Email: ${profile.basics?.email || req.user.email || ''}
+      Skills: ${(profile.skills || []).join(', ')}
+      Experience: ${JSON.stringify(profile.experience || [])}
+      Projects: ${JSON.stringify(profile.projects || [])}
+      Education: ${JSON.stringify(profile.education || [])}
+      `.trim();
+    } else {
+      profileContext = `
+      Skills: ${resume.extractedSkills.join(', ')}
+      Education: ${resume.education}
+      Experience: ${resume.experience}
+      `.trim();
+    }
+
+    const prompt = `You are a world-class Executive Career Coach and Resume Writer. 
+Your task is to draft a highly personalized, ATS-friendly cover letter for a candidate applying to a specific job.
+
+CANDIDATE'S PROFILE:
+${profileContext}
+
+TARGET JOB DESCRIPTION:
+${jobDescription.substring(0, 4000)}
+
+INSTRUCTIONS:
+1. Tone: ${tone}. Be engaging, confident, and concise. Avoid being overly generic or robotic.
+2. Structure: 
+   - A strong opening hook that names the role.
+   - 1-2 body paragraphs highlighting specific, measurable achievements from the candidate's profile that directly map to the Job Description's top requirements.
+   - A concluding call-to-action expressing enthusiasm for an interview.
+3. Keep it under exactly 400 words.
+4. Do NOT include fake placeholder addresses like "[123 Main St]". Use the contact info provided, or just omit formal header addresses and start with "Dear Hiring Manager,".
+5. Emphasize the exact overlapping skills between the candidate and the job. Do NOT invent experience they do not have.
+
+Return ONLY the raw markdown text of the cover letter. Do not wrap in JSON.`;
+
+    const response = await callGeminiWithRetry({
+      model: 'gemini-2.5-flash',
+      contents: prompt
+    });
+
+    const coverLetterText = response.text.trim();
+    res.status(200).json({ coverLetter: coverLetterText });
+  } catch (error) {
+    console.error('Cover Letter Generation Error:', error);
+    res.status(500).json({ message: 'Failed to generate cover letter.' });
+  }
+};
