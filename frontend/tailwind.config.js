@@ -12,30 +12,27 @@ export default {
         display: ['-apple-system', 'BlinkMacSystemFont', 'Inter', 'sans-serif'],
       },
       colors: {
-        // Neon / Cyber premium palette
-        surface: '#f8fafc',
-        'surface-low': '#f1f5f9',
-        'surface-lowest': '#ffffff',
-        'surface-variant': '#e2e8f0',
-        'surface-high': '#cbd5e1',
+        surface: 'rgb(var(--color-surface) / <alpha-value>)',
+        'surface-low': 'rgb(var(--color-surface-low) / <alpha-value>)',
+        'surface-lowest': 'rgb(var(--color-surface-lowest) / <alpha-value>)',
+        'surface-variant': 'rgb(var(--color-surface-variant) / <alpha-value>)',
+        'surface-high': 'rgb(var(--color-surface-high) / <alpha-value>)',
         
-        // Deep Dark Mode for AI apps
-        'dark-surface': '#040405',
-        'dark-card': '#0a0a0c',
-        'dark-border': '#18181b',
-        'dark-hover': '#131316',
-        'dark-muted': '#71717a',
+        'dark-surface': 'rgb(var(--color-surface) / <alpha-value>)',
+        'dark-card': 'rgb(var(--color-card) / <alpha-value>)',
+        'dark-border': 'rgb(var(--color-border) / <alpha-value>)',
+        'dark-hover': 'rgb(var(--color-surface-variant) / <alpha-value>)',
+        'dark-muted': 'rgb(var(--color-muted) / <alpha-value>)',
         
-        // Vibrant Accents
         primary: {
-          400: '#a78bfa',
-          500: '#8b5cf6', // Violet
-          600: '#7c3aed',
+          400: 'rgb(var(--color-primary-400) / <alpha-value>)',
+          500: 'rgb(var(--color-primary-500) / <alpha-value>)',
+          600: 'rgb(var(--color-primary-600) / <alpha-value>)',
         },
         secondary: {
-          400: '#22d3ee',
-          500: '#06b6d4', // Cyan
-          600: '#0891b2',
+          400: 'rgb(var(--color-secondary-400) / <alpha-value>)',
+          500: 'rgb(var(--color-secondary-500) / <alpha-value>)',
+          600: 'rgb(var(--color-secondary-600) / <alpha-value>)',
         },
         tertiary: {
           400: '#34d399',
@@ -44,31 +41,32 @@ export default {
         },
 
         // Text
-        'on-surface': '#0f172a',
-        'on-surface-variant': '#64748b',
-        'on-dark': '#f8fafc',
+        'on-surface': 'rgb(var(--color-text) / <alpha-value>)',
+        'on-surface-variant': 'rgb(var(--color-muted) / <alpha-value>)',
+        'on-dark': 'rgb(var(--color-text) / <alpha-value>)',
         
         // System colors
         error: '#ef4444',
         success: '#10b981',
         warning: '#f59e0b',
         // Outline
-        'outline-variant': '#cbd5e1',
+        'outline-variant': 'rgb(var(--color-border) / <alpha-value>)',
       },
       letterSpacing: {
         tight: '-0.02em',
         tighter: '-0.03em',
       },
       borderRadius: {
-        'card': '20px',
-        'input': '12px',
+        'card': '8px',
+        'input': '8px',
         'pill': '9999px',
       },
       boxShadow: {
-        'ambient': '0 4px 40px rgba(0,0,0,0.08), 0 2px 10px rgba(0,0,0,0.04)',
-        'ambient-hover': '0 10px 50px rgba(139, 92, 246, 0.15), 0 4px 20px rgba(139, 92, 246, 0.1)',
-        'glow-primary': '0 0 20px rgba(139, 92, 246, 0.5)',
-        'glow-cyan': '0 0 20px rgba(6, 182, 212, 0.5)',
+        'card': 'var(--shadow-card)',
+        'ambient': 'var(--shadow-card)',
+        'ambient-hover': 'var(--shadow-card-hover)',
+        'glow-primary': 'var(--shadow-glow)',
+        'glow-cyan': 'var(--shadow-glow)',
         'glass': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.05)',
       },
       backdropBlur: {
