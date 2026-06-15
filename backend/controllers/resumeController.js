@@ -126,9 +126,11 @@ CRITICAL LATEX & DESIGN REQUIREMENTS:
 - The font must be a highly professional serif font (TeX Gyre Termes).
 - Disable page numbers with \\pagestyle{empty}.
 - Configure list formatting globally: \\setlist[itemize]{leftmargin=0.15in, label={--}, itemsep=2pt, parsep=0pt, topsep=2pt, partopsep=0pt}
+- Format section headers to be classic and distinct. Example: \\titleformat{\\section}{\\large\\bfseries\\scshape}{}{0em}{}[\\vspace{-0.5em}\\rule{\\textwidth}{0.5pt}]
+- CRITICAL: Do NOT put any formatting commands (like \\rule, \\vspace, or \\textbf) inside \\section{}. Just use pure text like \\section{Experience}.
 - Escape LaTeX special characters (e.g. &, %, $, #, _) directly in the text.
 - Header: Name large, centered, bold. Contact info centered below it on a single line, separated by pipes (|).
-- Sections (Education, Experience, Projects, Skills): Use a strict 4-corner layout for headers.
+- Sections (Education, Experience, Projects, Skills): Use a strict 4-corner layout for headers. Use regular text and line breaks (\\\\), NOT \\item for job headers.
 - Use bullet points (\\begin{itemize} \\item ... \\end{itemize}) ONLY for the descriptions/accomplishments.
 - Start output immediately with \\documentclass. Do NOT output any markdown blocks.
 
@@ -228,9 +230,9 @@ Analyze for ALL of the following and provide specific, actionable feedback:
 5. ATS optimization (keyword density, formatting for Applicant Tracking Systems)
 6. Impact statements (missing quantifiable achievements)
 
-Return EXACTLY this valid JSON structure (no markdown):
+Return EXACTLY this valid JSON structure (no markdown) and generate a unique score between 1-100 based on the actual resume quality:
 {
-  "score": 72,
+  "score": "<integer between 1-100 based on your honest evaluation>",
   "summary": "One sentence overall assessment of the resume quality",
   "critical": [
     {
@@ -258,7 +260,7 @@ critical = must fix before applying (3-5 items)
 suggested = would significantly improve the resume (3-5 items)
 good = things already done well (2-3 items)`;
 
-    const response = await ai.models.generateContent({
+    const response = await callGeminiWithRetry({
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: { responseMimeType: "application/json" }
@@ -304,9 +306,9 @@ ${jobDescription.substring(0, 3000)}
 
 Perform a deep gap analysis between the resume and the job description. Provide specific, actionable recommendations.
 
-Return EXACTLY this valid JSON (no markdown):
+Return EXACTLY this valid JSON (no markdown) and calculate a genuine match score between 1-100:
 {
-  "matchScore": 68,
+  "matchScore": "<integer between 1-100 representing the actual alignment>",
   "companySummary": "2 sentence summary of what the company/role is looking for",
   "add": [
     {
@@ -440,6 +442,7 @@ CRITICAL LATEX & DESIGN REQUIREMENTS:
 - Disable page numbers by including \\pagestyle{empty}.
 - Configure the list formatting globally for a clean, tight look: \\setlist[itemize]{leftmargin=0.15in, label={--}, itemsep=2pt, parsep=0pt, topsep=2pt, partopsep=0pt}
 - Format section headers to be classic and distinct. Example: \\titleformat{\\section}{\\large\\bfseries\\scshape}{}{0em}{}[\\vspace{-0.5em}\\rule{\\textwidth}{0.5pt}]
+- CRITICAL: Do NOT put any formatting commands (like \\rule, \\vspace, or \\textbf) inside \\section{}. Just use pure text like \\section{Experience}.
 - Ensure proper escaping of LaTeX special characters like &, %, $, #, _, {, }, ~, ^, \\ manually in the text. Do NOT define or use any custom macros like \\safeText for escaping. Escape them directly (e.g. \\%).
 - For the Header: The Name should be large, centered, and bold (e.g. \\begin{center}\\Huge\\textbf{Name}\\vspace{2pt}\\end{center}). Below it, output the contact info centered on a single line, separated by pipes (|) and hyperlinking the URLs.
 - For Sections (Education, Experience, Projects): Use a strict 4-corner layout for headers. Do NOT use \\item for headers. Just use regular text and line breaks (\\\\).

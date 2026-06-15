@@ -13,28 +13,31 @@ import Admin from './pages/Admin';
 import Profile from './pages/Profile';
 import CoverLetter from './pages/CoverLetter';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Moon, Sun, Menu, X, FileText } from 'lucide-react';
+import { Sparkles, Moon, Sun, Menu, X, FileText, Palette } from 'lucide-react';
 
 // ─── Apple-style Navbar ───────────────────────────────────────────────────────
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
-  const { theme, toggleTheme } = useContext(ThemeContext);
+  const { theme, setTheme, toggleTheme, themes } = useContext(ThemeContext);
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isActive = (path) => location.pathname === path;
 
+  const activeTheme = themes.find(item => item.id === theme) || themes[0];
+  const isDarkTheme = activeTheme.mode === 'dark';
+
   const navLinkClass = (path) =>
-    `text-[14px] font-normal px-3.5 py-1.5 rounded-lg text-decoration-none transition-colors duration-150 flex items-center gap-1.5 ${
+    `text-[14px] font-medium px-3.5 py-1.5 rounded-lg text-decoration-none transition-colors duration-150 flex items-center gap-1.5 ${
       isActive(path)
-        ? 'text-primary-500 bg-primary-500/10 dark:bg-primary-500/20'
+        ? 'text-on-surface dark:text-on-dark bg-surface-variant/70 dark:bg-dark-hover'
         : 'text-gray-500 dark:text-on-dark-muted hover:bg-surface-variant dark:hover:bg-dark-hover'
     }`;
 
   const closeMenu = () => setMobileMenuOpen(false);
 
   return (
-    <nav className="glass-nav shadow-ambient">
+    <nav className="glass-nav">
       <div className="max-w-6xl mx-auto px-4 md:px-6 w-full flex items-center justify-between">
         {/* Logo */}
         <Link
@@ -42,10 +45,10 @@ const Navbar = () => {
           className="flex items-center gap-2.5 no-underline z-50"
           onClick={closeMenu}
         >
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center shrink-0 shadow-glow-primary">
-            <span className="text-white font-bold text-[15px] tracking-tight">C</span>
+          <div className="w-8 h-8 rounded-lg border border-outline-variant bg-surface-low flex items-center justify-center shrink-0">
+            <span className="text-on-surface font-bold text-[15px] tracking-tight">C</span>
           </div>
-          <span className="font-bold text-[18px] text-transparent bg-clip-text bg-gradient-to-r from-on-surface to-on-surface-variant dark:from-on-dark dark:to-outline-variant tracking-tight hover:animate-pulse">
+          <span className="font-bold text-[18px] text-on-surface dark:text-on-dark tracking-tight">
             CareerLens
           </span>
         </Link>
@@ -106,13 +109,26 @@ const Navbar = () => {
             </div>
           )}
 
-          {/* Theme Toggle (Desktop) */}
+          <div className="ml-2 flex items-center gap-1.5 rounded-lg border border-outline-variant dark:border-dark-border bg-surface-low dark:bg-dark-card px-2 py-1">
+            <Palette size={15} className="text-primary-500" />
+            <select
+              value={theme}
+              onChange={event => setTheme(event.target.value)}
+              className="bg-transparent text-[13px] font-medium text-on-surface dark:text-on-dark outline-none cursor-pointer"
+              aria-label="Select theme"
+            >
+              {themes.map(item => (
+                <option key={item.id} value={item.id}>{item.label}</option>
+              ))}
+            </select>
+          </div>
           <button
             onClick={toggleTheme}
-            className="ml-2 p-2 rounded-full text-gray-500 dark:text-on-dark-muted hover:bg-surface-variant dark:hover:bg-dark-hover transition-colors"
-            aria-label="Toggle Theme"
+            className="p-2 rounded-lg text-gray-500 dark:text-on-dark-muted hover:bg-surface-variant dark:hover:bg-dark-hover transition-colors"
+            aria-label="Cycle theme"
+            title="Cycle theme"
           >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            {isDarkTheme ? <Sun size={18} /> : <Moon size={18} />}
           </button>
         </div>
 
@@ -120,9 +136,10 @@ const Navbar = () => {
         <div className="flex items-center gap-2 md:hidden z-50">
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-full text-gray-500 dark:text-on-dark-muted hover:bg-surface-variant dark:hover:bg-dark-hover transition-colors"
+            className="p-2 rounded-lg text-gray-500 dark:text-on-dark-muted hover:bg-surface-variant dark:hover:bg-dark-hover transition-colors"
+            aria-label="Cycle theme"
           >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            {isDarkTheme ? <Sun size={18} /> : <Moon size={18} />}
           </button>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -168,6 +185,18 @@ const Navbar = () => {
                     </Link>
                   )}
                   <div className="h-px w-full bg-outline-variant dark:bg-dark-border my-2" />
+                  <label className="px-3.5 py-2 text-[13px] font-semibold text-on-surface-variant dark:text-on-dark-muted flex items-center justify-between gap-3">
+                    Theme
+                    <select
+                      value={theme}
+                      onChange={event => setTheme(event.target.value)}
+                      className="premium-input py-1.5 px-2 text-[13px] max-w-[150px]"
+                    >
+                      {themes.map(item => (
+                        <option key={item.id} value={item.id}>{item.label}</option>
+                      ))}
+                    </select>
+                  </label>
                   <button
                     onClick={() => { logout(); closeMenu(); }}
                     className="text-left text-[14px] font-normal text-error px-3.5 py-2 hover:bg-surface-variant dark:hover:bg-dark-hover rounded-lg"
