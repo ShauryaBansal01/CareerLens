@@ -117,7 +117,7 @@ const Register = () => {
                   id="reg-name"
                   type="text"
                   className="apple-input w-full"
-                  placeholder="Shaurya Bansal"
+                  placeholder="Enter Your Name"
                   value={name}
                   onChange={e => setName(e.target.value)}
                   required
