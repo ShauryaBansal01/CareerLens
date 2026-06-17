@@ -25,6 +25,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['user', 'admin'],
     default: 'user'
+  },
+  defaultAIProvider: {
+    type: String,
+    enum: ['gemini', 'openai', 'anthropic'],
+    default: 'gemini'
   }
 }, { timestamps: true });
 
