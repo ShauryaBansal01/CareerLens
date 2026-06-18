@@ -71,13 +71,13 @@ exports.uploadResume = async (req, res) => {
         config: { responseMimeType: "application/json" }
       });
 
-      const parsedData = JSON.parse(response.text);
+      const parsedData = response.data;
       extractedSkills = parsedData.skills ? parsedData.skills.map(s => s.toLowerCase()) : [];
       education = parsedData.educationSummary || education;
       experience = parsedData.experienceSummary || experience;
       detailedProfile = parsedData.detailedProfile || null;
     } catch (aiError) {
-      console.error("Gemini Extraction Error:", aiError);
+      console.error("AI Extraction Error:", aiError);
       education = 'Analysis deferred (AI Key missing or error)';
       experience = 'Analysis deferred (AI Key missing or error)';
     }
@@ -145,7 +145,7 @@ Only return the raw, compiling LaTeX code.`;
         });
         rawLatexCode = latexResponse.text.replace(/^```(latex)?/im, '').replace(/```$/im, '').trim();
       } catch(err) {
-        console.error("Gemini Latex Generation Error:", err);
+        console.error("AI Latex Generation Error:", err);
       }
 
       if (resume) {
@@ -266,7 +266,7 @@ good = things already done well (2-3 items)`;
       config: { responseMimeType: "application/json" }
     });
 
-    const feedback = JSON.parse(response.text);
+    const feedback = response.data;
     res.status(200).json(feedback);
   } catch (error) {
     console.error('Resume Improve Error:', error);
@@ -344,7 +344,7 @@ keywords = top 5-8 ATS keywords from the job description missing in the resume`;
       config: { responseMimeType: "application/json" }
     });
 
-    const optimization = JSON.parse(response.text);
+    const optimization = response.data;
     res.status(200).json(optimization);
   } catch (error) {
     console.error('Resume Optimize Error:', error);

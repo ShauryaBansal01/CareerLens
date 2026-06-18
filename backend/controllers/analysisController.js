@@ -20,7 +20,7 @@ exports.analyzeSkills = async (req, res) => {
       return res.status(404).json({ message: 'Target role not found.' });
     }
 
-    const analysis = await analysisService.calculateSkillGapAI(resume.extractedSkills || [], role.requiredSkills || []);
+    const analysis = await analysisService.calculateSkillGapAI(req.ai, resume.extractedSkills || [], role.requiredSkills || []);
 
     const experienceScore  = resume.experience && resume.experience !== 'Not explicitly found' ? 20 : 5;
     const projectsScore    = 0;
