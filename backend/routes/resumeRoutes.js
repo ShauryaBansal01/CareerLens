@@ -18,6 +18,7 @@ const {
   generateCoverLetter
 } = require('../controllers/resumeController');
 const { protect } = require('../middleware/authMiddleware');
+const injectAI = require('../middleware/injectAI');
 
 // Setup multer memory storage
 const storage = multer.memoryStorage();
@@ -32,17 +33,17 @@ const upload = multer({
   }
 });
 
-router.post('/upload', protect, upload.single('resume'), uploadResume);
+router.post('/upload', protect, injectAI, upload.single('resume'), uploadResume);
 router.get('/', protect, getResume);
-router.post('/improve', protect, improveResume);
-router.post('/optimize', protect, optimizeForCompany);
-router.post('/cover-letter', protect, generateCoverLetter);
+router.post('/improve', protect, injectAI, improveResume);
+router.post('/optimize', protect, injectAI, optimizeForCompany);
+router.post('/cover-letter', protect, injectAI, generateCoverLetter);
 
 // LaTeX Routes
 router.get('/latex', protect, getLatexCode);
 router.post('/latex', protect, saveLatexCode);
-router.post('/latex/generate', protect, generateLatexTemplate);
-router.post('/latex/tailor', protect, tailorLatexToJob);
+router.post('/latex/generate', protect, injectAI, generateLatexTemplate);
+router.post('/latex/tailor', protect, injectAI, tailorLatexToJob);
 
 // Versioning Routes
 router.route('/versions')

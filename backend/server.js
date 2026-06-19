@@ -31,6 +31,7 @@ app.use('/api/roadmap', roadmapRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/keys', require('./routes/apiKeyRoutes'));
 
 app.get('/', (req, res) => {
   res.send('API is running...');
