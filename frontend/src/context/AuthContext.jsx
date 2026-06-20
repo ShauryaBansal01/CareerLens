@@ -2,6 +2,7 @@ import { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
 const AuthContext = createContext();
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -21,7 +22,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, { email, password });
+    const res = await axios.post(`${API_URL}/auth/login`, { email, password });
     if (res.data) {
       localStorage.setItem('user', JSON.stringify(res.data));
       setUser(res.data);
@@ -30,12 +31,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const sendOtp = async (email) => {
-    const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/send-otp`, { email });
+    const res = await axios.post(`${API_URL}/auth/send-otp`, { email });
     return res.data;
   };
 
   const register = async (name, email, password, role, otp) => {
-    const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/register`, { name, email, password, role, otp });
+    const res = await axios.post(`${API_URL}/auth/register`, { name, email, password, role, otp });
     if (res.data) {
       localStorage.setItem('user', JSON.stringify(res.data));
       setUser(res.data);

@@ -8,79 +8,87 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['-apple-system', 'BlinkMacSystemFont', 'Inter', 'sans-serif'],
-        display: ['-apple-system', 'BlinkMacSystemFont', 'Inter', 'sans-serif'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        display: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       colors: {
-        surface: 'rgb(var(--color-surface) / <alpha-value>)',
-        'surface-low': 'rgb(var(--color-surface-low) / <alpha-value>)',
-        'surface-lowest': 'rgb(var(--color-surface-lowest) / <alpha-value>)',
-        'surface-variant': 'rgb(var(--color-surface-variant) / <alpha-value>)',
-        'surface-high': 'rgb(var(--color-surface-high) / <alpha-value>)',
-        
-        'dark-surface': 'rgb(var(--color-surface) / <alpha-value>)',
-        'dark-card': 'rgb(var(--color-card) / <alpha-value>)',
-        'dark-border': 'rgb(var(--color-border) / <alpha-value>)',
-        'dark-hover': 'rgb(var(--color-surface-variant) / <alpha-value>)',
-        'dark-muted': 'rgb(var(--color-muted) / <alpha-value>)',
-        
+        // Theme Backgrounds
+        background: {
+          light: '#FAFBFD',
+          dark: '#0F172A',
+        },
+        card: {
+          light: '#FFFFFF',
+          dark: '#1E293B',
+        },
+        // Core Palette
         primary: {
-          400: 'rgb(var(--color-primary-400) / <alpha-value>)',
-          500: 'rgb(var(--color-primary-500) / <alpha-value>)',
-          600: 'rgb(var(--color-primary-600) / <alpha-value>)',
+          50: '#F0EFFF',
+          100: '#E4E1FF',
+          200: '#C9C4FF',
+          300: '#AFA6FF',
+          400: '#8E82FF',
+          500: '#6C5CE7', // Primary Purple
+          600: '#5649B9',
+          700: '#40378A',
+          800: '#2B255C',
+          900: '#15122E',
         },
         secondary: {
-          400: 'rgb(var(--color-secondary-400) / <alpha-value>)',
-          500: 'rgb(var(--color-secondary-500) / <alpha-value>)',
-          600: 'rgb(var(--color-secondary-600) / <alpha-value>)',
+          50: '#EEF2FF',
+          100: '#E0E7FF',
+          200: '#C7D2FE',
+          300: '#A5B4FC',
+          400: '#818CF8',
+          500: '#6366F1', // Indigo
+          600: '#4F46E5',
+          700: '#4338CA',
+          800: '#3730A3',
+          900: '#312E81',
         },
-        tertiary: {
-          400: '#34d399',
-          500: '#10b981', // Emerald
-          600: '#059669',
+        accent: {
+          50: '#F0FDF4',
+          100: '#DCFCE7',
+          200: '#BBF7D0',
+          300: '#86EFAC',
+          400: '#4ADE80',
+          500: '#22C55E', // Emerald Green
+          600: '#16A34A',
+          700: '#15803D',
+          800: '#166534',
+          900: '#14532D',
         },
-
-        // Text
-        'on-surface': 'rgb(var(--color-text) / <alpha-value>)',
-        'on-surface-variant': 'rgb(var(--color-muted) / <alpha-value>)',
-        'on-dark': 'rgb(var(--color-text) / <alpha-value>)',
+        // Semantic Colors
+        success: '#22C55E',
+        warning: '#F59E0B',
+        error: '#EF4444',
+        info: '#3B82F6',
         
-        // System colors
-        error: '#ef4444',
-        success: '#10b981',
-        warning: '#f59e0b',
-        // Outline
-        'outline-variant': 'rgb(var(--color-border) / <alpha-value>)',
-      },
-      letterSpacing: {
-        tight: '-0.02em',
-        tighter: '-0.03em',
+        // Borders and Text (Dark Mode variables mapped via CSS if needed, but explicit here is good too)
+        border: {
+          light: '#E2E8F0',
+          dark: '#334155',
+        },
+        muted: {
+          light: '#64748B',
+          dark: '#94A3B8',
+        }
       },
       borderRadius: {
-        'card': '8px',
-        'input': '8px',
-        'pill': '9999px',
+        'button': '14px',
+        'input': '14px',
+        'card': '16px',
+        'modal': '18px',
       },
       boxShadow: {
-        'card': 'var(--shadow-card)',
-        'ambient': 'var(--shadow-card)',
-        'ambient-hover': 'var(--shadow-card-hover)',
-        'glow-primary': 'var(--shadow-glow)',
-        'glow-cyan': 'var(--shadow-glow)',
-        'glass': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.05)',
-      },
-      backdropBlur: {
-        nav: '20px',
-        glass: '12px',
+        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+        'soft-hover': '0 8px 30px -4px rgba(0, 0, 0, 0.08)',
+        'soft-dark': '0 4px 20px -2px rgba(0, 0, 0, 0.2)',
+        'soft-dark-hover': '0 8px 30px -4px rgba(0, 0, 0, 0.3)',
       },
       animation: {
-        'fade-in': 'fadeIn 0.4s ease-out forwards',
-        'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-        'spin-slow': 'spin 3s linear infinite',
-        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'float': 'float 6s ease-in-out infinite',
-        'gradient-x': 'gradientX 15s ease infinite',
-        'border-beam': 'borderBeam 4s linear infinite',
+        'fade-in': 'fadeIn 0.3s ease-out forwards',
+        'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
       },
       keyframes: {
         fadeIn: {
@@ -88,31 +96,9 @@ export default {
           '100%': { opacity: 1 },
         },
         slideUp: {
-          '0%': { opacity: 0, transform: 'translateY(20px)' },
+          '0%': { opacity: 0, transform: 'translateY(10px)' },
           '100%': { opacity: 1, transform: 'translateY(0)' },
         },
-        float: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-10px)' },
-        },
-        gradientX: {
-          '0%, 100%': {
-              'background-size': '200% 200%',
-              'background-position': 'left center'
-          },
-          '50%': {
-              'background-size': '200% 200%',
-              'background-position': 'right center'
-          },
-        },
-        borderBeam: {
-          '100%': { transform: 'rotate(1turn)' }
-        }
-      },
-      backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'mesh-dark': 'radial-gradient(at 40% 20%, hsla(258,90%,66%,0.15) 0px, transparent 50%), radial-gradient(at 80% 0%, hsla(189,100%,56%,0.15) 0px, transparent 50%), radial-gradient(at 0% 50%, hsla(330,100%,71%,0.1) 0px, transparent 50%)',
-        'mesh-light': 'radial-gradient(at 40% 20%, hsla(258,90%,66%,0.08) 0px, transparent 50%), radial-gradient(at 80% 0%, hsla(189,100%,56%,0.08) 0px, transparent 50%), radial-gradient(at 0% 50%, hsla(330,100%,71%,0.05) 0px, transparent 50%)',
       }
     },
   },
