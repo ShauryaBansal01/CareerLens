@@ -49,12 +49,19 @@ By leveraging the **Google Gemini API**, CareerLens intelligently parses uploade
 - Never lose an old resume! CareerLens saves your **Base Resume** and creates new versioned entries for every tailored resume.
 - Keep track of which resume version you used for which job application.
 
-### 5. 🌙 Modern, Responsive UI
+### 5. ✉️ Cover Letter Generation
+- Automatically generate professional, tailored cover letters that match the tone of your resume and target job description.
+
+### 6. 🔑 Bring Your Own Keys (BYOK)
+- Support for multiple AI providers (OpenAI, Gemini).
+- Securely configure and manage your own API keys via the settings dashboard.
+
+### 7. 🌙 Modern, Responsive UI
 - Built with **React** and **Tailwind CSS**.
 - Fluid animations powered by **Framer Motion**.
 - First-class support for **Dark Mode** matching system preferences.
 
-### 6. 📧 Seamless Communication
+### 8. 📧 Seamless Communication
 - Integrated SMTP setup to handle welcome emails, password resets, and notifications.
 
 ---
@@ -72,7 +79,7 @@ By leveraging the **Google Gemini API**, CareerLens intelligently parses uploade
 - **Runtime**: Node.js
 - **Framework**: Express.js
 - **Database**: MongoDB (Mongoose ORM)
-- **AI Integration**: `@google/genai` (Google Gemini 2.5 Flash/Pro)
+- **AI Integration**: Multi-provider support (OpenAI & Google Gemini)
 - **Authentication**: JWT (JSON Web Tokens) & bcryptjs
 
 **Hosting & Deployment:**
@@ -122,7 +129,7 @@ Before you begin, ensure you have the following installed:
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/CareerLens.git
+git clone https://github.com/ShauryaBansal01/CareerLens.git
 cd CareerLens
 ```
 
@@ -195,7 +202,6 @@ Here is a brief overview of the main API routes available on the backend:
 ## 🔮 Future Roadmap
 
 - [ ] **In-Browser LaTeX Compilation**: Compile LaTeX directly to PDF in the browser using tools like PDFTeX.js or a dedicated microservice.
-- [ ] **Cover Letter Generation**: AI-generated cover letters that match the tone of the tailored resume and JD.
 - [ ] **Interview Prep Module**: AI-generated mock interview questions based on the uploaded resume and the target job description.
 - [ ] **LinkedIn Integration**: Sync basic profile data directly from LinkedIn using OAuth.
 
