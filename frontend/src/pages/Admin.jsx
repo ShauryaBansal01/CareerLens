@@ -3,7 +3,9 @@ import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Users, Briefcase, Map, Plus, Trash2, Database } from 'lucide-react';
+import { Users, Briefcase, Map, Plus, Database } from 'lucide-react';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const Admin = () => {
   const { user } = useContext(AuthContext);
@@ -28,7 +30,7 @@ const Admin = () => {
   const fetchStats = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/admin/stats`, config);
+      const res = await axios.get(`${API_URL}/admin/stats`, config);
       setStats(res.data);
     } catch (error) {
       console.error(error);
@@ -39,7 +41,7 @@ const Admin = () => {
     e.preventDefault();
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      await axios.post(`${import.meta.env.VITE_API_URL}/admin/role`, {
+      await axios.post(`${API_URL}/admin/role`, {
         roleName,
         requiredSkills: roleSkills.split(',').map(s => s.trim())
       }, config);
@@ -56,7 +58,7 @@ const Admin = () => {
     e.preventDefault();
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      await axios.post(`${import.meta.env.VITE_API_URL}/admin/project`, {
+      await axios.post(`${API_URL}/admin/project`, {
         title: projectTitle,
         description: projectDesc,
         requiredSkills: projectSkills.split(',').map(s => s.trim())

@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import { useState, useContext } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { FileText, Copy, Check, Sparkles, AlertCircle } from 'lucide-react';
@@ -26,12 +26,12 @@ const CoverLetter = () => {
       const config = {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${user.token}`,
         },
       };
 
       const res = await axios.post(
-        'http://localhost:5000/api/resume/cover-letter',
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/resume/cover-letter`,
         { jobDescription, tone },
         config
       );

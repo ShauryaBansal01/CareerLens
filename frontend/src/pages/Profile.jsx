@@ -4,6 +4,8 @@ import AuthContext from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import { Save, AlertCircle, Plus, Trash2 } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const Profile = () => {
   const { user } = useContext(AuthContext);
   const [profile, setProfile] = useState({
@@ -22,7 +24,7 @@ const Profile = () => {
     const fetchProfile = async () => {
       if (!user) return;
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/profile`, {
+        const res = await axios.get(`${API_URL}/profile`, {
           headers: { Authorization: `Bearer ${user.token}` }
         });
         setProfile(res.data);
@@ -41,7 +43,7 @@ const Profile = () => {
       setSaving(true);
       setError(null);
       setSuccess(false);
-      const res = await axios.put(`${import.meta.env.VITE_API_URL}/profile`, profile, {
+      const res = await axios.put(`${API_URL}/profile`, profile, {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       setProfile(res.data);

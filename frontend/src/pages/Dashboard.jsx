@@ -1,585 +1,543 @@
-import { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Label } from 'recharts';
-import AuthContext from '../context/AuthContext';
-import { ThemeContext } from '../context/ThemeContext';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
+import { motion } from 'framer-motion';
 import {
-  CheckCircle, XCircle, Briefcase, Map,
-  AlertTriangle, Target, Zap, TrendingUp, Award, UploadCloud,
-  ChevronRight,
+  AlertCircle,
+  ArrowRight,
+  Bot,
+  Code2,
+  FileText,
+  Gauge,
+  KeyRound,
+  Map,
+  PenTool,
+  Plus,
+  Rocket,
+  Settings,
+  Sparkles,
+  Target,
+  UploadCloud,
+  UserRound,
 } from 'lucide-react';
+import {
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+} from 'recharts';
+import AuthContext from '../context/AuthContext';
+import { Button } from '../components/ui/Button';
 
-// ── Accent bar colors for insights ────────────────────────────────────────────
-const INSIGHT_COLORS = ['#0071e3', '#34c759', '#ff9500', '#ff3b30', '#5856d6'];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// ── Stagger variants ───────────────────────────────────────────────────────────
+const fadeUp = {
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: 'easeOut' } },
+};
+
 const stagger = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.07 } },
-};
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+  show: { opacity: 1, transition: { staggerChildren: 0.05 } },
 };
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
-const StatCard = ({ label, value, caption, captionClass }) => (
-  <div className="glass-panel group relative overflow-hidden">
-    <div className="absolute inset-0 bg-gradient-to-br from-primary-500/0 to-primary-500/5 group-hover:to-primary-500/10 transition-colors duration-500 pointer-events-none" />
-    <p className="text-[13px] text-gray-500 dark:text-on-dark-muted font-medium mb-3 uppercase tracking-wider relative z-10">{label}</p>
-    <p className="stat-value relative z-10">{value}</p>
-    {caption && (
-      <p className={`text-[12px] mt-2 font-medium relative z-10 ${captionClass || 'text-gray-500 dark:text-dark-muted'}`}>
-        {caption}
-      </p>
-    )}
+const implementedFeatures = [
+  {
+    icon: UploadCloud,
+    title: 'Resume Upload & Parsing',
+    copy: 'Upload a PDF resume. The backend extracts skills, education, experience, profile data, and base LaTeX.',
+  },
+  {
+    icon: Gauge,
+    title: 'Resume Analyzer',
+    copy: 'Generate AI resume feedback with score, critical fixes, suggestions, and strengths.',
+  },
+  {
+    icon: Target,
+    title: 'Job Description Tailoring',
+    copy: 'Paste a JD to get match score, missing keywords, and concrete add/remove/modify guidance.',
+  },
+  {
+    icon: Code2,
+    title: 'LaTeX Resume Builder',
+    copy: 'Generate, edit, save, tailor, and manage resume versions from the backend.',
+  },
+  {
+    icon: PenTool,
+    title: 'Cover Letter Generator',
+    copy: 'Generate cover letters from your saved profile or resume and a target job description.',
+  },
+  {
+    icon: Map,
+    title: 'Role Gap Roadmap',
+    copy: 'Analyze a target role, then generate learning roadmap and project recommendations.',
+  },
+  {
+    icon: UserRound,
+    title: 'Profile Management',
+    copy: 'Edit professional basics, skills, experience, education, and projects.',
+  },
+  {
+    icon: KeyRound,
+    title: 'Bring Your Own AI Key',
+    copy: 'Save and validate supported AI provider keys for AI-powered endpoints.',
+  },
+];
+
+const Panel = ({ children, className = '' }) => (
+  <div className={`rounded-2xl border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.06)] ${className}`}>
+    {children}
   </div>
 );
 
-const Dashboard = () => {
-  const { user } = useContext(AuthContext);
-  const { theme } = useContext(ThemeContext);
-  const [resumeData, setResumeData]   = useState(null);
-  const [roles, setRoles]             = useState([]);
-  const [selectedRole, setSelectedRole] = useState('');
-  const [analysis, setAnalysis]       = useState(null);
-  const [roadmap, setRoadmap]         = useState(null);
-  const [projects, setProjects]       = useState([]);
-  const [loading, setLoading]         = useState(false);
+const EmptyState = ({ title, copy, action }) => (
+  <Panel className="p-8 text-center">
+    <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-[#6C5CE7]/10 text-[#6C5CE7]">
+      <UploadCloud className="h-5 w-5" />
+    </div>
+    <h2 className="text-xl font-extrabold text-slate-950">{title}</h2>
+    <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">{copy}</p>
+    {action}
+  </Panel>
+);
 
-  useEffect(() => {
-    if (user) fetchDashboardData();
-  }, [user]);
-
-  const fetchDashboardData = async () => {
-    try {
-      const cfg = { headers: { Authorization: `Bearer ${user.token}` } };
-      try {
-        const r = await axios.get(`${import.meta.env.VITE_API_URL}/resume`, cfg);
-        setResumeData(r.data);
-      } catch (e) {
-        if (e.response?.status === 404) setResumeData(null);
-      }
-      const rolesRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/analysis/roles`);
-      if (rolesRes.data && Array.isArray(rolesRes.data) && rolesRes.data.length > 0) {
-        setRoles(rolesRes.data);
-      } else {
-        // DB is empty (first launch or fresh deploy) — seed automatically
-        await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/analysis/seed`);
-        await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/roadmap/seed`);
-        await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/projects/seed`);
-        const seeded = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/analysis/roles`);
-        setRoles(Array.isArray(seeded.data) ? seeded.data : []);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const seedDatabase = async () => {
-    try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/analysis/seed`);
-      await axios.post(`${import.meta.env.VITE_API_URL}/roadmap/seed`);
-      await axios.post(`${import.meta.env.VITE_API_URL}/projects/seed`);
-      fetchDashboardData();
-    } catch (e) { console.error(e); }
-  };
-
-  const handleAnalyze = async () => {
-    if (!selectedRole) return;
-    setLoading(true);
-    try {
-      const cfg = { headers: { Authorization: `Bearer ${user.token}` } };
-      const analysisRes = await axios.post(
-        `${import.meta.env.VITE_API_URL}/analysis/analyze`,
-        { roleId: selectedRole },
-        cfg,
-      );
-      setAnalysis(analysisRes.data);
-      const { role: targetRoleName, analysis: { missingSkills } } = analysisRes.data;
-      try {
-        const roadmapRes = await axios.post(
-          `${import.meta.env.VITE_API_URL}/roadmap/generate`,
-          { roleName: targetRoleName, missingSkills },
-          cfg,
-        );
-        setRoadmap(roadmapRes.data);
-      } catch { setRoadmap(null); }
-      try {
-        const projectsRes = await axios.post(
-          `${import.meta.env.VITE_API_URL}/projects/recommend`,
-          { missingSkills },
-          cfg,
-        );
-        setProjects(projectsRes.data);
-      } catch { setProjects([]); }
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  };
-
-  // ── Not authenticated ──────────────────────────────────────────────────────
-  if (!user) {
-    return (
-      <div className="min-h-[calc(100vh-54px)] flex items-center justify-center p-6 bg-surface dark:bg-dark-surface transition-colors duration-200">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center max-w-[480px]"
-        >
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center mx-auto mb-7">
-            <Zap className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-4xl font-bold text-on-surface dark:text-on-dark tracking-tighter mb-3">
-            Navigate your career with AI.
-          </h1>
-          <p className="text-[17px] text-gray-500 dark:text-on-dark-muted mb-9">
-            Sign in to unlock skill gap analysis, personalized roadmaps, and job-fit scoring.
-          </p>
-          <div className="flex gap-3 justify-center flex-wrap">
-            <Link to="/login" className="btn-premium px-8 py-3.5 text-[16px]">
-              Sign In
+const Landing = () => (
+  <main className="bg-[#FAFBFD]">
+    <section className="border-b border-slate-200 bg-[radial-gradient(circle_at_50%_18%,rgba(108,92,231,0.14),transparent_32%),linear-gradient(180deg,#fff_0%,#FAFBFD_82%)]">
+      <div className="mx-auto max-w-[1180px] px-4 py-16 text-center sm:px-6 lg:py-20">
+        <motion.div variants={stagger} initial="hidden" animate="show">
+          <motion.div variants={fadeUp} className="mx-auto inline-flex items-center gap-2 rounded-full border border-[#6C5CE7]/15 bg-[#6C5CE7]/10 px-4 py-2 text-xs font-bold text-[#5144d8]">
+            <Sparkles className="h-3.5 w-3.5" />
+            AI career tools backed by implemented APIs
+          </motion.div>
+          <motion.h1 variants={fadeUp} className="mx-auto mt-8 max-w-[780px] text-4xl font-extrabold leading-[1.06] tracking-tight text-slate-950 sm:text-6xl">
+            Build, analyze, and tailor your resume with CareerLens
+          </motion.h1>
+          <motion.p variants={fadeUp} className="mx-auto mt-6 max-w-[720px] text-base font-medium leading-7 text-slate-600 sm:text-lg">
+            Upload your resume, generate AI feedback, tailor it to a job description, manage LaTeX versions, and create cover letters from the backend features already available.
+          </motion.p>
+          <motion.div variants={fadeUp} className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link to="/register">
+              <button className="inline-flex h-12 items-center justify-center rounded-xl bg-[#6C5CE7] px-6 text-sm font-bold text-white shadow-[0_16px_34px_rgba(108,92,231,0.28)] transition hover:bg-[#584bd4]">
+                Get Started
+              </button>
             </Link>
-            <Link to="/register" className="btn-secondary px-8 py-3.5 text-[16px]">
-              Create Account
+            <Link to="/login">
+              <button className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 text-sm font-bold text-slate-800 shadow-sm transition hover:border-[#6C5CE7]/30">
+                Log in <ArrowRight className="h-4 w-4" />
+              </button>
             </Link>
-          </div>
+          </motion.div>
         </motion.div>
       </div>
-    );
-  }
+    </section>
 
-  const chartData = analysis ? [
-    { name: 'Matched', value: analysis.analysis.matchedSkills.length, color: theme === 'dark' ? '#10b981' : '#059669' },
-    { name: 'Missing', value: analysis.analysis.missingSkills.length, color: theme === 'dark' ? '#ef4444' : '#dc2626' },
-  ] : [];
+    <section className="mx-auto max-w-[1180px] px-4 py-14 sm:px-6">
+      <div className="mb-8">
+        <h2 className="text-2xl font-extrabold tracking-tight text-slate-950">Implemented Product Surface</h2>
+        <p className="mt-2 text-sm font-medium text-slate-500">This UI only advertises flows that exist in the backend.</p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {implementedFeatures.map(({ icon: Icon, title, copy }) => (
+          <Panel key={title} className="p-5 transition hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(15,23,42,0.09)]">
+            <div className="mb-4 grid h-10 w-10 place-items-center rounded-xl bg-[#6C5CE7]/10 text-[#6C5CE7]">
+              <Icon className="h-4 w-4" />
+            </div>
+            <h3 className="text-sm font-extrabold text-slate-950">{title}</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-500">{copy}</p>
+          </Panel>
+        ))}
+      </div>
+    </section>
+  </main>
+);
 
-  const firstName = user?.name?.split(' ')[0] || 'there';
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+const ScoreRing = ({ value = 0, label = 'Score' }) => {
+  const safeValue = Number.isFinite(Number(value)) ? Math.max(0, Math.min(100, Number(value))) : 0;
+  const data = [
+    { name: 'Score', value: safeValue, color: '#6C5CE7' },
+    { name: 'Remaining', value: 100 - safeValue, color: '#EEF2F7' },
+  ];
 
   return (
-    <div className="bg-surface dark:bg-dark-surface min-h-[calc(100vh-54px)] px-4 md:px-6 pt-10 pb-20 transition-colors duration-200">
-      <div className="max-w-[1100px] mx-auto w-full">
-
-        {/* ── Hero greeting ──────────────────────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-          className="mb-12"
-        >
-          <h1 className="text-4xl md:text-5xl font-bold text-on-surface dark:text-on-dark tracking-tighter mb-3">
-            {greeting}, {firstName}.
-          </h1>
-          <p className="text-[17px] text-gray-500 dark:text-on-dark-muted mb-6">
-            {resumeData
-              ? 'Your resume is loaded. Select a target role to run a full analysis.'
-              : 'Upload your resume to get started with AI-powered career insights.'}
-          </p>
-          <div className="flex gap-3 flex-wrap">
-            {!resumeData && (
-              <Link to="/upload" className="btn-premium px-6 py-3">
-                Upload Resume
-              </Link>
-            )}
-          </div>
-        </motion.div>
-
-        {/* ── No resume — CTA banner ────────────────────────────────────────── */}
-        {!resumeData && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-gradient-to-br from-primary-500 to-primary-600 rounded-[20px] p-8 md:p-11 flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
-          >
-            <div>
-              <p className="text-[11px] font-semibold text-white/70 uppercase tracking-[0.08em] mb-2.5">
-                Step 1 — Get started
-              </p>
-              <h2 className="text-2xl md:text-[26px] font-bold text-white tracking-tight mb-2">
-                Upload your resume
-              </h2>
-              <p className="text-[15px] text-white/80">
-                Our AI extracts your skills and builds a personalized career roadmap.
-              </p>
-            </div>
-            <Link
-              to="/upload"
-              className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white text-[15px] font-semibold px-7 py-3.5 rounded-pill no-underline flex items-center gap-2 whitespace-nowrap transition-all flex-shrink-0 hover:shadow-ambient hover:-translate-y-0.5"
-            >
-              Get started <ChevronRight className="w-4 h-4" />
-            </Link>
-          </motion.div>
-        )}
-
-        {/* ── Resume loaded — role selector + skills ────────────────────────── */}
-        {resumeData && (
-          <motion.div variants={stagger} initial="hidden" animate="show">
-            {/* Role selector */}
-            <motion.div variants={fadeUp} className="mb-6">
-              <div className="glass-card relative overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-500/0 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-                
-                <p className="section-title flex items-center mb-1.5 relative z-10">
-                  <Briefcase className="w-[18px] h-[18px] mr-2 text-primary-500" />
-                  Choose a target role
-                </p>
-                <p className="text-[14px] text-gray-500 dark:text-on-dark-muted mb-6 relative z-10">
-                  We'll cross-reference your resume against real-world job requirements to generate your personalized career plan.
-                </p>
-                
-                <div className="flex flex-col gap-5 relative z-10">
-                  <div className="relative max-w-[400px]">
-                      <select
-                        value={selectedRole}
-                        onChange={e => setSelectedRole(e.target.value)}
-                        className="premium-input appearance-none w-full bg-white/60 dark:bg-white/5 backdrop-blur-md hover:border-primary-400 focus:ring-4 focus:ring-primary-500/20 shadow-inner"
-                      >
-                      <option value="" disabled>Select a role…</option>
-                      {Array.isArray(roles) && roles.map(r => (
-                        <option key={r._id} value={r._id}>{r.roleName}</option>
-                      ))}
-                    </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-primary-500">
-                      <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
-                        <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-3 flex-wrap items-center">
-                    {selectedRole ? (
-                      <button
-                        onClick={handleAnalyze}
-                        disabled={loading}
-                        className="btn-premium px-6 py-3"
-                      >
-                        {loading ? (
-                          <span className="flex items-center gap-2 text-white">
-                            <span className="premium-spinner border-white/30 border-t-white w-4 h-4" />
-                            Analyzing…
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-2">
-                            <Zap className="w-[18px] h-[18px]" />
-                            Analyze Profile
-                          </span>
-                        )}
-                      </button>
-                    ) : (
-                      <button
-                        disabled
-                        className="px-6 py-3 rounded-full font-semibold text-[15px] bg-[#f5f5f7] dark:bg-[#2c2c2e] text-[#aeaeb2] dark:text-[#636366] cursor-not-allowed transition-colors"
-                      >
-                        <span className="flex items-center gap-2">
-                          <Zap className="w-[18px] h-[18px]" />
-                          Analyze Profile
-                        </span>
-                      </button>
-                    )}
-                    <Link to="/upload" className="btn-secondary px-6 py-3">
-                      <span className="flex items-center gap-2">
-                        <UploadCloud className="w-[18px] h-[18px]" />
-                        Re-upload Resume
-                      </span>
-                    </Link>
-                    
-                    {roles.length === 0 && (
-                      <button onClick={seedDatabase} className="btn-secondary px-6 py-3">
-                        <AlertTriangle className="w-[18px] h-[18px] mr-2 inline" />
-                        Populate Data
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Extracted skills */}
-            <motion.div variants={fadeUp}>
-              <div className="glass-card mb-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
-                  <p className="section-title flex items-center mb-0">
-                    <Zap className="w-[18px] h-[18px] mr-2 text-primary-500" />
-                    Your skills
-                  </p>
-                  <span className="premium-pill self-start sm:self-auto">{resumeData.extractedSkills?.length || 0} detected</span>
-                </div>
-                {resumeData.extractedSkills?.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {resumeData.extractedSkills.map((s, i) => (
-                      <span key={i} className="premium-pill-gray">{s}</span>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-[14px] text-[#aeaeb2] dark:text-on-dark-muted">No specific skills detected.</p>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-
-        {/* ── Analysis results ──────────────────────────────────────────────── */}
-        <AnimatePresence>
-          {analysis && (
-            <motion.div
-              key="analysis-results"
-              variants={stagger}
-              initial="hidden"
-              animate="show"
-              className="mt-2"
-            >
-              {/* ── Stats row ── */}
-              <motion.div
-                variants={fadeUp}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
-              >
-                <StatCard
-                  label="Job Readiness Score"
-                  value={analysis.scoring?.totalJobReadinessScore}
-                  caption="out of 100"
-                />
-                <StatCard
-                  label="Skills Matched"
-                  value={analysis.analysis.matchedSkills.length}
-                  caption={`of ${analysis.analysis.matchedSkills.length + analysis.analysis.missingSkills.length} required`}
-                />
-                <StatCard
-                  label="Skill Gaps"
-                  value={analysis.analysis.missingSkills.length}
-                  caption="to close for this role"
-                  captionClass="text-error"
-                />
-                <StatCard
-                  label="Match Rate"
-                  value={`${Math.round(
-                    (analysis.analysis.matchedSkills.length /
-                      (analysis.analysis.matchedSkills.length + analysis.analysis.missingSkills.length)) *
-                      100,
-                  )}%`}
-                  caption="skill alignment"
-                  captionClass="text-success"
-                />
-              </motion.div>
-
-              {/* ── Score chart + gap analysis ── */}
-              <motion.div
-                variants={fadeUp}
-                className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6"
-              >
-                {/* Score chart */}
-                <div className="glass-card flex flex-col items-center justify-center lg:col-span-1 shadow-card">
-                  <p className="section-title self-start flex items-center w-full mb-5">
-                    <Award className="w-[18px] h-[18px] mr-2 text-primary-500" />
-                    Job Fit
-                  </p>
-                  <div className="w-full h-[180px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={chartData}
-                          innerRadius={52}
-                          outerRadius={72}
-                          paddingAngle={4}
-                          dataKey="value"
-                          stroke="none"
-                          cornerRadius={5}
-                          startAngle={90}
-                          endAngle={-270}
-                        >
-                          {chartData.map((entry, i) => (
-                            <Cell key={i} fill={entry.color} />
-                          ))}
-                          <Label
-                            content={({ viewBox }) => {
-                              const { cx, cy } = viewBox;
-                              const matchPct = Math.round(
-                                (analysis.analysis.matchedSkills.length /
-                                  (analysis.analysis.matchedSkills.length + analysis.analysis.missingSkills.length)) * 100
-                              );
-                              return (
-                                <g>
-                                  <text
-                                    x={cx}
-                                    y={cy - 6}
-                                    textAnchor="middle"
-                                    dominantBaseline="middle"
-                                    className="text-[26px] font-bold fill-on-surface dark:fill-on-dark font-sans tracking-tight"
-                                  >
-                                    {matchPct}%
-                                  </text>
-                                  <text
-                                    x={cx}
-                                    y={cy + 16}
-                                    textAnchor="middle"
-                                    dominantBaseline="middle"
-                                    className="text-[11px] font-medium fill-on-surface-variant dark:fill-dark-muted font-sans"
-                                  >
-                                    match
-                                  </text>
-                                </g>
-                              );
-                            }}
-                          />
-                        </Pie>
-                        <Tooltip
-                          contentStyle={{
-                            borderRadius: '12px',
-                            border: 'none',
-                            backgroundColor: theme === 'dark' ? '#2c2c2e' : '#ffffff',
-                            color: theme === 'dark' ? '#ffffff' : '#1d1d1f',
-                            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                          }}
-                          itemStyle={{ color: theme === 'dark' ? '#ffffff' : '#1d1d1f' }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex gap-4 mt-1">
-                    <span className="text-[12px] text-success flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-success inline-block" />
-                      Matched
-                    </span>
-                    <span className="text-[12px] text-error flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-error inline-block" />
-                      Missing
-                    </span>
-                  </div>
-                </div>
-
-                {/* Skill gap detail */}
-                <div className="glass-card lg:col-span-2 shadow-card">
-                  <p className="section-title flex items-center">
-                    <Target className="w-[18px] h-[18px] mr-2 text-primary-500" />
-                    Skill Gap Analysis — {analysis.role}
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Matched */}
-                    <div className="bg-success/5 dark:bg-success/10 border border-success/10 dark:border-success/20 rounded-2xl p-5 transition-colors duration-200">
-                      <p className="text-[11px] font-bold text-success uppercase tracking-[0.07em] flex items-center gap-1.5 mb-3.5">
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        Verified matches
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {analysis.analysis.matchedSkills.length > 0
-                          ? analysis.analysis.matchedSkills.map(s => (
-                              <span key={s} className="premium-pill-success">{s}</span>
-                            ))
-                          : <span className="text-[13px] text-dark-muted">None found.</span>
-                        }
-                      </div>
-                    </div>
-                    {/* Missing */}
-                    <div className="bg-error/5 dark:bg-error/10 border border-error/10 dark:border-error/20 rounded-2xl p-5 transition-colors duration-200">
-                      <p className="text-[11px] font-bold text-error uppercase tracking-[0.07em] flex items-center gap-1.5 mb-3.5">
-                        <XCircle className="w-3.5 h-3.5" />
-                        Skill gaps
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {analysis.analysis.missingSkills.length > 0
-                          ? analysis.analysis.missingSkills.map(s => (
-                              <span key={s} className="premium-pill-error">{s}</span>
-                            ))
-                          : <span className="text-[13px] text-success font-semibold">🎉 100% match!</span>
-                        }
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* ── Roadmap ── */}
-              <motion.div variants={fadeUp} className="gap-4">
-                {roadmap && (
-                  <div className="glass-card shadow-card">
-                    <p className="section-title flex items-center">
-                      <Map className="w-[18px] h-[18px] mr-2 text-primary-500" />
-                      Learning Roadmap
-                    </p>
-                    {/* Phase labels and time */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                      {['beginner', 'intermediate', 'advanced'].map((level, i) => {
-                        const phaseColors = ['#10b981', '#f59e0b', '#06b6d4']; // Emerald, Amber, Cyan
-                        const phaseLabels = ['Foundation', 'Intermediate', 'Advanced'];
-                        const phaseWeeks = ['Week 1–4', 'Week 5–10', 'Week 11–16'];
-                        return (
-                          <div key={level} className="glass-panel border-t-[3px]" style={{ borderTopColor: phaseColors[i] }}>
-                            {/* Phase header */}
-                            <div className="flex items-center justify-between mb-3.5">
-                              <div className="flex items-center gap-2">
-                                <div
-                                  className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
-                                  style={{ background: phaseColors[i] }}
-                                >
-                                  {i + 1}
-                                </div>
-                                <p className="text-[13px] font-semibold text-on-surface dark:text-on-dark">
-                                  {phaseLabels[i]}
-                                </p>
-                              </div>
-                              <span className="text-[10px] text-gray-500 dark:text-on-dark-muted bg-white dark:bg-dark-card px-2 py-0.5 rounded-full font-medium">
-                                {phaseWeeks[i]}
-                              </span>
-                            </div>
-
-                            {/* Skills list */}
-                            <ul className="list-none p-0 m-0 flex flex-col gap-2.5">
-                              {roadmap[level].map((item, idx) => (
-                                <li key={idx}>
-                                  <div className="flex items-start gap-2 mb-1">
-                                    {item.isMissing ? (
-                                      <div
-                                        className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0"
-                                        style={{ background: phaseColors[i] }}
-                                      />
-                                    ) : (
-                                      <CheckCircle className="w-3.5 h-3.5 text-success mt-[3px] shrink-0" />
-                                    )}
-                                    <div className="flex-1 min-w-0">
-                                      <span className={`text-[13px] block ${item.isMissing ? 'text-on-surface dark:text-on-dark font-medium' : 'text-on-surface-variant dark:text-dark-muted font-normal line-through'}`}>
-                                        {item.skill}
-                                      </span>
-                                      {/* Time + Resource row */}
-                                      {item.isMissing && (
-                                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                          {item.timeEstimate && (
-                                            <span className="text-[10px] text-gray-500 dark:text-on-dark-muted font-medium">⏱ {item.timeEstimate}</span>
-                                          )}
-                                          {item.resource && item.resource !== 'https://...' && (
-                                            <a
-                                              href={item.resource}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="text-[10px] text-primary-500 font-medium no-underline hover:underline"
-                                            >
-                                              Learn →
-                                            </a>
-                                          )}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+    <div className="relative h-36">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie data={data} dataKey="value" innerRadius={46} outerRadius={62} startAngle={90} endAngle={-270} stroke="none">
+            {data.map((entry) => <Cell key={entry.name} fill={entry.color} />)}
+          </Pie>
+          <Tooltip />
+        </PieChart>
+      </ResponsiveContainer>
+      <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
+        <div>
+          <p className="text-3xl font-extrabold text-slate-950">{safeValue}</p>
+          <p className="text-[11px] font-bold text-slate-500">{label}</p>
+        </div>
       </div>
     </div>
   );
+};
+
+const StatCard = ({ icon: Icon, title, value, copy }) => (
+  <Panel className="p-5">
+    <div className="mb-4 flex items-center justify-between">
+      <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#6C5CE7]/10 text-[#6C5CE7]"><Icon className="h-4 w-4" /></span>
+    </div>
+    <p className="text-3xl font-extrabold tracking-tight text-slate-950">{value}</p>
+    <p className="mt-1 text-xs font-extrabold text-slate-700">{title}</p>
+    <p className="mt-2 text-xs leading-5 text-slate-500">{copy}</p>
+  </Panel>
+);
+
+const WorkflowCard = ({ icon: Icon, title, copy, to, cta }) => (
+  <Panel className="flex h-full flex-col p-5 transition hover:-translate-y-0.5 hover:shadow-[0_22px_60px_rgba(15,23,42,0.09)]">
+    <div className="mb-4 flex items-start justify-between gap-4">
+      <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#6C5CE7]/10 text-[#6C5CE7]"><Icon className="h-4 w-4" /></span>
+      <ArrowRight className="h-4 w-4 text-slate-300" />
+    </div>
+    <h3 className="text-sm font-extrabold text-slate-950">{title}</h3>
+    <p className="mt-2 flex-1 text-sm leading-6 text-slate-500">{copy}</p>
+    <Link to={to} className="mt-5 inline-flex text-xs font-extrabold text-[#5144d8]">
+      {cta}
+    </Link>
+  </Panel>
+);
+
+const RoleAnalysis = ({ user, resume }) => {
+  const [roles, setRoles] = useState([]);
+  const [selectedRole, setSelectedRole] = useState('');
+  const [analysis, setAnalysis] = useState(null);
+  const [roadmap, setRoadmap] = useState(null);
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const { data } = await axios.get(`${API_URL}/analysis/roles`);
+        setRoles(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setError(err.response?.data?.message || 'Could not load target roles.');
+      }
+    };
+    fetchRoles();
+  }, []);
+
+  const seedRoles = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const { data } = await axios.post(`${API_URL}/analysis/seed`);
+      setRoles(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not seed roles.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const analyze = async () => {
+    if (!selectedRole) return;
+    setLoading(true);
+    setError('');
+    setAnalysis(null);
+    setRoadmap(null);
+    setProjects([]);
+
+    try {
+      const config = { headers: { Authorization: `Bearer ${user.token}` } };
+      const { data } = await axios.post(`${API_URL}/analysis/analyze`, { roleId: selectedRole }, config);
+      setAnalysis(data);
+
+      const missingSkills = data.analysis?.missingSkills || [];
+      if (missingSkills.length > 0) {
+        const roadmapRes = await axios.post(`${API_URL}/roadmap/generate`, { roleName: data.role, missingSkills }, config);
+        setRoadmap(roadmapRes.data);
+
+        const projectRes = await axios.post(`${API_URL}/projects/recommend`, { missingSkills }, config);
+        setProjects(Array.isArray(projectRes.data) ? projectRes.data : []);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Analysis failed. Check your resume and AI key configuration.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const matchData = useMemo(() => {
+    const matched = analysis?.analysis?.matchedSkills?.length || 0;
+    const missing = analysis?.analysis?.missingSkills?.length || 0;
+    return [
+      { name: 'Matched', value: matched, color: '#22C55E' },
+      { name: 'Missing', value: missing, color: '#EF4444' },
+    ];
+  }, [analysis]);
+
+  return (
+    <Panel className="p-5">
+      <div className="mb-5 flex flex-col justify-between gap-4 md:flex-row md:items-start">
+        <div>
+          <h2 className="text-lg font-extrabold text-slate-950">Role Gap Analysis</h2>
+          <p className="mt-1 text-sm text-slate-500">Backend endpoints used: roles, analysis, roadmap, and project recommendations.</p>
+        </div>
+        {roles.length === 0 && (
+          <Button onClick={seedRoles} isLoading={loading} variant="secondary" icon={Plus}>Seed Roles</Button>
+        )}
+      </div>
+
+      {!resume ? (
+        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm font-medium text-slate-500">
+          Upload a resume before running role analysis.
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3 md:flex-row">
+          <select
+            value={selectedRole}
+            onChange={(event) => setSelectedRole(event.target.value)}
+            className="h-11 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#6C5CE7] focus:ring-4 focus:ring-[#6C5CE7]/10"
+          >
+            <option value="">Select a target role</option>
+            {roles.map((role) => <option key={role._id} value={role._id}>{role.roleName}</option>)}
+          </select>
+          <Button onClick={analyze} isLoading={loading} disabled={!selectedRole} icon={Target}>Analyze Role Fit</Button>
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-600">
+          <AlertCircle className="h-4 w-4" />
+          {error}
+        </div>
+      )}
+
+      {analysis && (
+        <div className="mt-6 grid gap-5 xl:grid-cols-[260px_1fr]">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+            <p className="text-xs font-extrabold text-slate-500">Job Readiness</p>
+            <ScoreRing value={analysis.scoring?.totalJobReadinessScore || 0} label="readiness" />
+            <p className="text-center text-sm font-bold text-slate-800">{analysis.role}</p>
+          </div>
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                <p className="mb-3 text-xs font-extrabold uppercase text-emerald-700">Matched Skills</p>
+                <div className="flex flex-wrap gap-2">
+                  {(analysis.analysis?.matchedSkills || []).map((skill) => <span key={skill} className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-emerald-700">{skill}</span>)}
+                  {(analysis.analysis?.matchedSkills || []).length === 0 && <span className="text-sm text-emerald-700">No direct matches found.</span>}
+                </div>
+              </div>
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+                <p className="mb-3 text-xs font-extrabold uppercase text-red-700">Missing Skills</p>
+                <div className="flex flex-wrap gap-2">
+                  {(analysis.analysis?.missingSkills || []).map((skill) => <span key={skill} className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-red-700">{skill}</span>)}
+                  {(analysis.analysis?.missingSkills || []).length === 0 && <span className="text-sm text-emerald-700">No missing skills for this role.</span>}
+                </div>
+              </div>
+            </div>
+            <div className="h-48 rounded-xl border border-slate-200 bg-white p-3">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={matchData} dataKey="value" innerRadius={50} outerRadius={70} paddingAngle={4} stroke="none">
+                    {matchData.map((entry) => <Cell key={entry.name} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {roadmap && (
+        <div className="mt-6">
+          <h3 className="mb-3 text-sm font-extrabold text-slate-950">Generated Learning Roadmap</h3>
+          <div className="grid gap-4 lg:grid-cols-3">
+            {['beginner', 'intermediate', 'advanced'].map((level) => (
+              <div key={level} className="rounded-xl border border-slate-200 bg-white p-4">
+                <p className="mb-3 text-xs font-extrabold uppercase text-[#5144d8]">{level}</p>
+                <div className="space-y-3">
+                  {(roadmap[level] || []).map((item, index) => (
+                    <div key={`${item.skill}-${index}`} className="rounded-lg bg-slate-50 p-3">
+                      <p className="text-xs font-extrabold text-slate-800">{item.skill}</p>
+                      <p className="mt-1 text-[11px] font-semibold text-slate-500">{item.timeEstimate || 'Self-paced'}</p>
+                      {item.resource && <a href={item.resource} target="_blank" rel="noreferrer" className="mt-2 block text-[11px] font-bold text-[#5144d8]">Open resource</a>}
+                    </div>
+                  ))}
+                  {(roadmap[level] || []).length === 0 && <p className="text-xs text-slate-400">No items generated.</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {projects.length > 0 && (
+        <div className="mt-6">
+          <h3 className="mb-3 text-sm font-extrabold text-slate-950">Generated Project Recommendations</h3>
+          <div className="grid gap-4 lg:grid-cols-3">
+            {projects.map((project) => (
+              <div key={project.title} className="rounded-xl border border-slate-200 bg-white p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-extrabold text-slate-950">{project.title}</p>
+                  <span className="rounded-full bg-[#6C5CE7]/10 px-2 py-1 text-[10px] font-bold text-[#5144d8]">{project.difficulty || 'Project'}</span>
+                </div>
+                <p className="text-xs leading-5 text-slate-500">{project.description}</p>
+                <p className="mt-3 text-[11px] font-bold text-slate-500">Deploy: {project.deployTarget || 'Your choice'}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </Panel>
+  );
+};
+
+const Workspace = ({ user }) => {
+  const [resume, setResume] = useState(null);
+  const [resumeLoading, setResumeLoading] = useState(true);
+  const [resumeError, setResumeError] = useState('');
+  const firstName = user?.name?.split(' ')[0] || 'there';
+
+  useEffect(() => {
+    const fetchResume = async () => {
+      if (!user?.token) return;
+      setResumeLoading(true);
+      setResumeError('');
+      try {
+        const { data } = await axios.get(`${API_URL}/resume`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        setResume(data);
+      } catch (err) {
+        if (err.response?.status !== 404) {
+          setResumeError(err.response?.data?.message || 'Could not load resume data.');
+        }
+        setResume(null);
+      } finally {
+        setResumeLoading(false);
+      }
+    };
+    fetchResume();
+  }, [user]);
+
+  const skills = resume?.extractedSkills || [];
+  const hasLatex = Boolean(resume?.rawLatexCode);
+
+  return (
+    <main className="min-h-[calc(100vh-64px)] bg-[#FAFBFD]">
+      <div className="mx-auto max-w-[1460px] px-4 py-6 sm:px-6">
+        <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-5">
+          <motion.div variants={fadeUp} className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-wide text-[#6C5CE7]">CareerLens Dashboard</p>
+              <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">Welcome back, {firstName}</h1>
+              <p className="mt-2 text-sm font-medium text-slate-500">Everything shown here is backed by an implemented backend endpoint.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link to="/upload"><Button icon={UploadCloud}>Upload Resume</Button></Link>
+              <Link to="/settings/keys"><Button variant="secondary" icon={KeyRound}>AI Keys</Button></Link>
+            </div>
+          </motion.div>
+
+          {resumeError && (
+            <motion.div variants={fadeUp} className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-600">
+              <AlertCircle className="h-4 w-4" />
+              {resumeError}
+            </motion.div>
+          )}
+
+          {!resumeLoading && !resume && (
+            <motion.div variants={fadeUp}>
+              <EmptyState
+                title="Upload a resume to unlock AI features"
+                copy="The backend needs a parsed resume before it can improve your resume, tailor it to jobs, generate LaTeX, create cover letters, or run role gap analysis."
+                action={<Link to="/upload" className="mt-6 inline-flex"><Button icon={UploadCloud}>Upload Resume</Button></Link>}
+              />
+            </motion.div>
+          )}
+
+          <motion.div variants={fadeUp} className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <StatCard icon={FileText} title="Resume Status" value={resume ? 'Loaded' : 'Missing'} copy={resume ? 'Parsed resume data is available.' : 'Upload a PDF to begin.'} />
+            <StatCard icon={Sparkles} title="Extracted Skills" value={skills.length} copy="Skills extracted from your resume upload." />
+            <StatCard icon={Code2} title="LaTeX Resume" value={hasLatex ? 'Ready' : 'Not yet'} copy="Generated when resume upload or builder succeeds." />
+            <StatCard icon={Bot} title="AI Provider" value="BYOK" copy="AI endpoints use your saved key or server default." />
+          </motion.div>
+
+          {resume && (
+            <motion.div variants={fadeUp} className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+              <Panel className="p-5">
+                <div className="mb-5 flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-lg font-extrabold text-slate-950">Parsed Resume Data</h2>
+                    <p className="mt-1 text-sm text-slate-500">From GET /api/resume.</p>
+                  </div>
+                  <Link to="/profile" className="text-xs font-extrabold text-[#5144d8]">Edit Profile</Link>
+                </div>
+                <div className="mb-5 flex flex-wrap gap-2">
+                  {skills.length > 0 ? skills.map((skill) => (
+                    <span key={skill} className="rounded-full bg-[#6C5CE7]/10 px-3 py-1 text-xs font-bold text-[#5144d8]">{skill}</span>
+                  )) : <span className="text-sm text-slate-500">No skills detected.</span>}
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <p className="mb-2 text-xs font-extrabold uppercase text-slate-500">Education</p>
+                    <p className="text-sm leading-6 text-slate-700">{resume.education || 'Not detected'}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <p className="mb-2 text-xs font-extrabold uppercase text-slate-500">Experience</p>
+                    <p className="text-sm leading-6 text-slate-700">{resume.experience || 'Not detected'}</p>
+                  </div>
+                </div>
+              </Panel>
+
+              <Panel className="p-5">
+                <h2 className="text-lg font-extrabold text-slate-950">Available Resume Actions</h2>
+                <div className="mt-4 grid gap-3">
+                  <Link to="/resume-ai" className="flex items-center gap-3 rounded-xl border border-slate-200 p-4 transition hover:border-[#6C5CE7]/30 hover:bg-[#6C5CE7]/5">
+                    <Gauge className="h-5 w-5 text-[#6C5CE7]" />
+                    <span><span className="block text-sm font-extrabold text-slate-950">Improve or optimize resume</span><span className="text-xs text-slate-500">POST /resume/improve and /resume/optimize</span></span>
+                  </Link>
+                  <Link to="/resume-latex" className="flex items-center gap-3 rounded-xl border border-slate-200 p-4 transition hover:border-[#6C5CE7]/30 hover:bg-[#6C5CE7]/5">
+                    <Code2 className="h-5 w-5 text-[#6C5CE7]" />
+                    <span><span className="block text-sm font-extrabold text-slate-950">Open LaTeX builder</span><span className="text-xs text-slate-500">Generate, tailor, and version resumes</span></span>
+                  </Link>
+                  <Link to="/cover-letter" className="flex items-center gap-3 rounded-xl border border-slate-200 p-4 transition hover:border-[#6C5CE7]/30 hover:bg-[#6C5CE7]/5">
+                    <PenTool className="h-5 w-5 text-[#6C5CE7]" />
+                    <span><span className="block text-sm font-extrabold text-slate-950">Generate cover letter</span><span className="text-xs text-slate-500">POST /resume/cover-letter</span></span>
+                  </Link>
+                </div>
+              </Panel>
+            </motion.div>
+          )}
+
+          <motion.div variants={fadeUp}>
+            <RoleAnalysis user={user} resume={resume} />
+          </motion.div>
+
+          <motion.div variants={fadeUp}>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <WorkflowCard icon={UploadCloud} title="Upload Resume" copy="Parse PDF resume, extract profile data, and create base LaTeX." to="/upload" cta="Open uploader" />
+              <WorkflowCard icon={Gauge} title="Resume Analyzer" copy="Get AI improvement feedback and job-description optimization." to="/resume-ai" cta="Open analyzer" />
+              <WorkflowCard icon={Code2} title="LaTeX Versions" copy="Generate, save, update, delete, and tailor LaTeX versions." to="/resume-latex" cta="Open builder" />
+              <WorkflowCard icon={KeyRound} title="API Keys" copy="Manage supported AI provider keys used by protected AI routes." to="/settings/keys" cta="Manage keys" />
+              <WorkflowCard icon={PenTool} title="Cover Letter" copy="Create a tailored cover letter from resume/profile data." to="/cover-letter" cta="Generate letter" />
+              <WorkflowCard icon={UserRound} title="Profile" copy="Edit professional profile fields used by generation flows." to="/profile" cta="Edit profile" />
+              <WorkflowCard icon={Settings} title="Admin" copy="Admin-only role/project management and stats routes." to="/admin" cta="Open admin" />
+              <WorkflowCard icon={Rocket} title="Role Roadmap" copy="Use the analysis card above to generate roadmap and projects." to="/" cta="Use dashboard" />
+            </div>
+          </motion.div>
+        </motion.div>
+      </div>
+    </main>
+  );
+};
+
+const Dashboard = () => {
+  const { user } = useContext(AuthContext);
+  return user ? <Workspace user={user} /> : <Landing />;
 };
 
 export default Dashboard;
