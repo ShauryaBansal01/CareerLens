@@ -19,6 +19,8 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: 'easeOut' } },
 };
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 // ── Score ring component ───────────────────────────────────────────────────────
 const ScoreRing = ({ score, size = 80 }) => {
   const r = (size - 8) / 2;
@@ -226,6 +228,10 @@ const Spinner = ({ label }) => (
   </div>
 );
 
+const cardClass = "rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-900";
+const panelClass = "rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-950/60";
+const primaryButtonClass = "inline-flex items-center justify-center gap-2 rounded-xl bg-[#6C5CE7] px-5 py-3 text-sm font-bold text-white shadow-[0_14px_28px_rgba(108,92,231,0.24)] transition hover:bg-[#584bd4] disabled:cursor-not-allowed disabled:opacity-50";
+
 // ── Main Page ──────────────────────────────────────────────────────────────────
 const ResumeAI = () => {
   const { user } = useContext(AuthContext);
@@ -249,7 +255,7 @@ const ResumeAI = () => {
     setImproveError('');
     setImproveFeedback(null);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/resume/improve`, {}, cfg);
+      const res = await axios.post(`${API_URL}/resume/improve`, {}, cfg);
       setImproveFeedback(res.data);
     } catch (err) {
       setImproveError(err.response?.data?.message || 'Could not generate feedback. Please try again.');
@@ -267,7 +273,7 @@ const ResumeAI = () => {
     setOptimizeError('');
     setOptimizeResult(null);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/resume/optimize`, { jobDescription: jobDesc }, cfg);
+      const res = await axios.post(`${API_URL}/resume/optimize`, { jobDescription: jobDesc }, cfg);
       setOptimizeResult(res.data);
     } catch (err) {
       setOptimizeError(err.response?.data?.message || 'Could not generate optimization. Please try again.');
@@ -284,7 +290,7 @@ const ResumeAI = () => {
           <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-5" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight mb-2">Sign in required</h2>
           <p className="text-gray-500 dark:text-gray-400 text-[15px] mb-7">Sign in and upload your resume to use AI Resume tools.</p>
-          <Link to="/login" className="btn-premium px-7 py-3 no-underline inline-block">Sign In</Link>
+          <Link to="/login" className={primaryButtonClass}>Sign In</Link>
         </div>
       </div>
     );
@@ -315,7 +321,7 @@ const ResumeAI = () => {
             SECTION 1 — Improve Your Resume
         ══════════════════════════════════════════════════════════════════════ */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}>
-          <div className="glass-card mb-6">
+          <div className={`${cardClass} mb-6`}>
 
             {/* Header */}
             <div className="flex items-start justify-between gap-4 mb-7 flex-wrap">
@@ -350,7 +356,7 @@ const ResumeAI = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 text-center max-w-[380px]">
                   Our AI will review your resume like a senior recruiter at a top tech company.
                 </p>
-                <button onClick={handleImprove} className="btn-premium px-8 py-3.5 text-[15px] flex items-center gap-2">
+                <button onClick={handleImprove} className={primaryButtonClass}>
                   Analyze My Resume
                   <ArrowRight className="w-4 h-4" />
                 </button>
@@ -376,7 +382,7 @@ const ResumeAI = () => {
                   {/* Score banner */}
                   <motion.div
                     variants={fadeUp}
-                    className="glass-panel flex items-center gap-5 mb-7"
+                    className={`${panelClass} flex items-center gap-5 mb-7`}
                   >
                     <ScoreRing score={improveFeedback.score || 0} size={80} />
                     <div className="flex-1">
@@ -449,7 +455,7 @@ const ResumeAI = () => {
             SECTION 2 — Optimize Resume for Company
         ══════════════════════════════════════════════════════════════════════ */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
-          <div className="glass-card">
+          <div className={cardClass}>
 
             {/* Header */}
             <div className="mb-7">
@@ -477,7 +483,7 @@ const ResumeAI = () => {
                 value={jobDesc}
                 onChange={e => { setJobDesc(e.target.value); setOptimizeError(''); }}
                 placeholder="Paste the full job description, role requirements, or company overview here…&#10;&#10;Example: 'We are looking for a React Developer with experience in TypeScript, Next.js, AWS, and GraphQL. The ideal candidate has 2+ years of frontend experience and has shipped production-grade applications...'"
-                className="premium-input min-h-[180px] resize-y"
+                className="block min-h-[220px] w-full resize-y rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#6C5CE7] focus:ring-4 focus:ring-[#6C5CE7]/10 dark:border-slate-800 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500"
               />
               <div className="flex justify-between mt-1.5">
                 <p className={`text-xs ${jobDesc.length < 20 ? 'text-red-500' : 'text-gray-400'}`}>
@@ -504,7 +510,7 @@ const ResumeAI = () => {
             <button
               onClick={handleOptimize}
               disabled={optimizeLoading || jobDesc.trim().length < 20}
-              className={`btn-premium w-full py-3.5 rounded-xl mb-${optimizeResult || optimizeLoading ? '8' : '0'}`}
+              className={`${primaryButtonClass} w-full ${optimizeResult || optimizeLoading ? 'mb-8' : 'mb-0'}`}
             >
               {optimizeLoading
                 ? <span className="flex items-center justify-center gap-2.5">

@@ -7,6 +7,8 @@ import { Play, Download, Save, Sparkles, FileText, CheckCircle2, AlertCircle, X,
 import AuthContext from '../context/AuthContext';
 import { useContext } from 'react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const ResumeLatex = () => {
   const { user } = useContext(AuthContext);
   const [latexCode, setLatexCode] = useState('');
@@ -48,17 +50,17 @@ const ResumeLatex = () => {
     if (!user) return;
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/resume/versions`, config);
+      const { data } = await axios.get(`${API_URL}/resume/versions`, config);
       
       if (data && data.length > 0) {
         setVersions(data);
         await loadVersion(data[0]._id, config);
       } else {
         // Fallback to legacy GET /latex
-        const legacy = await axios.get(`${import.meta.env.VITE_API_URL}/resume/latex`, config);
+        const legacy = await axios.get(`${API_URL}/resume/latex`, config);
         if (legacy.data.rawLatexCode) {
           // Auto migrate
-          const res = await axios.post(`${import.meta.env.VITE_API_URL}/resume/versions`, {
+          const res = await axios.post(`${API_URL}/resume/versions`, {
             title: 'Base Resume',
             rawLatexCode: legacy.data.rawLatexCode,
             isBaseResume: true
@@ -78,7 +80,7 @@ const ResumeLatex = () => {
   const loadVersion = async (id, configObj = null) => {
     try {
       const config = configObj || { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/resume/versions/${id}`, config);
+      const { data } = await axios.get(`${API_URL}/resume/versions/${id}`, config);
       setLatexCode(data.rawLatexCode);
       setActiveVersionId(id);
       setPdfUrl(''); // reset preview
@@ -107,12 +109,12 @@ const ResumeLatex = () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
       if (activeVersionId) {
-        await axios.put(`${import.meta.env.VITE_API_URL}/resume/versions/${activeVersionId}`, { rawLatexCode: latexCode }, config);
+        await axios.put(`${API_URL}/resume/versions/${activeVersionId}`, { rawLatexCode: latexCode }, config);
         const updatedVersions = versions.map(v => v._id === activeVersionId ? { ...v, rawLatexCode: latexCode } : v);
         setVersions(updatedVersions);
         showToast('Version saved successfully');
       } else {
-        const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/resume/versions`, { title: 'Untitled Version', rawLatexCode: latexCode }, config);
+        const { data } = await axios.post(`${API_URL}/resume/versions`, { title: 'Untitled Version', rawLatexCode: latexCode }, config);
         setVersions([data, ...versions]);
         setActiveVersionId(data._id);
         showToast('Created and saved successfully');
@@ -127,7 +129,7 @@ const ResumeLatex = () => {
     if (!user || !saveAsTitle.trim()) return;
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/resume/versions`, { 
+      const { data } = await axios.post(`${API_URL}/resume/versions`, { 
         title: saveAsTitle, 
         rawLatexCode: latexCode 
       }, config);
@@ -146,7 +148,7 @@ const ResumeLatex = () => {
     if (!window.confirm("Are you sure you want to delete this version?")) return;
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      await axios.delete(`${import.meta.env.VITE_API_URL}/resume/versions/${id}`, config);
+      await axios.delete(`${API_URL}/resume/versions/${id}`, config);
       const newVersions = versions.filter(v => v._id !== id);
       setVersions(newVersions);
       if (activeVersionId === id) {
@@ -167,7 +169,7 @@ const ResumeLatex = () => {
     setShowWizard(true);
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/resume/`, config);
+      const { data } = await axios.get(`${API_URL}/resume/`, config);
       
       if (data) {
         setResumeData(prev => ({
@@ -189,7 +191,7 @@ const ResumeLatex = () => {
     setShowWizard(false); // Close modal while loading
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/resume/latex/generate`, { resumeData }, config);
+      const { data } = await axios.post(`${API_URL}/resume/latex/generate`, { resumeData }, config);
       setLatexCode(data.rawLatexCode);
       showToast('Generated successfully with AI Magic!');
     } catch (error) {
@@ -212,10 +214,10 @@ const ResumeLatex = () => {
     setShowTailorWizard(false);
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/resume/latex/tailor`, { jobDescription: jobDescriptionText }, config);
+      const { data } = await axios.post(`${API_URL}/resume/latex/tailor`, { jobDescription: jobDescriptionText }, config);
       setLatexCode(data.rawLatexCode);
       
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/resume/versions`, { 
+      const res = await axios.post(`${API_URL}/resume/versions`, { 
         title: tailorVersionTitle, 
         targetCompany: targetCompany,
         targetJobDescription: jobDescriptionText,

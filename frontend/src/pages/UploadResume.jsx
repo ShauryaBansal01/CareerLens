@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UploadCloud, FileText, AlertCircle, CheckCircle } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const UploadResume = () => {
   const [file, setFile]             = useState(null);
   const [loading, setLoading]       = useState(false);
@@ -42,7 +44,7 @@ const UploadResume = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/resume/upload`, formData, {
+      const res = await axios.post(`${API_URL}/resume/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${user.token}`,
@@ -122,7 +124,7 @@ const UploadResume = () => {
             >
               <input
                 type="file"
-                accept="application/pdf,.docx,.doc"
+                accept="application/pdf,.pdf"
                 ref={fileInputRef}
                 onChange={handleFileChange}
                 className="hidden"
@@ -172,7 +174,7 @@ const UploadResume = () => {
 
             {/* File format pills */}
             <div className="flex gap-2 flex-wrap mb-8">
-              {['PDF', 'DOCX', 'DOC'].map(fmt => (
+              {['PDF only'].map(fmt => (
                 <span key={fmt} className="premium-pill-gray">{fmt}</span>
               ))}
             </div>
