@@ -130,7 +130,27 @@ const UploadResume = () => {
                 className="hidden"
               />
               <AnimatePresence mode="wait">
-                {!file ? (
+                {loading ? (
+                  <motion.div
+                    key="loading"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-center py-4"
+                  >
+                    <div className="relative w-16 h-16 mx-auto mb-4">
+                      <div className="absolute inset-0 border-4 border-primary-500/20 rounded-full"></div>
+                      <div className="absolute inset-0 border-4 border-primary-500 rounded-full border-t-transparent animate-spin"></div>
+                      <FileText className="absolute inset-0 m-auto w-6 h-6 text-primary-500 animate-pulse" />
+                    </div>
+                    <p className="text-[16px] font-semibold text-on-surface dark:text-on-dark tracking-tight mb-1">
+                      Analyzing your resume...
+                    </p>
+                    <p className="text-[13px] text-gray-500 dark:text-on-dark-muted">
+                      Extracting skills and experience with AI
+                    </p>
+                  </motion.div>
+                ) : !file ? (
                   <motion.div
                     key="empty"
                     initial={{ opacity: 0 }}

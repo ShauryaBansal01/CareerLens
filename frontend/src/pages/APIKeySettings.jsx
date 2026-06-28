@@ -28,7 +28,6 @@ const APIKeySettings = () => {
   const config = {
     headers: { Authorization: `Bearer ${user?.token}` },
   };
-
   useEffect(() => {
     fetchKeys();
   }, []);
