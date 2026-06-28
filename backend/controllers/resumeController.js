@@ -4,8 +4,16 @@ const ResumeVersion = require('../models/ResumeVersion');
 const UserProfile = require('../models/UserProfile');
 const pdfParse = require('pdf-parse');
 const { GoogleGenAI } = require('@google/genai');
+const fs = require('fs');
+const path = require('path');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+// Load LaTeX prompt instructions from external file to avoid JS string escaping issues
+const LATEX_INSTRUCTIONS = fs.readFileSync(
+  path.join(__dirname, '..', 'utils', 'latexPromptInstructions.txt'),
+  'utf-8'
+);
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -71,7 +79,7 @@ exports.uploadResume = async (req, res) => {
         config: { responseMimeType: "application/json" }
       });
 
-      const parsedData = response.data;
+      const parsedData = JSON.parse(response.text);
       extractedSkills = parsedData.skills ? parsedData.skills.map(s => s.toLowerCase()) : [];
       education = parsedData.educationSummary || education;
       experience = parsedData.experienceSummary || experience;
@@ -117,22 +125,9 @@ exports.uploadResume = async (req, res) => {
       
       let rawLatexCode = '';
       try {
-        const latexPrompt = `You are an expert LaTeX developer and a Senior Technical Recruiter.
-Your task is to generate a beautiful, modern, ATS-friendly software engineering resume in strict LaTeX code based on the provided extracted resume text.
+        const latexPrompt = `${LATEX_INSTRUCTIONS}
 
-CRITICAL LATEX & DESIGN REQUIREMENTS:
-- Use the standard "article" class with 11pt font.
-- You MUST INCLUDE these required packages: \\usepackage[letterpaper, margin=0.5in]{geometry}, \\usepackage{hyperref}, \\usepackage{enumitem}, \\usepackage{titlesec}, \\usepackage{xcolor}, \\usepackage{tgtermes}, \\usepackage[T1]{fontenc}.
-- The font must be a highly professional serif font (TeX Gyre Termes).
-- Disable page numbers with \\pagestyle{empty}.
-- Configure list formatting globally: \\setlist[itemize]{leftmargin=0.15in, label={--}, itemsep=2pt, parsep=0pt, topsep=2pt, partopsep=0pt}
-- Format section headers to be classic and distinct. Example: \\titleformat{\\section}{\\large\\bfseries\\scshape}{}{0em}{}[\\vspace{-0.5em}\\rule{\\textwidth}{0.5pt}]
-- CRITICAL: Do NOT put any formatting commands (like \\rule, \\vspace, or \\textbf) inside \\section{}. Just use pure text like \\section{Experience}.
-- Escape LaTeX special characters (e.g. &, %, $, #, _) directly in the text.
-- Header: Name large, centered, bold. Contact info centered below it on a single line, separated by pipes (|).
-- Sections (Education, Experience, Projects, Skills): Use a strict 4-corner layout for headers. Use regular text and line breaks (\\\\), NOT \\item for job headers.
-- Use bullet points (\\begin{itemize} \\item ... \\end{itemize}) ONLY for the descriptions/accomplishments.
-- Start output immediately with \\documentclass. Do NOT output any markdown blocks.
+Your task is to generate a resume based on the provided extracted resume text.
 
 USER RESUME TEXT:
 ${rawText.substring(0, 10000)}
@@ -266,7 +261,7 @@ good = things already done well (2-3 items)`;
       config: { responseMimeType: "application/json" }
     });
 
-    const feedback = response.data;
+    const feedback = JSON.parse(response.text);
     res.status(200).json(feedback);
   } catch (error) {
     console.error('Resume Improve Error:', error);
@@ -338,13 +333,13 @@ remove = 2-3 things that are irrelevant or harmful for this specific role
 modify = 3-4 specific bullet points or sections to rewrite for better fit
 keywords = top 5-8 ATS keywords from the job description missing in the resume`;
 
-    const response = await ai.models.generateContent({
+    const response = await callGeminiWithRetry({
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: { responseMimeType: "application/json" }
     });
 
-    const optimization = response.data;
+    const optimization = JSON.parse(response.text);
     res.status(200).json(optimization);
   } catch (error) {
     console.error('Resume Optimize Error:', error);
@@ -433,40 +428,22 @@ Experience: ${resume.experience}
       enhancePrompt = "Format this extracted data into a clean ATS-friendly LaTeX resume.";
     }
 
-    const prompt = `You are an expert LaTeX developer and a Senior Technical Recruiter. Your task is to generate a beautiful, modern, ATS-friendly software engineering resume in strict LaTeX code based on the provided JSON data.
+    const prompt = `${LATEX_INSTRUCTIONS}
 
-CRITICAL LATEX & DESIGN REQUIREMENTS:
-- Use the standard "article" class with 11pt font.
-- You MUST INCLUDE these required packages: \\usepackage[letterpaper, margin=0.5in]{geometry}, \\usepackage{hyperref}, \\usepackage{enumitem}, \\usepackage{titlesec}, \\usepackage{xcolor}, \\usepackage{tgtermes}, \\usepackage[T1]{fontenc}.
-- The font must be a highly professional serif font (TeX Gyre Termes, which resembles Times New Roman) for a classic, executive look.
-- Disable page numbers by including \\pagestyle{empty}.
-- Configure the list formatting globally for a clean, tight look: \\setlist[itemize]{leftmargin=0.15in, label={--}, itemsep=2pt, parsep=0pt, topsep=2pt, partopsep=0pt}
-- Format section headers to be classic and distinct. Example: \\titleformat{\\section}{\\large\\bfseries\\scshape}{}{0em}{}[\\vspace{-0.5em}\\rule{\\textwidth}{0.5pt}]
-- CRITICAL: Do NOT put any formatting commands (like \\rule, \\vspace, or \\textbf) inside \\section{}. Just use pure text like \\section{Experience}.
-- Ensure proper escaping of LaTeX special characters like &, %, $, #, _, {, }, ~, ^, \\ manually in the text. Do NOT define or use any custom macros like \\safeText for escaping. Escape them directly (e.g. \\%).
-- For the Header: The Name should be large, centered, and bold (e.g. \\begin{center}\\Huge\\textbf{Name}\\vspace{2pt}\\end{center}). Below it, output the contact info centered on a single line, separated by pipes (|) and hyperlinking the URLs.
-- For Sections (Education, Experience, Projects): Use a strict 4-corner layout for headers. Do NOT use \\item for headers. Just use regular text and line breaks (\\\\).
-  Example format for a job or project:
-  \\noindent\\textbf{Company Name} \\hfill Location\\\\
-  \\textit{Job Title} \\hfill \\textit{Jan 2020 -- Present}
-  \\begin{itemize}
-    \\item First bullet point...
-  \\end{itemize}
-- Use bullet points (\\begin{itemize} \\item ... \\end{itemize}) ONLY for the descriptions/accomplishments under each job or project.
+Your task is to generate a resume based on the provided JSON data.
 
 CONDITIONAL LOGIC (EXTREMELY IMPORTANT):
 - You are receiving the user's data as JSON.
 - IF a field, array, or section (such as 'projects', 'experience', 'education', 'skills', or any contact link) is EMPTY, blank, contains only whitespace, or is missing in the JSON, you MUST completely omit that section or field from the LaTeX document. 
 - Do NOT output empty headers (e.g. no "Projects" section if the projects array is empty).
 - Do NOT output placeholder text (e.g. "School Name" or "Company Name") if the user provided blank strings. Just skip that entry.
-- DO NOT define or use any custom commands or macros like \\safeText. Write pure, standard LaTeX.
 
 ${enhancePrompt}
 
 USER DATA (JSON):
 ${resumeContext}
 
-Ensure it compiles directly with pdflatex without any errors. Only return the raw LaTeX code, without any markdown formatting blocks (do not wrap in \`\`\`latex ... \`\`\`). Start the output immediately with \\documentclass.`;
+Ensure it compiles directly with pdflatex without any errors. Only return the raw LaTeX code, without any markdown formatting blocks. Start the output immediately with \\documentclass.`;
 
     const response = await callGeminiWithRetry({
       model: 'gemini-2.5-flash',
@@ -505,8 +482,7 @@ Experience: ${resume.experience}
 Raw Text (first 8000 chars): ${(resume.rawText || '').substring(0, 8000)}
     `.trim();
 
-    const prompt = `You are an expert LaTeX developer and an elite Technical Recruiter at a top tech company. 
-Your task is to generate a beautiful, modern, ATS-friendly software engineering resume in strict LaTeX code based on the candidate's existing resume AND a Target Job Description.
+    const prompt = `${LATEX_INSTRUCTIONS}
 
 CRITICAL INSTRUCTION FOR CONTENT (TAILORING):
 - You MUST aggressively tailor the candidate's existing experience and skills to match the Job Description.
@@ -514,19 +490,6 @@ CRITICAL INSTRUCTION FOR CONTENT (TAILORING):
 - Keep ONLY the candidate's experience, projects, and skills that are highly relevant to this specific JD. Completely remove or drastically minimize irrelevant "fluff" or unrelated jobs.
 - Rewrite the bullet points using the STAR method (Situation, Task, Action, Result) to subtly incorporate keywords from the JD without lying. Emphasize their achievements that align best with the target role.
 - Maximize keyword density for ATS optimization based on the JD.
-
-CRITICAL LATEX & DESIGN REQUIREMENTS:
-- Use the standard "article" class with 11pt font.
-- You MUST INCLUDE these required packages: \\usepackage[letterpaper, margin=0.5in]{geometry}, \\usepackage{hyperref}, \\usepackage{enumitem}, \\usepackage{titlesec}, \\usepackage{xcolor}, \\usepackage{tgtermes}, \\usepackage[T1]{fontenc}.
-- The font must be a highly professional serif font (TeX Gyre Termes).
-- Disable page numbers with \\pagestyle{empty}.
-- Configure list formatting globally: \\setlist[itemize]{leftmargin=0.15in, label={--}, itemsep=2pt, parsep=0pt, topsep=2pt, partopsep=0pt}
-- Format section headers to be classic and distinct. Example: \\titleformat{\\section}{\\large\\bfseries\\scshape}{}{0em}{}[\\vspace{-0.5em}\\rule{\\textwidth}{0.5pt}]
-- Escape LaTeX special characters (e.g. &, %, $, #, _) directly in the text. Do NOT use custom macros.
-- Header: Name large, centered, bold. Contact info centered below it on a single line, separated by pipes (|).
-- Sections (Education, Experience, Projects): Use a strict 4-corner layout for headers. Use regular text and line breaks (\\\\), NOT \\item for headers.
-- Use bullet points (\\begin{itemize} \\item ... \\end{itemize}) ONLY for the descriptions/accomplishments.
-- Start output immediately with \\documentclass. Do NOT output any markdown blocks (e.g., \`\`\`latex ... \`\`\`).
 
 CANDIDATE'S EXISTING RESUME:
 ${resumeContext}
