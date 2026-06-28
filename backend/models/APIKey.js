@@ -33,7 +33,7 @@ const apiKeySchema = new mongoose.Schema({
 apiKeySchema.index({ user: 1, provider: 1 }, { unique: true });
 
 // Encrypt the key before saving
-apiKeySchema.pre('save', function (next) {
+apiKeySchema.pre('save', async function () {
   if (this.isModified('key')) {
     // Generate masked key (e.g., sk-...1234)
     const rawKey = this.key;
@@ -46,7 +46,6 @@ apiKeySchema.pre('save', function (next) {
     // Encrypt the key
     this.key = encrypt(rawKey);
   }
-  next();
 });
 
 // Instance method to get decrypted key
