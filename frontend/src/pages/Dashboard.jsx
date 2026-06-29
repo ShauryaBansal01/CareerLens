@@ -252,12 +252,14 @@ const RoleAnalysis = ({ user, resume }) => {
       const { data } = await axios.post(`${API_URL}/analysis/analyze`, { roleId: selectedRole }, config);
       setAnalysis(data);
 
-      const missingSkills = data.analysis?.missingSkills || [];
-      if (missingSkills.length > 0) {
-        const roadmapRes = await axios.post(`${API_URL}/roadmap/generate`, { roleName: data.role, missingSkills }, config);
+      const rawMissing = data.analysis?.missingSkills || [];
+      // Extract flat skill names — handles both old string arrays and new object arrays
+      const missingSkillNames = rawMissing.map(s => (typeof s === 'string' ? s : s.skill));
+      if (missingSkillNames.length > 0) {
+        const roadmapRes = await axios.post(`${API_URL}/roadmap/generate`, { roleName: data.role, missingSkills: missingSkillNames }, config);
         setRoadmap(roadmapRes.data);
 
-        const projectRes = await axios.post(`${API_URL}/projects/recommend`, { missingSkills }, config);
+        const projectRes = await axios.post(`${API_URL}/projects/recommend`, { missingSkills: missingSkillNames }, config);
         setProjects(Array.isArray(projectRes.data) ? projectRes.data : []);
       }
     } catch (err) {
@@ -325,18 +327,42 @@ const RoleAnalysis = ({ user, resume }) => {
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
                 <p className="mb-3 text-xs font-extrabold uppercase text-emerald-700">Matched Skills</p>
                 <div className="flex flex-wrap gap-2">
-                  {(analysis.analysis?.matchedSkills || []).map((skill) => <span key={skill} className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-emerald-700">{skill}</span>)}
+                  {(analysis.analysis?.matchedSkills || []).map((item) => {
+                    const name = typeof item === 'string' ? item : item.skill;
+                    const prof = typeof item === 'object' ? item.proficiency : null;
+                    const profColors = { strong: 'bg-emerald-200', moderate: 'bg-emerald-100', basic: 'bg-emerald-50' };
+                    return (
+                      <span key={name} className={`rounded-full px-2.5 py-1 text-xs font-bold text-emerald-700 ${profColors[prof] || 'bg-white'}`} title={typeof item === 'object' ? item.evidence : ''}>
+                        {name}{prof && <span className="ml-1 text-[10px] font-semibold opacity-60">({prof})</span>}
+                      </span>
+                    );
+                  })}
                   {(analysis.analysis?.matchedSkills || []).length === 0 && <span className="text-sm text-emerald-700">No direct matches found.</span>}
                 </div>
               </div>
               <div className="rounded-xl border border-red-200 bg-red-50 p-4">
                 <p className="mb-3 text-xs font-extrabold uppercase text-red-700">Missing Skills</p>
                 <div className="flex flex-wrap gap-2">
-                  {(analysis.analysis?.missingSkills || []).map((skill) => <span key={skill} className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-red-700">{skill}</span>)}
+                  {(analysis.analysis?.missingSkills || []).map((item) => {
+                    const name = typeof item === 'string' ? item : item.skill;
+                    const prio = typeof item === 'object' ? item.priority : null;
+                    const prioColors = { critical: 'bg-red-200', important: 'bg-red-100', 'nice-to-have': 'bg-red-50' };
+                    return (
+                      <span key={name} className={`rounded-full px-2.5 py-1 text-xs font-bold text-red-700 ${prioColors[prio] || 'bg-white'}`} title={typeof item === 'object' ? item.recommendation : ''}>
+                        {name}{prio && <span className="ml-1 text-[10px] font-semibold opacity-60">({prio})</span>}
+                      </span>
+                    );
+                  })}
                   {(analysis.analysis?.missingSkills || []).length === 0 && <span className="text-sm text-emerald-700">No missing skills for this role.</span>}
                 </div>
               </div>
             </div>
+            {analysis.analysis?.overallReadinessVerdict && (
+              <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-extrabold uppercase text-slate-500 mb-2">AI Verdict</p>
+                <p className="text-sm leading-6 text-slate-700">{analysis.analysis.overallReadinessVerdict}</p>
+              </div>
+            )}
             <div className="h-48 rounded-xl border border-slate-200 bg-white p-3">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>

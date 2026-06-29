@@ -10,11 +10,20 @@ const userAnalysisSchema = new mongoose.Schema({
   roleId:   { type: String, required: true },
   roleName: { type: String, required: true },
 
-  // Skill gap analysis
+  // Skill gap analysis (rich objects with proficiency/priority)
   analysis: {
-    matchedSkills: [String],
-    missingSkills: [String],
+    matchedSkills: { type: [mongoose.Schema.Types.Mixed], default: [] },
+    missingSkills: { type: [mongoose.Schema.Types.Mixed], default: [] },
+    matchPercentage: Number,
     skillsWeightedScore: Number,
+    totalRequired: Number,
+    categories: {
+      languages:  { type: [String], default: [] },
+      frameworks: { type: [String], default: [] },
+      tools:      { type: [String], default: [] },
+      concepts:   { type: [String], default: [] },
+    },
+    overallReadinessVerdict: { type: String, default: '' },
   },
 
   // Scoring breakdown

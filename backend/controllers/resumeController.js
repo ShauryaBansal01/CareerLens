@@ -38,6 +38,48 @@ const callGeminiWithRetry = async (params, maxRetries = 4) => {
   }
 };
 
+/**
+ * Safely parse JSON from LLM responses. Handles:
+ * - Markdown code fences the model may wrap around JSON
+ * - Unescaped control characters in string values
+ * - Trailing commas before closing brackets
+ */
+const safeParseJSON = (text) => {
+  if (!text) throw new Error('Empty response from AI');
+
+  // Strip markdown code fences
+  let cleaned = text
+    .replace(/^\s*```(?:json)?\s*[\r\n]+/i, '')
+    .replace(/[\r\n]+\s*```\s*$/i, '')
+    .trim();
+
+  // First attempt: direct parse
+  try {
+    return JSON.parse(cleaned);
+  } catch (firstError) {
+    // Second attempt: fix common LLM JSON issues
+    try {
+      cleaned = cleaned
+        // Remove trailing commas before } or ]
+        .replace(/,\s*([}\]])/g, '$1')
+        // Escape unescaped newlines/tabs inside string values
+        .replace(/(["'])(?:(?!\1)[\s\S])*?\1/g, (match) => {
+          return match
+            .replace(/(?<!\\)\n/g, '\\n')
+            .replace(/(?<!\\)\r/g, '\\r')
+            .replace(/(?<!\\)\t/g, '\\t');
+        });
+
+      return JSON.parse(cleaned);
+    } catch (secondError) {
+      console.error('safeParseJSON: both parse attempts failed.');
+      console.error('Original error:', firstError.message);
+      console.error('First 500 chars of response:', text.substring(0, 500));
+      throw firstError;
+    }
+  }
+};
+
 // @desc    Upload & Parse Resume
 // @route   POST /api/resume/upload
 // @access  Private
@@ -79,7 +121,7 @@ exports.uploadResume = async (req, res) => {
         config: { responseMimeType: "application/json" }
       });
 
-      const parsedData = JSON.parse(response.text);
+      const parsedData = safeParseJSON(response.text);
       extractedSkills = parsedData.skills ? parsedData.skills.map(s => s.toLowerCase()) : [];
       education = parsedData.educationSummary || education;
       experience = parsedData.experienceSummary || experience;
@@ -204,12 +246,55 @@ exports.improveResume = async (req, res) => {
       return res.status(404).json({ message: 'No resume found. Please upload your resume first.' });
     }
 
-    const resumeContext = `
-Skills: ${resume.extractedSkills.join(', ')}
+    // ── Build the richest possible context from structured + raw data ──────
+    const profile = await UserProfile.findOne({ user: req.user.id });
+    let resumeContext = '';
+
+    if (profile) {
+      // Structured profile gives the AI clean, parsed data to analyze
+      const structuredData = {
+        contact: {
+          name: profile.basics?.name || '',
+          email: profile.basics?.email || '',
+          phone: profile.basics?.phone || '',
+          location: profile.basics?.location || '',
+          linkedin: profile.basics?.linkedin || '',
+          github: profile.basics?.github || '',
+          portfolio: profile.basics?.portfolio || '',
+        },
+        summary: profile.basics?.summary || '',
+        skills: profile.skills || resume.extractedSkills || [],
+        experience: (profile.experience || []).map(exp => ({
+          company: exp.company,
+          role: exp.role,
+          duration: exp.duration,
+          description: exp.description,
+        })),
+        education: (profile.education || []).map(edu => ({
+          institution: edu.institution,
+          degree: edu.degree,
+          duration: edu.duration,
+        })),
+        projects: (profile.projects || []).map(proj => ({
+          name: proj.name,
+          description: proj.description,
+          techStack: proj.techStack || [],
+        })),
+      };
+
+      resumeContext = `STRUCTURED RESUME DATA (parsed from upload — high accuracy):
+${JSON.stringify(structuredData, null, 2)}
+
+RAW RESUME TEXT (original PDF text — use for additional context the structured data may have missed):
+${(resume.rawText || '').substring(0, 6000)}`;
+    } else {
+      // Fallback: no profile, use what we have
+      resumeContext = `Skills: ${resume.extractedSkills.join(', ')}
 Education: ${resume.education}
 Experience: ${resume.experience}
-Raw Text (first 8000 chars): ${(resume.rawText || '').substring(0, 8000)}
-    `.trim();
+Raw Resume Text:
+${(resume.rawText || '').substring(0, 10000)}`;
+    }
 
     const prompt = `You are a Senior Technical Recruiter and Resume Coach at a top-tier tech company (Google, Meta, Amazon level). 
 Analyze the following resume and provide detailed, actionable improvement suggestions.
@@ -225,6 +310,11 @@ Analyze for ALL of the following and provide specific, actionable feedback:
 5. ATS optimization (keyword density, formatting for Applicant Tracking Systems)
 6. Impact statements (missing quantifiable achievements)
 
+CRITICAL LOCATION REQUIREMENT:
+For EVERY feedback item (critical, suggested, and good), you MUST include:
+- "location": The exact section of the resume where the issue or strength is found. Use one of these labels: "Header/Contact", "Summary/Objective", "Education", "Experience", "Projects", "Skills", "Certifications", "Overall Structure", or "Formatting". If the issue is within a specific job or project entry, include the company/project name (e.g., "Experience → Google", "Projects → E-commerce App").
+- "quote": A short direct quote (5-20 words) from the resume text that the feedback refers to. If the issue is about a missing section, use "[Section not found]" instead.
+
 Return EXACTLY this valid JSON structure (no markdown) and generate a unique score between 1-100 based on the actual resume quality:
 {
   "score": "<integer between 1-100 based on your honest evaluation>",
@@ -232,13 +322,17 @@ Return EXACTLY this valid JSON structure (no markdown) and generate a unique sco
   "critical": [
     {
       "issue": "Short issue title",
+      "location": "Experience → Company Name",
+      "quote": "Exact words from resume or [Section not found]",
       "detail": "Specific, actionable explanation with examples from their resume",
       "example": "Example of improved text or what to add"
     }
   ],
   "suggested": [
     {
-      "issue": "Short issue title", 
+      "issue": "Short issue title",
+      "location": "Skills",
+      "quote": "Exact words from resume",
       "detail": "Specific improvement suggestion",
       "example": "Concrete example"
     }
@@ -246,6 +340,8 @@ Return EXACTLY this valid JSON structure (no markdown) and generate a unique sco
   "good": [
     {
       "issue": "What they're doing well",
+      "location": "Experience → Company Name",
+      "quote": "Exact words from resume",
       "detail": "Why this is effective"
     }
   ]
@@ -261,7 +357,7 @@ good = things already done well (2-3 items)`;
       config: { responseMimeType: "application/json" }
     });
 
-    const feedback = JSON.parse(response.text);
+    const feedback = safeParseJSON(response.text);
     res.status(200).json(feedback);
   } catch (error) {
     console.error('Resume Improve Error:', error);
@@ -284,12 +380,43 @@ exports.optimizeForCompany = async (req, res) => {
       return res.status(404).json({ message: 'No resume found. Please upload your resume first.' });
     }
 
-    const resumeContext = `
-Skills: ${resume.extractedSkills.join(', ')}
+    // ── Build the richest possible context from structured + raw data ──────
+    const profile = await UserProfile.findOne({ user: req.user.id });
+    let resumeContext = '';
+
+    if (profile) {
+      const structuredData = {
+        skills: profile.skills || resume.extractedSkills || [],
+        experience: (profile.experience || []).map(exp => ({
+          company: exp.company,
+          role: exp.role,
+          duration: exp.duration,
+          description: exp.description,
+        })),
+        education: (profile.education || []).map(edu => ({
+          institution: edu.institution,
+          degree: edu.degree,
+          duration: edu.duration,
+        })),
+        projects: (profile.projects || []).map(proj => ({
+          name: proj.name,
+          description: proj.description,
+          techStack: proj.techStack || [],
+        })),
+      };
+
+      resumeContext = `STRUCTURED RESUME DATA (parsed from upload — high accuracy):
+${JSON.stringify(structuredData, null, 2)}
+
+RAW RESUME TEXT (use for additional context):
+${(resume.rawText || '').substring(0, 5000)}`;
+    } else {
+      resumeContext = `Skills: ${resume.extractedSkills.join(', ')}
 Education: ${resume.education}
 Experience: ${resume.experience}
-Resume Text (first 6000 chars): ${(resume.rawText || '').substring(0, 6000)}
-    `.trim();
+Resume Text:
+${(resume.rawText || '').substring(0, 8000)}`;
+    }
 
     const prompt = `You are a world-class Technical Resume Optimizer and Career Coach. Your job is to help a candidate tailor their resume to match a specific job description or company requirements.
 
@@ -339,7 +466,7 @@ keywords = top 5-8 ATS keywords from the job description missing in the resume`;
       config: { responseMimeType: "application/json" }
     });
 
-    const optimization = JSON.parse(response.text);
+    const optimization = safeParseJSON(response.text);
     res.status(200).json(optimization);
   } catch (error) {
     console.error('Resume Optimize Error:', error);
@@ -475,12 +602,42 @@ exports.tailorLatexToJob = async (req, res) => {
       return res.status(404).json({ message: 'No resume found. Please upload your resume first.' });
     }
 
-    const resumeContext = `
-Skills: ${resume.extractedSkills.join(', ')}
+    // ── Build the richest possible context from structured + raw data ──────
+    const profile = await UserProfile.findOne({ user: req.user.id });
+    let resumeContext = '';
+
+    if (profile) {
+      const structuredData = {
+        skills: profile.skills || resume.extractedSkills || [],
+        experience: (profile.experience || []).map(exp => ({
+          company: exp.company,
+          role: exp.role,
+          duration: exp.duration,
+          description: exp.description,
+        })),
+        education: (profile.education || []).map(edu => ({
+          institution: edu.institution,
+          degree: edu.degree,
+          duration: edu.duration,
+        })),
+        projects: (profile.projects || []).map(proj => ({
+          name: proj.name,
+          description: proj.description,
+          techStack: proj.techStack || [],
+        })),
+      };
+
+      resumeContext = `STRUCTURED RESUME DATA (parsed — high accuracy):
+${JSON.stringify(structuredData, null, 2)}
+
+RAW RESUME TEXT (for additional context):
+${(resume.rawText || '').substring(0, 6000)}`;
+    } else {
+      resumeContext = `Skills: ${resume.extractedSkills.join(', ')}
 Education: ${resume.education}
 Experience: ${resume.experience}
-Raw Text (first 8000 chars): ${(resume.rawText || '').substring(0, 8000)}
-    `.trim();
+Raw Text (first 8000 chars): ${(resume.rawText || '').substring(0, 8000)}`;
+    }
 
     const prompt = `${LATEX_INSTRUCTIONS}
 

@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   AlertCircle, CheckCircle, AlertTriangle, Sparkles,
   Building2, ChevronDown, ChevronUp, Plus, Minus,
-  RefreshCw, Zap, ArrowRight,
+  RefreshCw, Zap, ArrowRight, MapPin,
 } from 'lucide-react';
 
 // ── Animation variants ─────────────────────────────────────────────────────────
@@ -49,7 +49,7 @@ const ScoreRing = ({ score, size = 80 }) => {
   );
 };
 
-// ── Collapsible feedback card ──────────────────────────────────────────────────
+// ── Collapsible feedback card (with location + quote) ──────────────────────────
 const FeedbackCard = ({ item, type }) => {
   const [open, setOpen] = useState(false);
 
@@ -92,6 +92,12 @@ const FeedbackCard = ({ item, type }) => {
           <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 tracking-tight">
             {item.issue}
           </p>
+          {item.location && (
+            <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1">
+              <MapPin className="w-3 h-3 shrink-0" />
+              {item.location}
+            </p>
+          )}
         </div>
         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${c.labelColor}`}>
           {c.label}
@@ -114,6 +120,23 @@ const FeedbackCard = ({ item, type }) => {
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 pl-[52px]">
+              {item.quote && item.quote !== '[Section not found]' && (
+                <div className="bg-gray-100/60 dark:bg-gray-800/40 rounded-lg px-3.5 py-2 mb-2.5 border-l-[3px] border-l-gray-400 dark:border-l-gray-500">
+                  <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-0.5">
+                    From your resume
+                  </p>
+                  <p className="text-[13px] text-gray-700 dark:text-gray-300 leading-relaxed italic">
+                    &ldquo;{item.quote}&rdquo;
+                  </p>
+                </div>
+              )}
+              {item.quote === '[Section not found]' && (
+                <div className="bg-gray-100/60 dark:bg-gray-800/40 rounded-lg px-3.5 py-2 mb-2.5 border-l-[3px] border-l-gray-400 dark:border-l-gray-500">
+                  <p className="text-[12px] text-gray-500 dark:text-gray-400 italic">
+                    ⚠ This section is missing from your resume
+                  </p>
+                </div>
+              )}
               <p className={`text-[13px] text-gray-700 dark:text-gray-300 leading-relaxed ${item.example ? 'mb-2.5' : 'mb-0'}`}>
                 {item.detail}
               </p>
@@ -123,7 +146,7 @@ const FeedbackCard = ({ item, type }) => {
                     Example
                   </p>
                   <p className="text-[13px] text-gray-900 dark:text-gray-100 leading-relaxed italic">
-                    "{item.example}"
+                    &ldquo;{item.example}&rdquo;
                   </p>
                 </div>
               )}
@@ -204,11 +227,11 @@ const OptimizeCard = ({ item, type }) => {
                 <div className="flex flex-col gap-1.5">
                   <div className="bg-red-50/50 dark:bg-red-900/10 rounded-lg px-3.5 py-2.5 border border-red-500/15 dark:border-red-500/20">
                     <p className="text-[11px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wider mb-1">Before</p>
-                    <p className="text-[13px] text-gray-900 dark:text-gray-100 leading-relaxed italic">"{item.before}"</p>
+                    <p className="text-[13px] text-gray-900 dark:text-gray-100 leading-relaxed italic">&ldquo;{item.before}&rdquo;</p>
                   </div>
                   <div className="bg-green-50/50 dark:bg-green-900/10 rounded-lg px-3.5 py-2.5 border border-green-500/15 dark:border-green-500/20">
                     <p className="text-[11px] font-bold text-green-600 dark:text-green-500 uppercase tracking-wider mb-1">After</p>
-                    <p className="text-[13px] text-gray-900 dark:text-gray-100 leading-relaxed italic">"{item.after}"</p>
+                    <p className="text-[13px] text-gray-900 dark:text-gray-100 leading-relaxed italic">&ldquo;{item.after}&rdquo;</p>
                   </div>
                 </div>
               )}
@@ -482,7 +505,7 @@ const ResumeAI = () => {
               <textarea
                 value={jobDesc}
                 onChange={e => { setJobDesc(e.target.value); setOptimizeError(''); }}
-                placeholder="Paste the full job description, role requirements, or company overview here…&#10;&#10;Example: 'We are looking for a React Developer with experience in TypeScript, Next.js, AWS, and GraphQL. The ideal candidate has 2+ years of frontend experience and has shipped production-grade applications...'"
+                placeholder={"Paste the full job description, role requirements, or company overview here…\n\nExample: 'We are looking for a React Developer with experience in TypeScript, Next.js, AWS, and GraphQL. The ideal candidate has 2+ years of frontend experience and has shipped production-grade applications...'"}
                 className="block min-h-[220px] w-full resize-y rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#6C5CE7] focus:ring-4 focus:ring-[#6C5CE7]/10 dark:border-slate-800 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500"
               />
               <div className="flex justify-between mt-1.5">
@@ -515,7 +538,7 @@ const ResumeAI = () => {
               {optimizeLoading
                 ? <span className="flex items-center justify-center gap-2.5">
                     <span className="premium-spinner border-white/20 border-t-white" />
-                    Analyzing & optimizing…
+                    Analyzing &amp; optimizing…
                   </span>
                 : <>
                     <Zap className="w-4 h-4 mr-2" />
