@@ -843,3 +843,224 @@ Return ONLY the raw markdown text of the cover letter. Do not wrap in JSON.`;
     res.status(500).json({ message: 'Failed to generate cover letter.' });
   }
 };
+
+// @desc    Apply analysis suggestions to optimize resume content
+// @route   POST /api/resume/optimize-from-feedback
+// @access  Private
+exports.optimizeResumeFromFeedback = async (req, res) => {
+  try {
+    const { feedback } = req.body;
+    if (!feedback || (!feedback.critical?.length && !feedback.suggested?.length)) {
+      return res.status(400).json({ message: 'No feedback provided. Please run the analysis first.' });
+    }
+
+    const resume = await Resume.findOne({ user: req.user.id });
+    if (!resume) {
+      return res.status(404).json({ message: 'No resume found. Please upload your resume first.' });
+    }
+
+    const profile = await UserProfile.findOne({ user: req.user.id });
+    let resumeContext = '';
+
+    if (profile) {
+      const structuredData = {
+        basics: {
+          name: profile.basics?.name || '',
+          email: profile.basics?.email || '',
+          phone: profile.basics?.phone || '',
+          location: profile.basics?.location || '',
+          summary: profile.basics?.summary || '',
+          linkedin: profile.basics?.linkedin || '',
+          github: profile.basics?.github || '',
+          portfolio: profile.basics?.portfolio || '',
+        },
+        skills: profile.skills || resume.extractedSkills || [],
+        experience: (profile.experience || []).map((exp, i) => ({
+          _index: i,
+          company: exp.company,
+          role: exp.role,
+          duration: exp.duration,
+          description: exp.description,
+        })),
+        education: (profile.education || []).map((edu, i) => ({
+          _index: i,
+          institution: edu.institution,
+          degree: edu.degree,
+          duration: edu.duration,
+        })),
+        projects: (profile.projects || []).map((proj, i) => ({
+          _index: i,
+          name: proj.name,
+          description: proj.description,
+          techStack: proj.techStack || [],
+        })),
+      };
+
+      resumeContext = `STRUCTURED RESUME DATA (parsed from upload — high accuracy):
+${JSON.stringify(structuredData, null, 2)}
+
+RAW RESUME TEXT (original PDF text — for additional context):
+${(resume.rawText || '').substring(0, 6000)}`;
+    } else {
+      resumeContext = `Skills: ${resume.extractedSkills.join(', ')}
+Education: ${resume.education}
+Experience: ${resume.experience}
+Raw Resume Text:
+${(resume.rawText || '').substring(0, 10000)}`;
+    }
+
+    // Build the feedback items into a clear list for the AI
+    const feedbackItems = [];
+    (feedback.critical || []).forEach(item => {
+      feedbackItems.push({
+        priority: 'CRITICAL',
+        issue: item.issue,
+        location: item.location,
+        quote: item.quote,
+        detail: item.detail,
+        example: item.example || '',
+      });
+    });
+    (feedback.suggested || []).forEach(item => {
+      feedbackItems.push({
+        priority: 'SUGGESTED',
+        issue: item.issue,
+        location: item.location,
+        quote: item.quote,
+        detail: item.detail,
+        example: item.example || '',
+      });
+    });
+
+    const prompt = `You are an elite Resume Optimization AI. Your job is to apply specific improvement suggestions to a candidate's resume.
+
+CANDIDATE'S CURRENT RESUME:
+${resumeContext}
+
+IMPROVEMENT SUGGESTIONS TO APPLY:
+${JSON.stringify(feedbackItems, null, 2)}
+
+CRITICAL RULES:
+1. NEVER fabricate achievements, technologies, companies, metrics, certifications, or experience that don't exist in the original resume.
+2. ONLY improve what already exists — use stronger action verbs, better wording, improved keyword placement, better readability, better bullet formatting, and more impactful summaries.
+3. Preserve ALL personal information exactly (name, email, phone, links, education institution names, company names, project names, dates/durations).
+4. Preserve the original section structure and experience chronology.
+5. Keep the resume concise and professional — maintain one-page layout focus.
+6. For each change you make, explain WHY you changed it.
+
+Return EXACTLY this valid JSON structure (no markdown):
+{
+  "sections": [
+    {
+      "sectionName": "Human-readable section label (e.g. 'Experience → Company Name' or 'Summary' or 'Skills')",
+      "sectionType": "experience|education|projects|skills|summary",
+      "index": 0,
+      "changes": [
+        {
+          "id": "unique-change-id (e.g. 'exp-0-desc' or 'summary-0')",
+          "field": "description|summary|skills|degree|techStack",
+          "original": "The exact original text before optimization",
+          "optimized": "The improved text after optimization",
+          "changeType": "rewrite|enhance|restructure",
+          "reason": "Brief explanation of why this change improves the resume (e.g. 'Added stronger action verb and quantifiable metric')"
+        }
+      ]
+    }
+  ],
+  "optimizedProfile": {
+    "basics": {
+      "name": "...", "email": "...", "phone": "...", "location": "...",
+      "summary": "optimized summary text",
+      "linkedin": "...", "github": "...", "portfolio": "..."
+    },
+    "skills": ["skill1", "skill2"],
+    "experience": [
+      { "company": "...", "role": "...", "duration": "...", "description": "optimized description" }
+    ],
+    "education": [
+      { "institution": "...", "degree": "...", "duration": "..." }
+    ],
+    "projects": [
+      { "name": "...", "description": "optimized description", "techStack": ["..."] }
+    ]
+  },
+  "summary": "Brief summary of all changes made (e.g. 'Applied 8 improvements across 4 sections')",
+  "estimatedScoreIncrease": 15
+}
+
+IMPORTANT:
+- The "optimizedProfile" must contain the FULL profile with ALL optimizations applied (this is what gets saved).
+- The "sections" array must contain ONLY the items that were actually changed (for the diff viewer).
+- Every "original" field must exactly match the current resume content.
+- The "optimizedProfile" must preserve all fields from the original, even ones that weren't changed.
+- Generate between 5-12 meaningful changes total.`;
+
+    const response = await callGeminiWithRetry({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: { responseMimeType: "application/json" }
+    });
+
+    const result = safeParseJSON(response.text);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Optimize From Feedback Error:', error);
+    res.status(500).json({ message: 'Failed to optimize resume from feedback.' });
+  }
+};
+
+// @desc    AI-rewrite a specific LaTeX section
+// @route   POST /api/resume/rewrite-section
+// @access  Private
+exports.rewriteSection = async (req, res) => {
+  try {
+    const { sectionType, sectionContent } = req.body;
+    if (!sectionContent || sectionContent.trim().length < 10) {
+      return res.status(400).json({ message: 'Section content is too short to rewrite.' });
+    }
+
+    // Get full resume context for better rewriting
+    const resume = await Resume.findOne({ user: req.user.id });
+    const rawContext = resume ? (resume.rawText || '').substring(0, 4000) : '';
+
+    const prompt = `You are an expert Resume Writer and LaTeX developer. Your task is to rewrite a specific section of a LaTeX resume to make it more impactful.
+
+SECTION TYPE: ${sectionType || 'Unknown'}
+
+SECTION CONTENT (LaTeX code):
+${sectionContent}
+
+FULL RESUME CONTEXT (for understanding the candidate's background):
+${rawContext}
+
+CRITICAL RULES:
+1. NEVER fabricate achievements, technologies, companies, metrics, or experience.
+2. ONLY improve existing content — use stronger action verbs, better wording, improved keyword placement, quantifiable metrics where they already exist.
+3. Preserve ALL LaTeX formatting commands, template styling, and structure.
+4. Replace ONLY the text content (bullet points, descriptions, summaries), NOT the LaTeX template code.
+5. Keep the same number of bullet points (or reduce by 1 if a bullet is truly redundant).
+6. Output must be valid LaTeX that compiles with pdflatex.
+
+Return EXACTLY this JSON (no markdown):
+{
+  "original": "The exact original LaTeX section content (copy from input)",
+  "rewritten": "The improved LaTeX section content with better wording",
+  "changes": [
+    "Brief description of change 1 (e.g. 'Replaced passive voice with active verb')",
+    "Brief description of change 2"
+  ]
+}`;
+
+    const response = await callGeminiWithRetry({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: { responseMimeType: "application/json" }
+    });
+
+    const result = safeParseJSON(response.text);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Rewrite Section Error:', error);
+    res.status(500).json({ message: 'Failed to rewrite section.' });
+  }
+};
