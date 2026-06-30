@@ -15,7 +15,9 @@ const {
   createVersion,
   updateVersion,
   deleteVersion,
-  generateCoverLetter
+  generateCoverLetter,
+  optimizeResumeFromFeedback,
+  rewriteSection
 } = require('../controllers/resumeController');
 const { protect } = require('../middleware/authMiddleware');
 const injectAI = require('../middleware/injectAI');
@@ -37,6 +39,8 @@ router.post('/upload', protect, injectAI, upload.single('resume'), uploadResume)
 router.get('/', protect, getResume);
 router.post('/improve', protect, injectAI, improveResume);
 router.post('/optimize', protect, injectAI, optimizeForCompany);
+router.post('/optimize-from-feedback', protect, injectAI, optimizeResumeFromFeedback);
+router.post('/rewrite-section', protect, injectAI, rewriteSection);
 router.post('/cover-letter', protect, injectAI, generateCoverLetter);
 
 // LaTeX Routes
