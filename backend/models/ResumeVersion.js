@@ -26,6 +26,11 @@ const resumeVersionSchema = new mongoose.Schema({
   isBaseResume: {
     type: Boolean,
     default: false
+  },
+  source: {
+    type: String,
+    enum: ['upload', 'ai-wizard', 'ai-optimized', 'ai-tailored', 'ai-section-edit', 'manual-edit'],
+    default: 'manual-edit'
   }
 }, { timestamps: true });
 
