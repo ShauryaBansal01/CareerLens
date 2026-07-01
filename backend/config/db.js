@@ -8,6 +8,10 @@ const connectDB = async () => {
         serverSelectionTimeoutMS: 8000,   // fail fast, don't hang
         socketTimeoutMS: 45000,
         retryWrites: true,
+        // ── Connection pool tuning for high concurrency ──────────────────
+        maxPoolSize: 50,       // Max connections per worker (conservative for Atlas free tier)
+        minPoolSize: 5,        // Keep warm connections ready to avoid cold-start latency
+        maxIdleTimeMS: 30000,  // Close idle connections after 30s to free resources
       }
     );
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
@@ -23,4 +27,3 @@ const connectDB = async () => {
 };
 
 module.exports = connectDB;
-
