@@ -6,6 +6,7 @@ const pdfParse = require('pdf-parse');
 const { GoogleGenAI } = require('@google/genai');
 const fs = require('fs');
 const path = require('path');
+const { invalidateUserCache } = require('../middleware/aiCache');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -96,11 +97,12 @@ exports.uploadResume = async (req, res) => {
     let education = 'Not explicitly found';
     let experience = 'Not explicitly found';
     let detailedProfile = null;
+    let rawLatexCode = '';
 
-    try {
-      const response = await callGeminiWithRetry({
-        model: 'gemini-2.5-flash',
-        contents: `You are an expert technical recruiter AI. Extract the candidate's core technical skills, education, experience, and projects from the following resume. 
+    // ── Run both AI calls in PARALLEL for ~2x speed ──────────────────────
+    const extractionPromise = callGeminiWithRetry({
+      model: 'gemini-2.5-flash',
+      contents: `You are an expert technical recruiter AI. Extract the candidate's core technical skills, education, experience, and projects from the following resume. 
         Return EXACTLY a valid JSON object with the following schema:
         {
           "skills": ["skill1", "skill2"],
@@ -118,18 +120,39 @@ exports.uploadResume = async (req, res) => {
         
         Resume Text:
         ${rawText.substring(0, 15000)}`,
-        config: { responseMimeType: "application/json" }
-      });
+      config: { responseMimeType: "application/json" }
+    });
 
-      const parsedData = safeParseJSON(response.text);
-      extractedSkills = parsedData.skills ? parsedData.skills.map(s => s.toLowerCase()) : [];
-      education = parsedData.educationSummary || education;
-      experience = parsedData.experienceSummary || experience;
-      detailedProfile = parsedData.detailedProfile || null;
-    } catch (aiError) {
-      console.error("AI Extraction Error:", aiError);
+    const latexPromise = callGeminiWithRetry({
+      model: 'gemini-2.5-flash',
+      contents: `${LATEX_INSTRUCTIONS}\n\nYour task is to generate a resume based on the provided extracted resume text.\n\nUSER RESUME TEXT:\n${rawText.substring(0, 10000)}\n\nOnly return the raw, compiling LaTeX code.`
+    });
+
+    // Wait for both to complete (allSettled so one failure doesn't kill the other)
+    const [extractionResult, latexResult] = await Promise.allSettled([extractionPromise, latexPromise]);
+
+    // ── Process extraction result ────────────────────────────────────────
+    if (extractionResult.status === 'fulfilled') {
+      try {
+        const parsedData = safeParseJSON(extractionResult.value.text);
+        extractedSkills = parsedData.skills ? parsedData.skills.map(s => s.toLowerCase()) : [];
+        education = parsedData.educationSummary || education;
+        experience = parsedData.experienceSummary || experience;
+        detailedProfile = parsedData.detailedProfile || null;
+      } catch (parseError) {
+        console.error("AI Extraction Parse Error:", parseError);
+      }
+    } else {
+      console.error("AI Extraction Error:", extractionResult.reason);
       education = 'Analysis deferred (AI Key missing or error)';
       experience = 'Analysis deferred (AI Key missing or error)';
+    }
+
+    // ── Process LaTeX result ─────────────────────────────────────────────
+    if (latexResult.status === 'fulfilled') {
+      rawLatexCode = latexResult.value.text.replace(/^```(latex)?/im, '').replace(/```$/im, '').trim();
+    } else {
+      console.error("AI LaTeX Generation Error:", latexResult.reason);
     }
 
       // Upsert UserProfile if we got detailed data
@@ -164,26 +187,6 @@ exports.uploadResume = async (req, res) => {
       }
 
       let resume = await Resume.findOne({ user: req.user.id });
-      
-      let rawLatexCode = '';
-      try {
-        const latexPrompt = `${LATEX_INSTRUCTIONS}
-
-Your task is to generate a resume based on the provided extracted resume text.
-
-USER RESUME TEXT:
-${rawText.substring(0, 10000)}
-
-Only return the raw, compiling LaTeX code.`;
-
-        const latexResponse = await callGeminiWithRetry({
-          model: 'gemini-2.5-flash',
-          contents: latexPrompt
-        });
-        rawLatexCode = latexResponse.text.replace(/^```(latex)?/im, '').replace(/```$/im, '').trim();
-      } catch(err) {
-        console.error("AI Latex Generation Error:", err);
-      }
 
       if (resume) {
         resume.extractedSkills = extractedSkills;
@@ -215,6 +218,9 @@ Only return the raw, compiling LaTeX code.`;
            isBaseResume: true
          });
       }
+
+    // Invalidate any cached AI responses for this user since their resume changed
+    invalidateUserCache(req.user.id);
 
     res.status(200).json(resume);
   } catch (error) {
