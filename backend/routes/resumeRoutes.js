@@ -21,6 +21,8 @@ const {
 } = require('../controllers/resumeController');
 const { protect } = require('../middleware/authMiddleware');
 const injectAI = require('../middleware/injectAI');
+const { aiLimiter } = require('../middleware/rateLimiter');
+const { aiCache } = require('../middleware/aiCache');
 
 // Setup multer memory storage
 const storage = multer.memoryStorage();
@@ -35,19 +37,19 @@ const upload = multer({
   }
 });
 
-router.post('/upload', protect, injectAI, upload.single('resume'), uploadResume);
+router.post('/upload', protect, aiLimiter, injectAI, upload.single('resume'), uploadResume);
 router.get('/', protect, getResume);
-router.post('/improve', protect, injectAI, improveResume);
-router.post('/optimize', protect, injectAI, optimizeForCompany);
-router.post('/optimize-from-feedback', protect, injectAI, optimizeResumeFromFeedback);
-router.post('/rewrite-section', protect, injectAI, rewriteSection);
-router.post('/cover-letter', protect, injectAI, generateCoverLetter);
+router.post('/improve', protect, aiLimiter, aiCache, injectAI, improveResume);
+router.post('/optimize', protect, aiLimiter, aiCache, injectAI, optimizeForCompany);
+router.post('/optimize-from-feedback', protect, aiLimiter, aiCache, injectAI, optimizeResumeFromFeedback);
+router.post('/rewrite-section', protect, aiLimiter, injectAI, rewriteSection);
+router.post('/cover-letter', protect, aiLimiter, injectAI, generateCoverLetter);
 
 // LaTeX Routes
 router.get('/latex', protect, getLatexCode);
 router.post('/latex', protect, saveLatexCode);
-router.post('/latex/generate', protect, injectAI, generateLatexTemplate);
-router.post('/latex/tailor', protect, injectAI, tailorLatexToJob);
+router.post('/latex/generate', protect, aiLimiter, injectAI, generateLatexTemplate);
+router.post('/latex/tailor', protect, aiLimiter, injectAI, tailorLatexToJob);
 
 // Versioning Routes
 router.route('/versions')
