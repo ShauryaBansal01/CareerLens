@@ -1,19 +1,31 @@
-import React from 'react';
+import * as React from "react"
+import { cva } from "class-variance-authority"
+import { cn } from "../../lib/utils"
 
-export const Badge = ({ className = '', variant = 'default', children }) => {
-  const baseStyles = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border";
-  
-  const variants = {
-    default: "bg-[var(--bg-main)] text-[var(--text-muted)] border-[var(--border-color)]",
-    primary: "bg-primary-50 text-primary-600 border-primary-200 dark:bg-primary-900/30 dark:text-primary-400 dark:border-primary-800",
-    success: "bg-accent-50 text-success border-accent-200 dark:bg-accent-900/30 dark:text-accent-400 dark:border-accent-800",
-    warning: "bg-amber-50 text-warning border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800",
-    error: "bg-red-50 text-error border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800",
-  };
+const badgeVariants = cva(
+  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2",
+  {
+    variants: {
+      variant: {
+        default:
+          "border-transparent bg-primary-900 text-white hover:bg-primary-900/80 dark:bg-primary-800 dark:hover:bg-primary-800/80",
+        secondary:
+          "border-transparent bg-slate-100 text-text-main hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700",
+        destructive:
+          "border-transparent bg-red-600 text-white hover:bg-red-600/80",
+        outline: "text-text-main border-border-color",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
 
+function Badge({ className, variant, ...props }) {
   return (
-    <span className={`${baseStyles} ${variants[variant]} ${className}`}>
-      {children}
-    </span>
-  );
-};
+    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+  )
+}
+
+export { Badge, badgeVariants }
