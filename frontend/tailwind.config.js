@@ -8,14 +8,14 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-        display: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        sans: ['Plus Jakarta Sans', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        display: ['Plus Jakarta Sans', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       colors: {
         // Theme Backgrounds
         background: {
-          light: '#FAFBFD',
-          dark: '#0F172A',
+          light: '#F8FAFC',
+          dark: '#020617',
         },
         card: {
           light: '#FFFFFF',
@@ -23,16 +23,16 @@ export default {
         },
         // Core Palette
         primary: {
-          50: '#F0EFFF',
-          100: '#E4E1FF',
-          200: '#C9C4FF',
-          300: '#AFA6FF',
-          400: '#8E82FF',
-          500: '#6C5CE7', // Primary Purple
-          600: '#5649B9',
-          700: '#40378A',
-          800: '#2B255C',
-          900: '#15122E',
+          50: '#F8FAFC',
+          100: '#F1F5F9',
+          200: '#E2E8F0',
+          300: '#CBD5E1',
+          400: '#94A3B8',
+          500: '#64748B', 
+          600: '#475569', 
+          700: '#334155',
+          800: '#1E293B',
+          900: '#0F172A', // Main Navy
         },
         secondary: {
           50: '#EEF2FF',
@@ -47,16 +47,16 @@ export default {
           900: '#312E81',
         },
         accent: {
-          50: '#F0FDF4',
-          100: '#DCFCE7',
-          200: '#BBF7D0',
-          300: '#86EFAC',
-          400: '#4ADE80',
-          500: '#22C55E', // Emerald Green
-          600: '#16A34A',
-          700: '#15803D',
-          800: '#166534',
-          900: '#14532D',
+          50: '#F0F9FF',
+          100: '#E0F2FE',
+          200: '#BAE6FD',
+          300: '#7DD3FC',
+          400: '#38BDF8',
+          500: '#0EA5E9', 
+          600: '#0284C7',
+          700: '#0369A1', // Main Blue
+          800: '#075985',
+          900: '#0C4A6E',
         },
         // Semantic Colors
         success: '#22C55E',

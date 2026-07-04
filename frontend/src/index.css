@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,22 +7,22 @@
 @layer base {
   :root {
     color-scheme: light;
-    --bg-main: #FAFBFD;
+    --bg-main: #F8FAFC;
     --bg-card: #FFFFFF;
     --text-main: #0F172A;
-    --text-muted: #64748B;
+    --text-muted: #475569;
     --border-color: #E2E8F0;
     --border-color-hover: #CBD5E1;
   }
 
   :root[data-theme='dark'] {
     color-scheme: dark;
-    --bg-main: #0F172A;
-    --bg-card: #1E293B;
+    --bg-main: #020617;
+    --bg-card: #0F172A;
     --text-main: #F8FAFC;
     --text-muted: #94A3B8;
-    --border-color: #334155;
-    --border-color-hover: #475569;
+    --border-color: #1E293B;
+    --border-color-hover: #334155;
   }
 
   *,
@@ -40,7 +40,7 @@
   body {
     background-color: var(--bg-main);
     color: var(--text-main);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     letter-spacing: -0.01em;
     line-height: 1.6;
     margin: 0;
@@ -54,7 +54,7 @@
   h5,
   h6 {
     color: var(--text-main);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1.2;
@@ -101,4 +101,10 @@
   .apple-input {
     /* These will be naturally styled by Tailwind utilities as we migrate */
   }
+}
+
+@keyframes indeterminate {
+  0%   { width: 8%;  margin-left: 0; }
+  50%  { width: 45%; margin-left: 30%; }
+  100% { width: 8%;  margin-left: 92%; }
 }
