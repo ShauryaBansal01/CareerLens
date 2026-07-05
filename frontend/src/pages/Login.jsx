@@ -35,10 +35,10 @@ const Login = () => {
       >
         {/* Logo mark */}
         <div className="flex items-center gap-2.5 mb-8">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-primary-900 dark:bg-primary-800 flex items-center justify-center shrink-0 shadow-sm">
             <span className="text-white font-bold text-base tracking-tight">C</span>
           </div>
-          <span className="text-[17px] font-semibold text-gray-900 dark:text-white tracking-tight">
+          <span className="text-[17px] font-bold text-text-main dark:text-text-main tracking-tight">
             CareerLens
           </span>
         </div>
@@ -84,7 +84,7 @@ const Login = () => {
               <label className="apple-label !mb-0" htmlFor="login-password">Password</label>
               <a
                 href="#"
-                className="text-[13px] text-blue-600 dark:text-blue-400 no-underline font-normal hover:underline"
+                className="text-[13px] text-accent-700 dark:text-accent-400 no-underline font-medium hover:underline"
               >
                 Forgot password?
               </a>
@@ -104,11 +104,11 @@ const Login = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="btn-apple-rect w-full mt-6"
+            className="w-full mt-6 py-3 rounded-lg text-[15px] font-bold text-white bg-accent-700 hover:bg-accent-800 transition-colors shadow-sm disabled:opacity-50"
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2.5">
-                <span className="apple-spinner" />
+                <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                 Signing in…
               </span>
             ) : 'Sign In'}
@@ -119,7 +119,7 @@ const Login = () => {
             Don't have an account?{' '}
             <Link
               to="/register"
-              className="text-blue-600 dark:text-blue-400 no-underline font-medium hover:underline"
+              className="text-accent-700 dark:text-accent-400 no-underline font-bold hover:underline"
             >
               Create one
             </Link>
