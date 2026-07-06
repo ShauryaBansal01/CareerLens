@@ -57,10 +57,10 @@ const Register = () => {
       >
         {/* Logo mark */}
         <div className="flex items-center gap-2.5 mb-8">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-indigo-500 flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-primary-900 dark:bg-primary-800 flex items-center justify-center shrink-0 shadow-sm">
             <span className="text-white font-bold text-base tracking-tight">C</span>
           </div>
-          <span className="text-[17px] font-semibold text-gray-900 dark:text-white tracking-tight">
+          <span className="text-[17px] font-bold text-text-main dark:text-text-main tracking-tight">
             CareerLens
           </span>
         </div>
@@ -154,7 +154,7 @@ const Register = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="btn-apple-rect w-full mt-7"
+                className="w-full mt-7 py-3 rounded-lg text-[15px] font-bold text-white bg-accent-700 hover:bg-accent-800 transition-colors shadow-sm disabled:opacity-50"
               >
                 {isLoading ? 'Sending OTP…' : 'Continue'}
               </button>
@@ -163,7 +163,7 @@ const Register = () => {
                 Already have an account?{' '}
                 <Link
                   to="/login"
-                  className="text-indigo-600 dark:text-indigo-400 no-underline font-medium hover:underline"
+                  className="text-accent-700 dark:text-accent-400 no-underline font-bold hover:underline"
                 >
                   Sign in
                 </Link>
@@ -195,7 +195,7 @@ const Register = () => {
               <button
                 type="submit"
                 disabled={isLoading || otp.length < 6}
-                className="btn-apple-rect w-full mt-7"
+                className="w-full mt-7 py-3 rounded-lg text-[15px] font-bold text-white bg-accent-700 hover:bg-accent-800 transition-colors shadow-sm disabled:opacity-50"
               >
                 {isLoading ? 'Verifying…' : 'Verify & Create Account'}
               </button>
@@ -205,7 +205,7 @@ const Register = () => {
                 <button
                   type="button"
                   onClick={handleSendOtp}
-                  className="text-indigo-600 dark:text-indigo-400 no-underline font-medium hover:underline bg-transparent border-none cursor-pointer p-0"
+                  className="text-accent-700 dark:text-accent-400 no-underline font-bold hover:underline bg-transparent border-none cursor-pointer p-0"
                 >
                   Resend OTP
                 </button>
