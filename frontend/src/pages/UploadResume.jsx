@@ -1,4 +1,4 @@
-import { useState, useContext, useRef } from 'react';
+import { useState, useContext, useRef, useEffect } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import { Link } from 'react-router-dom';
@@ -7,14 +7,36 @@ import { UploadCloud, FileText, AlertCircle, CheckCircle } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+const UPLOAD_STEPS = [
+  "Parsing PDF document...",
+  "Extracting skills & experience with AI...",
+  "Analyzing career trajectory...",
+  "Generating ATS-friendly LaTeX code...",
+  "Saving profile to database...",
+  "Finalizing results..."
+];
+
 const UploadResume = () => {
   const [file, setFile]             = useState(null);
   const [loading, setLoading]       = useState(false);
+  const [uploadStep, setUploadStep] = useState(0);
   const [resumeData, setResumeData] = useState(null);
   const [error, setError]           = useState(null);
   const [dragOver, setDragOver]     = useState(false);
   const { user } = useContext(AuthContext);
   const fileInputRef = useRef(null);
+
+  // Cycle through upload steps when loading
+  useEffect(() => {
+    let interval;
+    if (loading) {
+      setUploadStep(0);
+      interval = setInterval(() => {
+        setUploadStep(prev => (prev < UPLOAD_STEPS.length - 1 ? prev + 1 : prev));
+      }, 3000); // change step every 3 seconds
+    }
+    return () => clearInterval(interval);
+  }, [loading]);
 
   const handleFileChange = (e) => {
     if (e.target.files?.[0]) {
@@ -144,10 +166,10 @@ const UploadResume = () => {
                       <FileText className="absolute inset-0 m-auto w-6 h-6 text-primary-500 animate-pulse" />
                     </div>
                     <p className="text-[16px] font-semibold text-on-surface dark:text-on-dark tracking-tight mb-1">
-                      Analyzing your resume...
+                      {UPLOAD_STEPS[uploadStep]}
                     </p>
                     <p className="text-[13px] text-gray-500 dark:text-on-dark-muted">
-                      Extracting skills and experience with AI
+                      Please wait, this usually takes 5-15 seconds.
                     </p>
                   </motion.div>
                 ) : !file ? (
@@ -220,7 +242,7 @@ const UploadResume = () => {
               {loading ? (
                 <span className="flex items-center justify-center gap-2.5 text-white">
                   <span className="premium-spinner border-white/20 border-t-white" />
-                  Analyzing & Generating LaTeX...
+                  {UPLOAD_STEPS[uploadStep]}
                 </span>
               ) : 'Analyze My Resume'}
             </button>

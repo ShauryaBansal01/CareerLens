@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
@@ -323,12 +323,26 @@ const DiffCard = ({ change, accepted, onToggle }) => {
 };
 
 // ── Spinner ────────────────────────────────────────────────────────────────────
-const Spinner = ({ label }) => (
-  <div className="flex flex-col items-center gap-3.5 py-12">
-    <div className="w-11 h-11 rounded-full border-[3px] border-white/10 dark:border-white/5 border-t-blue-600 animate-spin" />
-    <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
-  </div>
-);
+const Spinner = ({ label, messages }) => {
+  const [msgIdx, setMsgIdx] = useState(0);
+
+  useEffect(() => {
+    if (!messages || messages.length === 0) return;
+    const interval = setInterval(() => {
+      setMsgIdx(prev => (prev < messages.length - 1 ? prev + 1 : prev));
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [messages]);
+
+  return (
+    <div className="flex flex-col items-center gap-3.5 py-12">
+      <div className="w-11 h-11 rounded-full border-[3px] border-white/10 dark:border-white/5 border-t-blue-600 animate-spin" />
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        {messages ? messages[msgIdx] : label}
+      </p>
+    </div>
+  );
+};
 
 const cardClass = "rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-900";
 const panelClass = "rounded-xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-950/60";
@@ -598,7 +612,18 @@ const ResumeAI = () => {
             )}
 
             {/* Loading */}
-            {improveLoading && <Spinner label="Analyzing your resume with AI…" />}
+            {improveLoading && (
+              <Spinner 
+                messages={[
+                  "Reading resume contents...",
+                  "Analyzing structure and ATS compatibility...",
+                  "Evaluating career trajectory and impact...",
+                  "Identifying missing keywords and gaps...",
+                  "Generating tailored feedback...",
+                  "Finalizing score..."
+                ]} 
+              />
+            )}
 
             {/* Error */}
             {improveError && (
@@ -717,7 +742,15 @@ const ResumeAI = () => {
               exit={{ opacity: 0, y: -16 }}
               className={`${cardClass} mb-6`}
             >
-              <Spinner label="Applying AI suggestions to your resume… This may take a moment." />
+              <Spinner 
+                messages={[
+                  "Reviewing approved suggestions...",
+                  "Restructuring sentences for maximum impact...",
+                  "Adding strong action verbs and metrics...",
+                  "Ensuring 100% ATS compatibility...",
+                  "Finalizing your optimized profile..."
+                ]} 
+              />
             </motion.div>
           )}
 
