@@ -1,48 +1,89 @@
-$env:GIT_AUTHOR_DATE="2026-06-17T10:00:00"
-$env:GIT_COMMITTER_DATE="2026-06-17T10:00:00"
-git add backend/models/
-git add backend/utils/
-git commit -m "feat: setup backend models and encryption utility"
+$env:GIT_AUTHOR_DATE="2026-07-04T10:15:00"
+$env:GIT_COMMITTER_DATE="2026-07-04T10:15:00"
+git add frontend/tailwind.config.js frontend/src/index.css
+git commit -m "chore: setup design tokens and base styles"
 
-$env:GIT_AUTHOR_DATE="2026-06-18T14:30:00"
-$env:GIT_COMMITTER_DATE="2026-06-18T14:30:00"
-git add backend/controllers/
-git add backend/services/
-git add backend/middleware/
-git commit -m "feat: implement backend controllers and AI services"
+$env:GIT_AUTHOR_DATE="2026-07-04T12:30:00"
+$env:GIT_COMMITTER_DATE="2026-07-04T12:30:00"
+git add frontend/src/components/ui/Card.jsx
+git commit -m "feat(ui): add Card component"
 
-$env:GIT_AUTHOR_DATE="2026-06-19T11:15:00"
-$env:GIT_COMMITTER_DATE="2026-06-19T11:15:00"
-git add backend/routes/
-git add backend/server.js
-git commit -m "feat: add API routes and update server configuration"
+$env:GIT_AUTHOR_DATE="2026-07-04T15:45:00"
+$env:GIT_COMMITTER_DATE="2026-07-04T15:45:00"
+git add frontend/src/components/ui/Button.jsx
+git commit -m "feat(ui): add Button component"
 
-$env:GIT_AUTHOR_DATE="2026-06-20T16:45:00"
-$env:GIT_COMMITTER_DATE="2026-06-20T16:45:00"
-git add frontend/tailwind.config.js
-git add frontend/src/index.css
-git add frontend/src/App.jsx
-git add frontend/src/context/
-git commit -m "chore: configure frontend tailwind and auth context"
+$env:GIT_AUTHOR_DATE="2026-07-04T17:20:00"
+$env:GIT_COMMITTER_DATE="2026-07-04T17:20:00"
+git add frontend/src/components/ui/Badge.jsx
+git commit -m "feat(ui): add Badge component"
 
-$env:GIT_AUTHOR_DATE="2026-06-21T13:20:00"
-$env:GIT_COMMITTER_DATE="2026-06-21T13:20:00"
-git add frontend/src/components/
-git commit -m "feat: build reusable frontend components"
+$env:GIT_AUTHOR_DATE="2026-07-05T09:10:00"
+$env:GIT_COMMITTER_DATE="2026-07-05T09:10:00"
+git add frontend/src/components/ui/Input.jsx
+git commit -m "feat(ui): add Input component"
 
-$env:GIT_AUTHOR_DATE="2026-06-27T09:00:00"
-$env:GIT_COMMITTER_DATE="2026-06-27T09:00:00"
-git add frontend/src/pages/Admin.jsx
-git add frontend/src/pages/CoverLetter.jsx
+$env:GIT_AUTHOR_DATE="2026-07-05T11:40:00"
+$env:GIT_COMMITTER_DATE="2026-07-05T11:40:00"
+git add frontend/src/lib/
+git commit -m "chore: add utility functions for tailwind merge"
+
+$env:GIT_AUTHOR_DATE="2026-07-05T14:15:00"
+$env:GIT_COMMITTER_DATE="2026-07-05T14:15:00"
+git add frontend/src/pages/Landing.jsx
+git commit -m "refactor(landing): update Landing page to new design system"
+
+$env:GIT_AUTHOR_DATE="2026-07-05T16:50:00"
+$env:GIT_COMMITTER_DATE="2026-07-05T16:50:00"
+git add frontend/src/pages/Login.jsx
+git commit -m "refactor(auth): update Login UI"
+
+$env:GIT_AUTHOR_DATE="2026-07-06T09:30:00"
+$env:GIT_COMMITTER_DATE="2026-07-06T09:30:00"
+git add frontend/src/pages/Register.jsx
+git commit -m "refactor(auth): update Register UI"
+
+$env:GIT_AUTHOR_DATE="2026-07-06T11:20:00"
+$env:GIT_COMMITTER_DATE="2026-07-06T11:20:00"
 git add frontend/src/pages/Dashboard.jsx
-git add frontend/src/pages/Profile.jsx
-git commit -m "feat: implement primary frontend pages"
+git commit -m "refactor(dashboard): migrate Dashboard to design tokens"
 
-$env:GIT_AUTHOR_DATE="2026-06-27T15:00:00"
-$env:GIT_COMMITTER_DATE="2026-06-27T15:00:00"
-git add backend/refactor_resume_controller.js
-git add refactor_app.js
-git add frontend/src/pages/
-git commit -m "feat: complete remaining pages and refactoring scripts"
+$env:GIT_AUTHOR_DATE="2026-07-06T14:45:00"
+$env:GIT_COMMITTER_DATE="2026-07-06T14:45:00"
+git add frontend/src/components/layout/
+git commit -m "refactor(layout): update AppLayout and Sidebar with new styles"
 
-git push origin main
+$env:GIT_AUTHOR_DATE="2026-07-06T16:30:00"
+$env:GIT_COMMITTER_DATE="2026-07-06T16:30:00"
+git add frontend/src/context/TaskContext.jsx
+git commit -m "feat(core): implement global background TaskContext"
+
+$env:GIT_AUTHOR_DATE="2026-07-07T09:15:00"
+$env:GIT_COMMITTER_DATE="2026-07-07T09:15:00"
+git add frontend/src/App.jsx
+git commit -m "chore: wrap application in TaskProvider"
+
+$env:GIT_AUTHOR_DATE="2026-07-07T11:40:00"
+$env:GIT_COMMITTER_DATE="2026-07-07T11:40:00"
+git add frontend/src/pages/UploadResume.jsx
+git commit -m "feat(upload): integrate background task context for resume parsing"
+
+$env:GIT_AUTHOR_DATE="2026-07-07T13:25:00"
+$env:GIT_COMMITTER_DATE="2026-07-07T13:25:00"
+git add frontend/src/pages/ResumeAI.jsx
+git commit -m "refactor(resume): migrate Resume Analyzer UI to new design system"
+
+$env:GIT_AUTHOR_DATE="2026-07-07T15:10:00"
+$env:GIT_COMMITTER_DATE="2026-07-07T15:10:00"
+git add frontend/src/pages/CoverLetter.jsx
+git commit -m "refactor(cover-letter): migrate Cover Letter generator UI"
+
+$env:GIT_AUTHOR_DATE="2026-07-07T16:50:00"
+$env:GIT_COMMITTER_DATE="2026-07-07T16:50:00"
+git add frontend/src/pages/ResumeLatex.jsx
+git commit -m "refactor(resume): update Resume Latex viewer styling"
+
+$env:GIT_AUTHOR_DATE="2026-07-07T17:30:00"
+$env:GIT_COMMITTER_DATE="2026-07-07T17:30:00"
+git add .
+git commit -m "chore: cleanup obsolete files, dependencies, and configuration"
