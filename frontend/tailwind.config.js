@@ -63,7 +63,7 @@ export default {
         warning: '#F59E0B',
         error: '#EF4444',
         info: '#3B82F6',
-        
+
         // Borders and Text (Dark Mode variables mapped via CSS if needed, but explicit here is good too)
         border: {
           light: '#E2E8F0',

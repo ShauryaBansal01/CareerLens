@@ -105,10 +105,10 @@ CRITICAL: The "skill" values in matchedRequiredSkills and missingRequiredSkills 
     // ── Categories ──────────────────────────────────────────────────────────
     if (parsed.categories && typeof parsed.categories === 'object') {
       categories = {
-        languages:  Array.isArray(parsed.categories.languages)  ? parsed.categories.languages.map(s => s.toLowerCase())  : [],
+        languages: Array.isArray(parsed.categories.languages) ? parsed.categories.languages.map(s => s.toLowerCase()) : [],
         frameworks: Array.isArray(parsed.categories.frameworks) ? parsed.categories.frameworks.map(s => s.toLowerCase()) : [],
-        tools:      Array.isArray(parsed.categories.tools)      ? parsed.categories.tools.map(s => s.toLowerCase())      : [],
-        concepts:   Array.isArray(parsed.categories.concepts)   ? parsed.categories.concepts.map(s => s.toLowerCase())   : [],
+        tools: Array.isArray(parsed.categories.tools) ? parsed.categories.tools.map(s => s.toLowerCase()) : [],
+        concepts: Array.isArray(parsed.categories.concepts) ? parsed.categories.concepts.map(s => s.toLowerCase()) : [],
       };
     }
 

@@ -25,7 +25,9 @@
     --border-color-hover: #475569;
   }
 
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     box-sizing: border-box;
   }
 
@@ -45,7 +47,12 @@
     transition: background-color 0.2s ease, color 0.2s ease;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     color: var(--text-main);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     font-weight: 700;
@@ -56,23 +63,42 @@
 }
 
 @layer utilities {
-  .page-top { 
-    padding-top: 72px; /* Height of new navbar + padding */
+  .page-top {
+    padding-top: 72px;
+    /* Height of new navbar + padding */
   }
 
   /* Custom Scrollbar */
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
   ::-webkit-scrollbar-thumb {
     background: var(--border-color);
     border-radius: 999px;
   }
-  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+  }
 }
 
 @layer components {
+
   /* Legacy overrides to prevent app breaking while migrating */
-  .glass-nav, .apple-card, .glass-card, .glass-panel, .btn-premium, .btn-secondary, .premium-input, .apple-input {
+  .glass-nav,
+  .apple-card,
+  .glass-card,
+  .glass-panel,
+  .btn-premium,
+  .btn-secondary,
+  .premium-input,
+  .apple-input {
     /* These will be naturally styled by Tailwind utilities as we migrate */
   }
 }

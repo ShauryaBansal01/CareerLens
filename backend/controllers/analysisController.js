@@ -22,8 +22,8 @@ exports.analyzeSkills = async (req, res) => {
 
     const analysis = await analysisService.calculateSkillGapAI(req.ai, resume.extractedSkills || [], role.requiredSkills || []);
 
-    const experienceScore  = resume.experience && resume.experience !== 'Not explicitly found' ? 20 : 5;
-    const projectsScore    = 0;
+    const experienceScore = resume.experience && resume.experience !== 'Not explicitly found' ? 20 : 5;
+    const projectsScore = 0;
     const consistencyScore = 5;
     const totalJobReadinessScore = analysis.skillsWeightedScore + experienceScore + projectsScore + consistencyScore;
 
