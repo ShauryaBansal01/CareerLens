@@ -1,9 +1,13 @@
-import { useState, useContext, useRef, useEffect } from 'react';
+import { useState, useContext, useRef } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
+import TaskContext from '../context/TaskContext';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UploadCloud, FileText, AlertCircle, CheckCircle } from 'lucide-react';
+import { Card, CardContent } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Badge } from '../components/ui/Badge';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -18,30 +22,25 @@ const UPLOAD_STEPS = [
 
 const UploadResume = () => {
   const [file, setFile]             = useState(null);
-  const [loading, setLoading]       = useState(false);
-  const [uploadStep, setUploadStep] = useState(0);
-  const [resumeData, setResumeData] = useState(null);
-  const [error, setError]           = useState(null);
   const [dragOver, setDragOver]     = useState(false);
   const { user } = useContext(AuthContext);
+  const { startTask, getTask, clearTask } = useContext(TaskContext);
   const fileInputRef = useRef(null);
 
-  // Cycle through upload steps when loading
-  useEffect(() => {
-    let interval;
-    if (loading) {
-      setUploadStep(0);
-      interval = setInterval(() => {
-        setUploadStep(prev => (prev < UPLOAD_STEPS.length - 1 ? prev + 1 : prev));
-      }, 3000); // change step every 3 seconds
-    }
-    return () => clearInterval(interval);
-  }, [loading]);
+  // Derive state from TaskContext
+  const uploadTask = getTask('resume-upload');
+  const loading = uploadTask?.status === 'running';
+  const uploadStep = uploadTask?.currentStep || 0;
+  const resumeData = uploadTask?.status === 'completed' ? uploadTask.result : null;
+  const error = uploadTask?.status === 'failed' ? uploadTask.error : null;
 
   const handleFileChange = (e) => {
     if (e.target.files?.[0]) {
       setFile(e.target.files[0]);
-      setError(null);
+      // Clear any previous task when selecting a new file
+      if (uploadTask && uploadTask.status !== 'running') {
+        clearTask('resume-upload');
+      }
     }
   };
 
@@ -49,100 +48,69 @@ const UploadResume = () => {
     e.preventDefault();
     setDragOver(false);
     const dropped = e.dataTransfer.files?.[0];
-    if (dropped) { setFile(dropped); setError(null); }
+    if (dropped) {
+      setFile(dropped);
+      if (uploadTask && uploadTask.status !== 'running') {
+        clearTask('resume-upload');
+      }
+    }
   };
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!file) { setError('Please select a PDF file first.'); return; }
-
-    if (!user?.token) {
-      setError('You are not signed in. Please log out and sign back in.');
-      return;
-    }
+    if (!file) return;
 
     const formData = new FormData();
     formData.append('resume', file);
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await axios.post(`${API_URL}/resume/upload`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${user.token}`,
-        },
-      });
-      setResumeData(res.data);
-    } catch (err) {
-      const status = err.response?.status;
-      const msg    = err.response?.data?.message;
-      if (status === 401) {
-        setError('Session expired. Please log out and sign back in.');
-      } else if (status === 400) {
-        setError(msg || 'Invalid file. Please upload a PDF.');
-      } else if (status === 500) {
-        setError(msg || 'Server error. Please try again in a moment.');
-      } else {
-        setError(msg || 'Upload failed. Please ensure the file is a valid PDF under 5MB.');
-      }
-    } finally {
-      setLoading(false);
-    }
+
+    startTask(
+      'resume-upload',
+      'Uploading Resume',
+      async () => {
+        const res = await axios.post(`${API_URL}/resume/upload`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${user.token}`,
+          },
+        });
+        return res.data;
+      },
+      '/upload',
+      UPLOAD_STEPS
+    );
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-6 bg-transparent transition-colors duration-300">
-        <div className="glass-card text-center max-w-[400px] w-full">
-          <AlertCircle className="w-10 h-10 text-error mx-auto mb-5" />
-          <h2 className="text-2xl font-bold text-on-surface dark:text-on-dark tracking-tight mb-2">
-            Sign in required
-          </h2>
-          <p className="text-[15px] text-gray-500 dark:text-on-dark-muted mb-7">
-            You need to be signed in to upload your resume.
-          </p>
-          <Link to="/login" className="btn-premium px-7 py-3">
-            Sign In
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-[calc(100vh-64px)] px-4 py-12 md:py-16 transition-colors duration-300 relative z-10">
-      <div className="max-w-[680px] mx-auto w-full">
+    <div className="max-w-3xl mx-auto space-y-8">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-text-main sm:text-3xl">Upload Resume</h1>
+        <p className="text-sm text-text-muted mt-1">
+          Our AI analyzes your resume and gives you actionable career insights in seconds.
+        </p>
+      </div>
 
-        {/* ─── Hero ─── */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="mb-10 md:mb-12"
-        >
-          <h1 className="text-4xl md:text-[40px] font-bold tracking-tighter mb-2.5 text-gradient">
-            Upload Your Resume
-          </h1>
-          <p className="text-[17px] text-gray-500 dark:text-dark-muted">
-            Our AI analyzes your resume and gives you actionable career insights in seconds.
-          </p>
-        </motion.div>
-
-        {/* ─── Upload card ─── */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.05 }}
-          className="glass-card mb-6"
-        >
-          <form onSubmit={handleUpload}>
+      <Card className="overflow-hidden">
+        <CardContent className="p-0">
+          <form onSubmit={handleUpload} className="p-6 md:p-8">
             {/* Drop zone */}
             <div
-              className={`premium-drop-zone group ${dragOver ? 'drag-over' : ''} mb-6`}
+              className={`relative group ${
+                dragOver ? 'border-accent-500 bg-accent-50 dark:bg-accent-900/20 scale-[1.01]' : 'border-border-color hover:border-accent-400 bg-bg-card'
+              } border-2 border-dashed rounded-xl p-8 cursor-pointer transition-all duration-200 mb-6 flex flex-col items-center justify-center min-h-[260px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500`}
               onClick={() => fileInputRef.current?.click()}
               onDragOver={e => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onDrop={handleDrop}
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
+              role="button"
+              aria-label="File upload dropzone"
             >
               <input
                 type="file"
@@ -150,6 +118,7 @@ const UploadResume = () => {
                 ref={fileInputRef}
                 onChange={handleFileChange}
                 className="hidden"
+                tabIndex={-1}
               />
               <AnimatePresence mode="wait">
                 {loading ? (
@@ -161,14 +130,14 @@ const UploadResume = () => {
                     className="text-center py-4"
                   >
                     <div className="relative w-16 h-16 mx-auto mb-4">
-                      <div className="absolute inset-0 border-4 border-primary-500/20 rounded-full"></div>
-                      <div className="absolute inset-0 border-4 border-primary-500 rounded-full border-t-transparent animate-spin"></div>
-                      <FileText className="absolute inset-0 m-auto w-6 h-6 text-primary-500 animate-pulse" />
+                      <div className="absolute inset-0 border-4 border-slate-100 dark:border-slate-800 rounded-full"></div>
+                      <div className="absolute inset-0 border-4 border-accent-600 rounded-full border-t-transparent animate-spin"></div>
+                      <FileText className="absolute inset-0 m-auto w-6 h-6 text-accent-600" />
                     </div>
-                    <p className="text-[16px] font-semibold text-on-surface dark:text-on-dark tracking-tight mb-1">
+                    <p className="text-base font-semibold text-text-main mb-1">
                       {UPLOAD_STEPS[uploadStep]}
                     </p>
-                    <p className="text-[13px] text-gray-500 dark:text-on-dark-muted">
+                    <p className="text-sm text-text-muted">
                       Please wait, this usually takes 5-15 seconds.
                     </p>
                   </motion.div>
@@ -180,12 +149,17 @@ const UploadResume = () => {
                     exit={{ opacity: 0 }}
                     className="text-center"
                   >
-                    <UploadCloud className="w-12 h-12 text-primary-400 dark:text-primary-500 mx-auto mb-4 stroke-1 group-hover:scale-110 transition-transform duration-300 drop-shadow-lg" />
-                    <p className="text-[16px] font-semibold text-on-surface dark:text-on-dark tracking-tight mb-1">
+                    <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                      <UploadCloud className="w-6 h-6 text-slate-500" />
+                    </div>
+                    <p className="text-base font-semibold text-text-main mb-1">
                       Drag &amp; drop your resume here
                     </p>
-                    <p className="text-[14px] text-gray-500 dark:text-on-dark-muted">or click to browse files</p>
-                    <p className="text-[12px] text-[#aeaeb2] dark:text-[#636366] mt-4">Max 5 MB</p>
+                    <p className="text-sm text-text-muted mb-4">or click to browse files</p>
+                    <div className="flex gap-2 justify-center">
+                      <Badge variant="secondary">PDF only</Badge>
+                      <Badge variant="secondary">Max 5MB</Badge>
+                    </div>
                   </motion.div>
                 ) : (
                   <motion.div
@@ -195,149 +169,115 @@ const UploadResume = () => {
                     exit={{ opacity: 0 }}
                     className="text-center"
                   >
-                    <FileText className="w-10 h-10 text-primary-500 mx-auto mb-3.5 stroke-[1.5]" />
-                    <p className="text-[15px] font-semibold text-on-surface dark:text-on-dark mb-1">
+                    <div className="w-12 h-12 bg-accent-50 dark:bg-accent-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <FileText className="w-6 h-6 text-accent-600" />
+                    </div>
+                    <p className="text-base font-semibold text-text-main mb-1">
                       {file.name}
                     </p>
-                    <p className="text-[13px] text-gray-500 dark:text-on-dark-muted mb-4">
+                    <p className="text-sm text-text-muted mb-4">
                       {(file.size / 1024 / 1024).toFixed(2)} MB
                     </p>
-                    <button
+                    <Button
                       type="button"
+                      variant="destructive"
+                      size="sm"
                       onClick={e => { e.stopPropagation(); setFile(null); }}
-                      className="text-[13px] text-error font-medium bg-transparent border-none cursor-pointer hover:underline"
                     >
                       Remove file
-                    </button>
+                    </Button>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
-            {/* File format pills */}
-            <div className="flex gap-2 flex-wrap mb-8">
-              {['PDF only'].map(fmt => (
-                <span key={fmt} className="premium-pill-gray">{fmt}</span>
-              ))}
-            </div>
-
             {/* Error */}
             {error && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex items-center gap-2 text-[14px] text-error mb-4 bg-error/10 dark:bg-error/20 p-3 rounded-xl"
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="mb-6 flex items-center gap-3 p-4 rounded-lg bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 text-sm font-medium"
               >
-                <AlertCircle className="w-4 h-4 shrink-0" />
+                <AlertCircle className="w-5 h-5 shrink-0" aria-hidden="true" />
                 {error}
-              </motion.p>
+              </motion.div>
             )}
 
             {/* Submit */}
-            <button
-              type="submit"
+            <Button
+              onClick={handleUpload}
               disabled={!file || loading}
-              className="btn-premium w-full py-4 rounded-xl text-[16px]"
+              className="w-full h-12 text-base"
+              isLoading={loading}
             >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2.5 text-white">
-                  <span className="premium-spinner border-white/20 border-t-white" />
-                  {UPLOAD_STEPS[uploadStep]}
-                </span>
-              ) : 'Analyze My Resume'}
-            </button>
+              Analyze My Resume
+            </Button>
           </form>
-        </motion.div>
+        </CardContent>
+      </Card>
 
-        {/* ─── Results ─── */}
-        <AnimatePresence>
-          {resumeData && (
-            <motion.div
-              key="upload-results"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35 }}
-              className="glass-card shadow-card"
-            >
-              {/* Success header */}
-              <div className="flex items-center gap-3 mb-7">
-                <div className="w-9 h-9 rounded-full bg-success/10 dark:bg-success/20 flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-success" />
+      {/* Results */}
+      <AnimatePresence>
+        {resumeData && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <Card>
+              <CardContent className="p-6 md:p-8">
+                <div className="flex items-start gap-4 mb-8">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 dark:bg-emerald-900/30 dark:text-emerald-400">
+                    <CheckCircle className="w-5 h-5" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-text-main">Analysis complete</h3>
+                    <p className="text-sm text-text-muted mt-1">Your resume has been successfully processed.</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-[21px] font-semibold text-on-surface dark:text-on-dark tracking-tight">
-                    Analysis complete
-                  </h3>
-                  <p className="text-[13px] text-gray-500 dark:text-on-dark-muted mt-0.5">
-                    Your resume has been successfully processed.
-                  </p>
-                </div>
-              </div>
 
-              <hr className="apple-sep mb-7" />
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">Detected Skills</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {resumeData.extractedSkills?.length > 0
+                        ? resumeData.extractedSkills.map((skill, i) => (
+                            <Badge key={i} variant="secondary">{skill}</Badge>
+                          ))
+                        : <span className="text-sm text-text-muted">No specific skills detected.</span>
+                      }
+                    </div>
+                  </div>
 
-              {/* Skills */}
-              <div className="mb-7">
-                <p className="text-[12px] font-semibold text-gray-500 dark:text-on-dark-muted uppercase tracking-[0.06em] mb-3.5">
-                  Detected Skills
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {resumeData.extractedSkills?.length > 0
-                    ? resumeData.extractedSkills.map((skill, i) => (
-                        <span key={i} className="premium-pill-gray">{skill}</span>
-                      ))
-                    : <span className="text-[14px] text-dark-muted">No specific skills detected.</span>
-                  }
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div className="p-4 rounded-lg bg-slate-50 border border-border-color dark:bg-slate-900">
+                      <h4 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Education</h4>
+                      <p className="text-sm text-text-main line-clamp-3">
+                        {resumeData.education || 'Not detected'}
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-slate-50 border border-border-color dark:bg-slate-900">
+                      <h4 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Experience</h4>
+                      <p className="text-sm text-text-main line-clamp-3">
+                        {resumeData.experience || 'Not detected'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              {/* Education & Experience */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                <div className="bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-[14px] p-5">
-                  <p className="text-[12px] font-semibold text-gray-500 dark:text-on-dark-muted uppercase tracking-[0.06em] mb-2.5">
-                    Education
-                  </p>
-                  <p className="text-[14px] text-on-surface dark:text-on-dark leading-[1.6]">
-                    {resumeData.education || 'Not detected'}
-                  </p>
+                <div className="flex flex-col sm:flex-row gap-3 mt-8 pt-6 border-t border-border-color">
+                  <Link to="/resume-latex" className="flex-1">
+                    <Button className="w-full">Go to LaTeX Builder</Button>
+                  </Link>
+                  <Link to="/" className="flex-1">
+                    <Button variant="outline" className="w-full">Go to Dashboard</Button>
+                  </Link>
                 </div>
-                <div className="bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-[14px] p-5">
-                  <p className="text-[12px] font-semibold text-gray-500 dark:text-on-dark-muted uppercase tracking-[0.06em] mb-2.5">
-                    Experience
-                  </p>
-                  <p className="text-[14px] text-on-surface dark:text-on-dark leading-[1.6]">
-                    {resumeData.experience || 'Not detected'}
-                  </p>
-                </div>
-              </div>
-
-              {/* CTA */}
-              <div className="flex flex-col sm:flex-row items-center gap-3 mb-4 mt-6">
-                <Link 
-                  to="/resume-latex" 
-                  className="btn-premium px-7 py-3 text-[15px] flex-1 text-center w-full sm:w-auto"
-                >
-                  Go to LaTeX Builder →
-                </Link>
-                <Link 
-                  to="/profile" 
-                  className="btn-secondary px-7 py-3 text-[15px] flex-1 text-center w-full sm:w-auto"
-                >
-                  View Profile
-                </Link>
-              </div>
-              <div className="flex flex-col sm:flex-row items-center gap-3">
-                <Link 
-                  to="/" 
-                  className="btn-secondary px-7 py-3 text-[15px] flex-1 text-center w-full sm:w-auto"
-                >
-                  Go to Dashboard
-                </Link>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
