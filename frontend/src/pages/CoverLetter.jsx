@@ -3,46 +3,59 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import { FileText, Copy, Check, Sparkles, AlertCircle } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
+import TaskContext from '../context/TaskContext';
+import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
 
 const CoverLetter = () => {
   const { user } = useContext(AuthContext);
+  const { startTask, getTask, clearTask } = useContext(TaskContext);
   const [jobDescription, setJobDescription] = useState('');
   const [tone, setTone] = useState('Professional');
-  const [coverLetter, setCoverLetter] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
+
+  // Derive state from TaskContext
+  const clTask = getTask('cover-letter');
+  const loading = clTask?.status === 'running';
+  const coverLetter = clTask?.status === 'completed' ? clTask.result : '';
+  const error = clTask?.status === 'failed' ? clTask.error : null;
 
   const generateCoverLetter = async () => {
     if (!jobDescription || jobDescription.trim().length < 20) {
-      setError('Please provide a valid job description (minimum 20 characters).');
       return;
     }
 
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/resume/cover-letter`,
-        { jobDescription, tone },
-        config
-      );
-
-      setCoverLetter(res.data.coverLetter);
-    } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.message || 'Failed to generate cover letter.');
-    } finally {
-      setLoading(false);
+    // Clear previous result
+    if (clTask && clTask.status !== 'running') {
+      clearTask('cover-letter');
     }
+
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${user.token}`,
+      },
+    };
+
+    startTask(
+      'cover-letter',
+      'Generating Cover Letter',
+      async () => {
+        const res = await axios.post(
+          `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/resume/cover-letter`,
+          { jobDescription, tone },
+          config
+        );
+        return res.data.coverLetter;
+      },
+      '/cover-letter',
+      [
+        'Analyzing job requirements...',
+        'Matching your experience to the role...',
+        'Drafting cover letter...',
+        'Polishing and finalizing...',
+      ]
+    );
   };
 
   const copyToClipboard = () => {
@@ -54,12 +67,12 @@ const CoverLetter = () => {
 
   if (!user) {
     return (
-      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-6 relative z-10 transition-colors duration-300">
-        <div className="glass-card text-center max-w-[400px] w-full">
-          <AlertCircle className="w-10 h-10 text-error mx-auto mb-5" />
-          <h2 className="text-2xl font-bold text-on-surface dark:text-on-dark mb-2">Sign in required</h2>
-          <p className="text-on-surface-variant dark:text-dark-muted">Please log in to generate cover letters.</p>
-        </div>
+      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-6 relative z-10 transition-colors duration-300 bg-bg-main">
+        <Card className="text-center max-w-[400px] w-full p-10">
+          <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-5" />
+          <h2 className="text-2xl font-bold text-text-main mb-2">Sign in required</h2>
+          <p className="text-text-muted">Please log in to generate cover letters.</p>
+        </Card>
       </div>
     );
   }
@@ -74,12 +87,12 @@ const CoverLetter = () => {
            className="mb-8"
         >
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-violet-500/10 dark:bg-violet-500/20 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+            <div className="w-10 h-10 rounded-xl bg-accent-600/10 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-accent-600" />
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-on-surface dark:text-on-dark tracking-tight">AI Cover Letter</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-text-main tracking-tight">AI Cover Letter</h1>
           </div>
-          <p className="text-[17px] text-gray-500 dark:text-dark-muted ml-[52px]">Instantly draft ATS-optimized cover letters tailored precisely to the job description.</p>
+          <p className="text-[17px] text-text-muted ml-[52px]">Instantly draft ATS-optimized cover letters tailored precisely to the job description.</p>
         </motion.div>
 
         {error && (
@@ -97,14 +110,14 @@ const CoverLetter = () => {
             animate={{ opacity: 1, x: 0 }}
             className="flex flex-col gap-6"
           >
-            <div className="glass-card flex flex-col h-full">
-              <h2 className="section-title">
+            <Card className="flex flex-col h-full p-6">
+              <h2 className="text-xl font-bold text-text-main tracking-tight mb-2">
                 Target Role
               </h2>
-              <p className="text-[14px] text-gray-500 dark:text-dark-muted mb-4">Paste the Target Job Description below. We'll cross-reference it with your profile data.</p>
+              <p className="text-[14px] text-text-muted mb-4">Paste the Target Job Description below. We'll cross-reference it with your profile data.</p>
               
               <textarea 
-                className="premium-input h-64 md:h-80 resize-none mb-6 text-[14px]"
+                className="block h-64 md:h-80 w-full resize-none rounded-xl border border-border-color bg-bg-card px-4 py-3 text-[14px] leading-6 text-text-main outline-none transition placeholder:text-text-muted/60 focus:border-accent-500 focus:ring-4 focus:ring-accent-500/10 mb-6"
                 placeholder="E.g. We are looking for a Senior Frontend Engineer to join our core product team. You should have 5+ years of experience in React, TypeScript, and Tailwind..."
                 value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
@@ -112,9 +125,9 @@ const CoverLetter = () => {
 
               <div className="flex flex-col sm:flex-row items-center gap-4 mt-auto">
                 <div className="w-full sm:w-1/3">
-                   <label className="block text-xs font-semibold text-gray-500 dark:text-dark-muted mb-1.5 uppercase tracking-wider">Tone</label>
+                   <label className="block text-xs font-semibold text-text-muted mb-1.5 uppercase tracking-wider">Tone</label>
                    <select 
-                     className="premium-input py-2.5 px-3 appearance-none cursor-pointer"
+                     className="block w-full rounded-xl border border-border-color bg-bg-card px-4 py-2.5 text-sm leading-6 text-text-main outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-accent-500/10 appearance-none cursor-pointer"
                      value={tone}
                      onChange={(e) => setTone(e.target.value)}
                    >
@@ -125,16 +138,17 @@ const CoverLetter = () => {
                    </select>
                 </div>
                 
-                <button 
+                <Button 
                   onClick={generateCoverLetter} 
-                  disabled={loading}
-                  className="btn-premium flex-1 w-full flex items-center gap-2 h-[46px] mt-0 sm:mt-5"
+                  disabled={loading || jobDescription.trim().length < 20}
+                  className="flex-1 w-full h-[46px] mt-0 sm:mt-5"
+                  isLoading={loading}
+                  icon={!loading ? Sparkles : undefined}
                 >
-                  {loading ? <span className="premium-spinner border-white/20 border-t-white" /> : <Sparkles size={18} />}
                   {loading ? 'Drafting...' : 'Generate Letter'}
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           </motion.div>
 
           {/* Results Panel */}
@@ -143,41 +157,44 @@ const CoverLetter = () => {
             animate={{ opacity: 1, x: 0 }}
             className="h-full"
           >
-            <div className="glass-card flex flex-col h-full min-h-[400px]">
+            <Card className="flex flex-col h-full min-h-[400px] p-6">
                <div className="flex justify-between items-center mb-5">
-                 <h2 className="text-[22px] font-bold text-on-surface dark:text-on-dark tracking-tight">Generated Output</h2>
-                 <button 
+                 <h2 className="text-[22px] font-bold text-text-main tracking-tight">Generated Output</h2>
+                 <Button 
                     onClick={copyToClipboard}
                     disabled={!coverLetter || loading}
-                    className="btn-secondary py-1.5 px-4 text-[13px] gap-1.5"
+                    variant="secondary"
+                    size="sm"
+                    className="py-1.5 px-4 text-[13px]"
+                    icon={copied ? Check : Copy}
                  >
-                    {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
                     {copied ? 'Copied' : 'Copy Text'}
-                 </button>
+                 </Button>
                </div>
 
                {loading ? (
                  <div className="flex-1 flex flex-col gap-3 justify-center">
-                   <div className="h-4 bg-gray-200 dark:bg-white/5 rounded-full animate-pulse w-3/4 mb-4"></div>
-                   <div className="h-4 bg-gray-200 dark:bg-white/5 rounded-full animate-pulse w-full"></div>
-                   <div className="h-4 bg-gray-200 dark:bg-white/5 rounded-full animate-pulse w-full"></div>
-                   <div className="h-4 bg-gray-200 dark:bg-white/5 rounded-full animate-pulse w-5/6"></div>
-                   <div className="h-4 bg-gray-200 dark:bg-white/5 rounded-full animate-pulse w-full mt-4"></div>
-                   <div className="h-4 bg-gray-200 dark:bg-white/5 rounded-full animate-pulse w-4/5"></div>
+                   <div className="h-4 bg-slate-200 dark:bg-slate-700/50 rounded-full animate-pulse w-3/4 mb-4"></div>
+                   <div className="h-4 bg-slate-200 dark:bg-slate-700/50 rounded-full animate-pulse w-full"></div>
+                   <div className="h-4 bg-slate-200 dark:bg-slate-700/50 rounded-full animate-pulse w-full"></div>
+                   <div className="h-4 bg-slate-200 dark:bg-slate-700/50 rounded-full animate-pulse w-5/6"></div>
+                   <div className="h-4 bg-slate-200 dark:bg-slate-700/50 rounded-full animate-pulse w-full mt-4"></div>
+                   <div className="h-4 bg-slate-200 dark:bg-slate-700/50 rounded-full animate-pulse w-4/5"></div>
                  </div>
                ) : coverLetter ? (
                  <textarea
-                   className="premium-input flex-1 h-full min-h-[400px] resize-none text-[15px] leading-relaxed font-sans bg-transparent dark:bg-transparent border-none p-0 focus:ring-0 whitespace-pre-wrap shadow-none"
+                   className="flex-1 h-full min-h-[400px] resize-none text-[15px] leading-relaxed font-sans bg-transparent border-none p-0 focus:ring-0 whitespace-pre-wrap shadow-none text-text-main outline-none"
                    value={coverLetter}
-                   onChange={(e) => setCoverLetter(e.target.value)}
+                   onChange={(e) => { /* Read only, ideally should be editable later if needed */ }}
+                   readOnly
                  />
                ) : (
-                 <div className="flex-1 flex flex-col items-center justify-center text-gray-400 dark:text-dark-muted">
+                 <div className="flex-1 flex flex-col items-center justify-center text-text-muted">
                     <FileText size={48} className="mb-4 opacity-50" />
                     <p className="text-[15px]">Your generated cover letter will appear here.</p>
                  </div>
                )}
-            </div>
+            </Card>
           </motion.div>
 
         </div>
