@@ -592,7 +592,7 @@ const ResumeLatex = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-54px)] flex flex-col bg-gray-50 dark:bg-dark-surface overflow-hidden relative">
+    <div className="h-[calc(100vh-140px)] flex flex-col bg-bg-card border border-border-color rounded-xl overflow-hidden relative shadow-sm">
 
       {/* Wizard Modal */}
       <AnimatePresence>
@@ -706,7 +706,7 @@ const ResumeLatex = () => {
                 </label>
                 <div className="flex gap-3">
                   <button onClick={() => setShowWizard(false)} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Cancel</button>
-                  <button onClick={handleGenerate} className="px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all shadow-md flex items-center gap-2">
+                  <button onClick={handleGenerate} className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-accent-700 hover:bg-accent-800 transition-all shadow-sm flex items-center gap-2">
                     Generate Resume
                   </button>
                 </div>
@@ -759,7 +759,7 @@ const ResumeLatex = () => {
               </div>
               <div className="p-5 border-t border-white/10 dark:border-white/5 bg-white dark:bg-dark-card flex items-center justify-end gap-3">
                 <button onClick={() => setShowTailorWizard(false)} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Cancel</button>
-                <button onClick={handleTailorJob} className="px-6 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md flex items-center gap-2">
+                <button onClick={handleTailorJob} className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-accent-700 hover:bg-accent-800 transition-all shadow-sm flex items-center gap-2">
                   <Target size={16} />
                   Tailor Resume
                 </button>
@@ -810,14 +810,14 @@ const ResumeLatex = () => {
       </AnimatePresence>
 
       {/* Top Toolbar */}
-      <header className="bg-white dark:bg-dark-card border-b border-white/10 dark:border-white/5 px-4 py-2.5 flex justify-between items-center z-10 shrink-0">
+      <header className="bg-bg-card border-b border-border-color px-4 py-3 flex justify-between items-center z-10 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-accent-100 dark:bg-accent-900/30 text-accent-700 flex items-center justify-center">
             <FileText size={18} strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="text-[17px] font-semibold text-gray-900 dark:text-white tracking-tight leading-none">LaTeX Editor</h1>
-            <p className="text-[12px] text-gray-500 dark:text-gray-400 mt-0.5">Build ATS-friendly PDFs directly in your browser</p>
+            <h1 className="text-[17px] font-bold text-text-main tracking-tight leading-none">LaTeX Editor</h1>
+            <p className="text-[12px] text-text-muted mt-0.5">Build ATS-friendly PDFs directly in your browser</p>
           </div>
         </div>
 
