@@ -2,8 +2,15 @@ import { createContext, useState, useCallback, useRef } from 'react';
 
 const TaskContext = createContext();
 
+/**
+ * Merges partial state into a page's persisted state.
+ * Key = page identifier (e.g. 'resume-ai', 'cover-letter').
+ * Value = arbitrary object that survives route changes.
+ */
+
 export const TaskProvider = ({ children }) => {
   const [tasks, setTasks] = useState({});
+  const [pageStates, setPageStates] = useState({});
   const abortControllers = useRef({});
 
   const updateTask = useCallback((id, patch) => {
@@ -112,8 +119,33 @@ export const TaskProvider = ({ children }) => {
     return tasks[id] || null;
   }, [tasks]);
 
+  /** Merge partial state into a page's persisted store. */
+  const setPageState = useCallback((pageId, patch) => {
+    setPageStates(prev => ({
+      ...prev,
+      [pageId]: { ...prev[pageId], ...patch },
+    }));
+  }, []);
+
+  /** Read the persisted state for a page. */
+  const getPageState = useCallback((pageId) => {
+    return pageStates[pageId] || null;
+  }, [pageStates]);
+
+  /** Clear persisted state for a page (e.g. when user resets). */
+  const clearPageState = useCallback((pageId) => {
+    setPageStates(prev => {
+      const copy = { ...prev };
+      delete copy[pageId];
+      return copy;
+    });
+  }, []);
+
   return (
-    <TaskContext.Provider value={{ tasks, startTask, clearTask, getTask }}>
+    <TaskContext.Provider value={{
+      tasks, startTask, clearTask, getTask,
+      setPageState, getPageState, clearPageState,
+    }}>
       {children}
     </TaskContext.Provider>
   );

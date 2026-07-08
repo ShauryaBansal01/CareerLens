@@ -354,7 +354,7 @@ const panelClass = "rounded-xl border border-border-color bg-slate-50 p-5 dark:b
 // ── Main Page ──────────────────────────────────────────────────────────────────
 const ResumeAI = () => {
   const { user } = useContext(AuthContext);
-  const { startTask, getTask, clearTask } = useContext(TaskContext);
+  const { startTask, getTask, clearTask, getPageState, setPageState } = useContext(TaskContext);
   const navigate = useNavigate();
 
   // Derive improve state from TaskContext
@@ -363,9 +363,12 @@ const ResumeAI = () => {
   const improveFeedback = improveTask?.status === 'completed' ? improveTask.result : null;
   const improveError = improveTask?.status === 'failed' ? improveTask.error : '';
 
-  // Optimize state
-  const [jobDesc, setJobDesc]               = useState('');
-  const [optimizeResult, setOptimizeResult] = useState(null);
+  // Hydrate local state from persisted page state
+  const persisted = getPageState('resume-ai');
+
+  // Optimize state (Section 2) — persisted
+  const [jobDesc, setJobDesc]               = useState(persisted?.jobDesc || '');
+  const [optimizeResult, setOptimizeResult] = useState(persisted?.optimizeResult || null);
   const [optimizeLoading, setOptimizeLoading] = useState(false);
   const [optimizeError, setOptimizeError]   = useState('');
 
@@ -375,7 +378,7 @@ const ResumeAI = () => {
   const optimizeData = optimizeFbTask?.status === 'completed' ? optimizeFbTask.result : null;
   const optimizeFeedbackError = optimizeFbTask?.status === 'failed' ? optimizeFbTask.error : '';
 
-  const [acceptedChanges, setAcceptedChanges] = useState({});
+  const [acceptedChanges, setAcceptedChanges] = useState(persisted?.acceptedChanges || {});
   const [savingOptimized, setSavingOptimized] = useState(false);
   const [generatingLatex, setGeneratingLatex] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState('');
@@ -391,6 +394,11 @@ const ResumeAI = () => {
       setAcceptedChanges(accepted);
     }
   }, [optimizeData]);
+
+  // Persist local state to context on change
+  useEffect(() => {
+    setPageState('resume-ai', { jobDesc, optimizeResult, acceptedChanges });
+  }, [jobDesc, optimizeResult, acceptedChanges, setPageState]);
 
   const cfg = { headers: { Authorization: `Bearer ${user?.token}` } };
 

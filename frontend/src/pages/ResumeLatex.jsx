@@ -985,12 +985,18 @@ const ResumeLatex = () => {
                 />
                 {(!latexCode || (!pdfUrl && !compiling)) && (
                   <div className="text-gray-500 dark:text-gray-400 flex flex-col items-center max-w-xs text-center absolute">
-                    <div className="w-16 h-16 mb-4 rounded-2xl bg-white dark:bg-dark-card flex items-center justify-center border border-white/10 dark:border-gray-600 shadow-sm">
-                      <Play size={24} className="text-gray-400 dark:text-gray-500 ml-1" />
-                    </div>
+                    <button
+                      onClick={compilePdf}
+                      disabled={!latexCode || compiling}
+                      className="w-16 h-16 mb-4 rounded-2xl bg-white dark:bg-dark-card flex items-center justify-center border border-white/10 dark:border-gray-600 shadow-sm cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-dark-card"
+                    >
+                      <Play size={24} className="text-gray-400 dark:text-gray-500 ml-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+                    </button>
                     <h3 className="text-gray-700 dark:text-gray-200 font-medium text-lg mb-1">No Preview Available</h3>
                     <p className="text-[13px] leading-relaxed">
-                      Write your LaTeX code on the left and click Compile to generate your PDF preview.
+                      {latexCode
+                        ? 'Click the play button above or press Compile to generate your PDF preview.'
+                        : 'Write your LaTeX code on the left and click Compile to generate your PDF preview.'}
                     </p>
                   </div>
                 )}

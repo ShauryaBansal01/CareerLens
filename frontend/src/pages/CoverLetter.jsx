@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { FileText, Copy, Check, Sparkles, AlertCircle } from 'lucide-react';
@@ -9,10 +9,18 @@ import { Button } from '../components/ui/Button';
 
 const CoverLetter = () => {
   const { user } = useContext(AuthContext);
-  const { startTask, getTask, clearTask } = useContext(TaskContext);
-  const [jobDescription, setJobDescription] = useState('');
-  const [tone, setTone] = useState('Professional');
+  const { startTask, getTask, clearTask, getPageState, setPageState } = useContext(TaskContext);
+
+  // Hydrate from persisted page state
+  const persisted = getPageState('cover-letter-page');
+  const [jobDescription, setJobDescription] = useState(persisted?.jobDescription || '');
+  const [tone, setTone] = useState(persisted?.tone || 'Professional');
   const [copied, setCopied] = useState(false);
+
+  // Persist inputs to context on change
+  useEffect(() => {
+    setPageState('cover-letter-page', { jobDescription, tone });
+  }, [jobDescription, tone, setPageState]);
 
   // Derive state from TaskContext
   const clTask = getTask('cover-letter');
