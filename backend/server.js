@@ -19,7 +19,10 @@ const profileRoutes = require('./routes/profileRoutes');
 const PORT = process.env.PORT || 5000;
 const numCPUs = os.cpus().length;
 
-if (cluster.isPrimary) {
+// Skip clustering when SINGLE_PROCESS=true (needed for Render free tier — 512MB RAM)
+const useCluster = cluster.isPrimary && process.env.SINGLE_PROCESS !== 'true';
+
+if (useCluster) {
   // ── Primary Process: fork workers ────────────────────────────────────────
   console.log(`🚀 Primary process ${process.pid} starting ${numCPUs} workers...`);
 
@@ -33,7 +36,7 @@ if (cluster.isPrimary) {
     cluster.fork();
   });
 } else {
-  // ── Worker Process: run the Express app ──────────────────────────────────
+  // ── Worker / Single Process: run the Express app ─────────────────────────
 
   // Connect to database (each worker gets its own connection pool)
   connectDB();
@@ -50,9 +53,9 @@ if (cluster.isPrimary) {
   }));
   app.use(express.json());
 
-  // Health check — no rate limiting (used by load balancers & monitoring)
+  // Health check — no rate limiting (used by Render & UptimeRobot)
   app.get('/', (req, res) => {
-    res.send('API is running...');
+    res.json({ status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime() });
   });
 
   // Apply rate limiter only to API routes (not health check)

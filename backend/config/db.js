@@ -9,7 +9,7 @@ const connectDB = async () => {
         socketTimeoutMS: 45000,
         retryWrites: true,
         // ── Connection pool tuning for high concurrency ──────────────────
-        maxPoolSize: 50,       // Max connections per worker (conservative for Atlas free tier)
+        maxPoolSize: process.env.NODE_ENV === 'production' ? 10 : 50,
         minPoolSize: 5,        // Keep warm connections ready to avoid cold-start latency
         maxIdleTimeMS: 30000,  // Close idle connections after 30s to free resources
       }
