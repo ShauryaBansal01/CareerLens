@@ -49,8 +49,18 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const forgotPassword = async (email) => {
+    const res = await axios.post(`${API_URL}/auth/forgot-password`, { email });
+    return res.data;
+  };
+
+  const resetPassword = async (email, otp, password) => {
+    const res = await axios.post(`${API_URL}/auth/reset-password`, { email, otp, password });
+    return res.data;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, sendOtp, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, sendOtp, register, logout, forgotPassword, resetPassword }}>
       {!loading && children}
     </AuthContext.Provider>
   );

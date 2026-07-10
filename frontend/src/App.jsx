@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-ro
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { TaskProvider } from './context/TaskContext';
-import { useContext, useState } from 'react';
+import { useContext, useState, lazy, Suspense } from 'react';
 import AuthContext from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -10,7 +10,9 @@ import UploadResume from './pages/UploadResume';
 import Dashboard from './pages/Dashboard';
 import Landing from './pages/Landing';
 import ResumeAI from './pages/ResumeAI';
-import ResumeLatex from './pages/ResumeLatex';
+import NotFound from './pages/NotFound';
+import ForgotPassword from './pages/ForgotPassword';
+const ResumeLatex = lazy(() => import('./pages/ResumeLatex'));
 import Admin from './pages/Admin';
 import Profile from './pages/Profile';
 import CoverLetter from './pages/CoverLetter';
@@ -138,15 +140,17 @@ function App() {
               {/* Public Routes */}
               <Route path="/login" element={<AppRoute requireAuth={false}><Login /></AppRoute>} />
               <Route path="/register" element={<AppRoute requireAuth={false}><Register /></AppRoute>} />
+              <Route path="/forgot-password" element={<AppRoute requireAuth={false}><ForgotPassword /></AppRoute>} />
               
               {/* Authenticated Routes */}
               <Route path="/upload" element={<AppRoute><UploadResume /></AppRoute>} />
               <Route path="/profile" element={<AppRoute><Profile /></AppRoute>} />
               <Route path="/resume-ai" element={<AppRoute><ResumeAI /></AppRoute>} />
               <Route path="/cover-letter" element={<AppRoute><CoverLetter /></AppRoute>} />
-              <Route path="/resume-latex" element={<AppRoute><ResumeLatex /></AppRoute>} />
+              <Route path="/resume-latex" element={<AppRoute><Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-bg-main"><div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-500 border-t-transparent" /></div>}><ResumeLatex /></Suspense></AppRoute>} />
               <Route path="/settings/keys" element={<AppRoute><APIKeySettings /></AppRoute>} />
               <Route path="/admin" element={<AppRoute><Admin /></AppRoute>} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
         </Router>

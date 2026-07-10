@@ -25,6 +25,16 @@
     --border-color-hover: #334155;
   }
 
+  :root[data-theme='slate'] {
+    color-scheme: light;
+    --bg-main: #F1F5F9;
+    --bg-card: #FFFFFF;
+    --text-main: #1E293B;
+    --text-muted: #64748B;
+    --border-color: #E2E8F0;
+    --border-color-hover: #CBD5E1;
+  }
+
   *,
   *::before,
   *::after {
@@ -88,23 +98,22 @@
   }
 }
 
-@layer components {
 
-  /* Legacy overrides to prevent app breaking while migrating */
-  .glass-nav,
-  .apple-card,
-  .glass-card,
-  .glass-panel,
-  .btn-premium,
-  .btn-secondary,
-  .premium-input,
-  .apple-input {
-    /* These will be naturally styled by Tailwind utilities as we migrate */
-  }
-}
 
 @keyframes indeterminate {
   0%   { width: 8%;  margin-left: 0; }
   50%  { width: 45%; margin-left: 30%; }
   100% { width: 8%;  margin-left: 92%; }
+}
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
