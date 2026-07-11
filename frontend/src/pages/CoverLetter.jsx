@@ -8,6 +8,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 
 const CoverLetter = () => {
+  useEffect(() => { document.title = 'Cover Letter | CareerLens'; }, []);
   const { user } = useContext(AuthContext);
   const { startTask, getTask, clearTask, getPageState, setPageState } = useContext(TaskContext);
 
@@ -125,11 +126,29 @@ const CoverLetter = () => {
               <p className="text-[14px] text-text-muted mb-4">Paste the Target Job Description below. We'll cross-reference it with your profile data.</p>
               
               <textarea 
-                className="block h-64 md:h-80 w-full resize-none rounded-xl border border-border-color bg-bg-card px-4 py-3 text-[14px] leading-6 text-text-main outline-none transition placeholder:text-text-muted/60 focus:border-accent-500 focus:ring-4 focus:ring-accent-500/10 mb-6"
+                className="block h-64 md:h-80 w-full resize-none rounded-xl border border-border-color bg-bg-card px-4 py-3 text-[14px] leading-6 text-text-main outline-none transition placeholder:text-text-muted/60 focus:border-accent-500 focus:ring-4 focus:ring-accent-500/10"
                 placeholder="E.g. We are looking for a Senior Frontend Engineer to join our core product team. You should have 5+ years of experience in React, TypeScript, and Tailwind..."
                 value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
               />
+              <div className="flex items-center justify-between mt-2 mb-6">
+                <p className="text-xs text-text-muted">
+                  {jobDescription.length < 20 ? (
+                    <span className="text-red-500">Minimum 20 characters required</span>
+                  ) : (
+                    <span className="text-emerald-500">Ready to generate</span>
+                  )}
+                </p>
+                <p className={`text-xs font-medium ${
+                  jobDescription.length < 20
+                    ? 'text-red-500'
+                    : jobDescription.length < 100
+                    ? 'text-amber-500'
+                    : 'text-emerald-500'
+                }`}>
+                  {jobDescription.length} characters
+                </p>
+              </div>
 
               <div className="flex flex-col sm:flex-row items-center gap-4 mt-auto">
                 <div className="w-full sm:w-1/3">

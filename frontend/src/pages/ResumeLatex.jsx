@@ -612,7 +612,7 @@ const ResumeLatex = () => {
                   </h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Provide your details, and our AI will rewrite and format a brilliant LaTeX resume.</p>
                 </div>
-                <button onClick={() => setShowWizard(false)} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors text-gray-500 dark:text-gray-400">
+                <button onClick={() => setShowWizard(false)} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors text-gray-500 dark:text-gray-400" aria-label="Close wizard">
                   <X size={20} />
                 </button>
               </div>
@@ -622,17 +622,17 @@ const ResumeLatex = () => {
                 <section>
                   <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4 border-b border-white/10 dark:border-white/5 pb-2">Personal Information</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    <input className="apple-input bg-gray-50 dark:bg-dark-surface w-full text-sm" placeholder="Full Name" value={resumeData.personalInfo.name} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, name: e.target.value}})} />
-                    <input className="apple-input bg-gray-50 dark:bg-dark-surface w-full text-sm" placeholder="Email" value={resumeData.personalInfo.email} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, email: e.target.value}})} />
-                    <input className="apple-input bg-gray-50 dark:bg-dark-surface w-full text-sm" placeholder="Phone" value={resumeData.personalInfo.phone} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, phone: e.target.value}})} />
-                    <input className="apple-input bg-gray-50 dark:bg-dark-surface w-full text-sm" placeholder="LinkedIn URL" value={resumeData.personalInfo.linkedin} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, linkedin: e.target.value}})} />
-                    <input className="apple-input bg-gray-50 dark:bg-dark-surface w-full text-sm col-span-2" placeholder="GitHub / Portfolio URL" value={resumeData.personalInfo.github} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, github: e.target.value}})} />
+                    <input className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-dark-surface px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors" placeholder="Full Name" value={resumeData.personalInfo.name} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, name: e.target.value}})} />
+                    <input className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-dark-surface px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors" placeholder="Email" value={resumeData.personalInfo.email} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, email: e.target.value}})} />
+                    <input className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-dark-surface px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors" placeholder="Phone" value={resumeData.personalInfo.phone} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, phone: e.target.value}})} />
+                    <input className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-dark-surface px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors" placeholder="LinkedIn URL" value={resumeData.personalInfo.linkedin} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, linkedin: e.target.value}})} />
+                    <input className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-dark-surface px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors col-span-2" placeholder="GitHub / Portfolio URL" value={resumeData.personalInfo.github} onChange={e => setResumeData({...resumeData, personalInfo: {...resumeData.personalInfo, github: e.target.value}})} />
                   </div>
                 </section>
                 {/* Skills */}
                 <section>
                   <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4 border-b border-white/10 dark:border-white/5 pb-2">Skills</h3>
-                  <textarea className="apple-input bg-gray-50 dark:bg-dark-surface w-full text-sm min-h-[80px]" placeholder="React, Node.js, Python, AWS (comma separated)" value={resumeData.skills} onChange={e => setResumeData({...resumeData, skills: e.target.value})} />
+                  <textarea className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-dark-surface px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors min-h-[80px]" placeholder="React, Node.js, Python, AWS (comma separated)" value={resumeData.skills} onChange={e => setResumeData({...resumeData, skills: e.target.value})} />
                 </section>
                 {/* Experience */}
                 <section>
@@ -643,13 +643,13 @@ const ResumeLatex = () => {
                   <div className="space-y-6">
                     {resumeData.experience.map((exp, index) => (
                       <div key={index} className="p-4 border border-gray-100 dark:border-white/5 rounded-xl bg-gray-50/50 dark:bg-dark-surface/50 relative group">
-                        <button onClick={() => removeExperience(index)} className="absolute top-3 right-3 text-red-400 hover:text-red-600 dark:hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
+                        <button onClick={() => removeExperience(index)} className="absolute top-3 right-3 text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-opacity" aria-label="Remove experience"><Trash2 size={16} /></button>
                         <div className="grid grid-cols-2 gap-3 mb-3">
-                          <input className="apple-input bg-white dark:bg-dark-card w-full text-sm" placeholder="Company Name" value={exp.company} onChange={e => updateExperience(index, 'company', e.target.value)} />
-                          <input className="apple-input bg-white dark:bg-dark-card w-full text-sm" placeholder="Role / Title" value={exp.role} onChange={e => updateExperience(index, 'role', e.target.value)} />
-                          <input className="apple-input bg-white dark:bg-dark-card w-full text-sm col-span-2" placeholder="Dates (e.g., Jan 2021 - Present)" value={exp.dates} onChange={e => updateExperience(index, 'dates', e.target.value)} />
+                          <input className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-card px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors" placeholder="Company Name" value={exp.company} onChange={e => updateExperience(index, 'company', e.target.value)} />
+                          <input className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-card px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors" placeholder="Role / Title" value={exp.role} onChange={e => updateExperience(index, 'role', e.target.value)} />
+                          <input className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-card px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors col-span-2" placeholder="Dates (e.g., Jan 2021 - Present)" value={exp.dates} onChange={e => updateExperience(index, 'dates', e.target.value)} />
                         </div>
-                        <textarea className="apple-input bg-white dark:bg-dark-card w-full text-sm min-h-[100px]" placeholder="Rough notes on what you did... AI will enhance this into STAR bullet points!" value={exp.bulletPoints} onChange={e => updateExperience(index, 'bulletPoints', e.target.value)} />
+                        <textarea className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-card px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors min-h-[100px]" placeholder="Rough notes on what you did... AI will enhance this into STAR bullet points!" value={exp.bulletPoints} onChange={e => updateExperience(index, 'bulletPoints', e.target.value)} />
                       </div>
                     ))}
                   </div>
@@ -663,12 +663,12 @@ const ResumeLatex = () => {
                   <div className="space-y-6">
                     {resumeData.projects.map((proj, index) => (
                       <div key={index} className="p-4 border border-gray-100 dark:border-white/5 rounded-xl bg-gray-50/50 dark:bg-dark-surface/50 relative group">
-                        <button onClick={() => removeProject(index)} className="absolute top-3 right-3 text-red-400 hover:text-red-600 dark:hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
+                        <button onClick={() => removeProject(index)} className="absolute top-3 right-3 text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-opacity" aria-label="Remove project"><Trash2 size={16} /></button>
                         <div className="grid grid-cols-2 gap-3 mb-3">
-                          <input className="apple-input bg-white dark:bg-dark-card w-full text-sm" placeholder="Project Name" value={proj.name} onChange={e => updateProject(index, 'name', e.target.value)} />
-                          <input className="apple-input bg-white dark:bg-dark-card w-full text-sm" placeholder="Tech Stack (e.g., React, Firebase)" value={proj.techStack} onChange={e => updateProject(index, 'techStack', e.target.value)} />
+                          <input className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-card px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors" placeholder="Project Name" value={proj.name} onChange={e => updateProject(index, 'name', e.target.value)} />
+                          <input className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-card px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors" placeholder="Tech Stack (e.g., React, Firebase)" value={proj.techStack} onChange={e => updateProject(index, 'techStack', e.target.value)} />
                         </div>
-                        <textarea className="apple-input bg-white dark:bg-dark-card w-full text-sm min-h-[80px]" placeholder="Rough notes on the project... AI will enhance this!" value={proj.description} onChange={e => updateProject(index, 'description', e.target.value)} />
+                        <textarea className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-card px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors min-h-[80px]" placeholder="Rough notes on the project... AI will enhance this!" value={proj.description} onChange={e => updateProject(index, 'description', e.target.value)} />
                       </div>
                     ))}
                   </div>
@@ -682,10 +682,10 @@ const ResumeLatex = () => {
                   <div className="space-y-4">
                     {resumeData.education.map((edu, index) => (
                       <div key={index} className="p-4 border border-gray-100 dark:border-white/5 rounded-xl bg-gray-50/50 dark:bg-dark-surface/50 relative group flex flex-col md:flex-row gap-3">
-                        <button onClick={() => removeEducation(index)} className="absolute top-3 right-3 text-red-400 hover:text-red-600 dark:hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
-                        <input className="apple-input bg-white dark:bg-dark-card w-full md:w-1/3 text-sm" placeholder="School/University" value={edu.school} onChange={e => updateEducation(index, 'school', e.target.value)} />
-                        <input className="apple-input bg-white dark:bg-dark-card w-full md:w-1/3 text-sm" placeholder="Degree (e.g., BS Computer Science)" value={edu.degree} onChange={e => updateEducation(index, 'degree', e.target.value)} />
-                        <input className="apple-input bg-white dark:bg-dark-card w-full md:w-1/3 text-sm md:mr-6" placeholder="Dates/Graduation" value={edu.dates} onChange={e => updateEducation(index, 'dates', e.target.value)} />
+                        <button onClick={() => removeEducation(index)} className="absolute top-3 right-3 text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-opacity" aria-label="Remove education"><Trash2 size={16} /></button>
+                        <input className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-card px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors md:w-1/3" placeholder="School/University" value={edu.school} onChange={e => updateEducation(index, 'school', e.target.value)} />
+                        <input className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-card px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors md:w-1/3" placeholder="Degree (e.g., BS Computer Science)" value={edu.degree} onChange={e => updateEducation(index, 'degree', e.target.value)} />
+                        <input className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-card px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors md:w-1/3 md:mr-6" placeholder="Dates/Graduation" value={edu.dates} onChange={e => updateEducation(index, 'dates', e.target.value)} />
                       </div>
                     ))}
                   </div>
@@ -734,24 +734,25 @@ const ResumeLatex = () => {
                   </h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Paste the JD. We'll extract keywords and rewrite your resume to match.</p>
                 </div>
-                <button onClick={() => setShowTailorWizard(false)} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors text-gray-500 dark:text-gray-400">
+                <button onClick={() => setShowTailorWizard(false)} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors text-gray-500 dark:text-gray-400" aria-label="Close tailor modal">
                   <X size={20} />
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Version Title (Required)</label>
-                    <input className="apple-input bg-gray-50 dark:bg-dark-surface w-full text-sm" placeholder="e.g. Frontend Dev - Meta" value={tailorVersionTitle} onChange={e => setTailorVersionTitle(e.target.value)} />
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="tailor-version-title">Version Title (Required)</label>
+                    <input id="tailor-version-title" className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-dark-surface px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors" placeholder="e.g. Frontend Dev - Meta" value={tailorVersionTitle} onChange={e => setTailorVersionTitle(e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Target Company (Optional)</label>
-                    <input className="apple-input bg-gray-50 dark:bg-dark-surface w-full text-sm" placeholder="e.g. Meta" value={targetCompany} onChange={e => setTargetCompany(e.target.value)} />
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="target-company">Target Company (Optional)</label>
+                    <input id="target-company" className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-dark-surface px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors" placeholder="e.g. Meta" value={targetCompany} onChange={e => setTargetCompany(e.target.value)} />
                   </div>
                 </div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Job Description</label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="job-desc">Job Description</label>
                 <textarea
-                  className="apple-input bg-gray-50 dark:bg-dark-surface text-sm min-h-[200px] w-full resize-none"
+                  id="job-desc"
+                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-dark-surface px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors min-h-[200px] resize-none"
                   placeholder="Paste the target Job Description or company requirements here..."
                   value={jobDescriptionText}
                   onChange={e => setJobDescriptionText(e.target.value)}
@@ -784,14 +785,15 @@ const ResumeLatex = () => {
                   <Save className="text-blue-500" size={20} />
                   Save as New Version
                 </h2>
-                <button onClick={() => setShowSaveAsModal(false)} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors text-gray-500 dark:text-gray-400">
+                <button onClick={() => setShowSaveAsModal(false)} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors text-gray-500 dark:text-gray-400" aria-label="Close save modal">
                   <X size={20} />
                 </button>
               </div>
               <div className="p-6">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Version Title</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" htmlFor="version-title">Version Title</label>
                 <input
-                  className="apple-input bg-gray-50 dark:bg-dark-surface w-full text-sm"
+                  id="version-title"
+                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-dark-surface px-4 py-3 text-[15px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors"
                   placeholder="e.g. Software Engineer - Google"
                   value={saveAsTitle}
                   onChange={e => setSaveAsTitle(e.target.value)}
@@ -1082,18 +1084,18 @@ const ResumeLatex = () => {
                       }`}>
                         {v.title}
                       </p>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                      <div className="flex items-center gap-1 shrink-0">
                         <button
                           onClick={(e) => { e.stopPropagation(); restoreVersion(v._id); }}
                           className="p-1 rounded text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                          title="Restore as new copy"
+                          aria-label="Restore as new copy"
                         >
                           <RotateCcw className="w-3 h-3" />
                         </button>
                         <button
                           onClick={(e) => deleteVersion(v._id, e)}
                           className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                          title="Delete version"
+                          aria-label="Delete version"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>

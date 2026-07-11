@@ -10,6 +10,7 @@ import { Badge } from '../components/ui/Badge';
 import { Input } from '../components/ui/Input';
 
 const APIKeySettings = () => {
+  useEffect(() => { document.title = 'API Key Settings | CareerLens'; }, []);
   const { user } = useContext(AuthContext);
   const [keys, setKeys] = useState([]);
   const [defaultProvider, setDefaultProvider] = useState('gemini');
@@ -78,28 +79,28 @@ const APIKeySettings = () => {
   };
 
   if (loading) {
-    return <div className="min-h-[60vh] flex items-center justify-center"><div className="text-[var(--text-muted)] font-medium">Loading settings...</div></div>;
+    return <div className="min-h-[60vh] flex items-center justify-center"><div className="text-gray-500 dark:text-gray-400 font-medium">Loading settings...</div></div>;
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
+    <div className="max-w-4xl mx-auto space-y-8">
       
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-[var(--text-main)]">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
           API Key Management
         </h1>
-        <p className="text-[var(--text-muted)] mt-2">Bring Your Own Key (BYOK) for AI features.</p>
+        <p className="text-gray-500 dark:text-gray-400 mt-2">Bring Your Own Key (BYOK) for AI features.</p>
       </div>
 
       {error && (
-        <div className="bg-error/10 border border-error/20 text-error px-4 py-3 rounded-xl flex items-center shadow-sm">
-          <AlertCircle className="mr-2 w-5 h-5" /> {error}
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl flex items-center shadow-sm">
+          <AlertCircle className="mr-2 w-5 h-5 shrink-0" /> {error}
         </div>
       )}
       
       {success && (
-        <div className="bg-success/10 border border-success/20 text-success px-4 py-3 rounded-xl flex items-center shadow-sm">
-          <CheckCircle2 className="mr-2 w-5 h-5" /> {success}
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 px-4 py-3 rounded-xl flex items-center shadow-sm">
+          <CheckCircle2 className="mr-2 w-5 h-5 shrink-0" /> {success}
         </div>
       )}
 
@@ -111,9 +112,10 @@ const APIKeySettings = () => {
         <CardContent>
           <form onSubmit={handleSave} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-[var(--text-main)] mb-1.5">Provider</label>
-              <select 
-                className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-input px-4 py-2.5 text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:border-primary-500 transition-all duration-200"
+              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1.5" htmlFor="api-provider">Provider</label>
+              <select
+                id="api-provider"
+                className="w-full bg-white dark:bg-dark-card border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors"
                 value={formState.provider}
                 onChange={(e) => setFormState({ ...formState, provider: e.target.value })}
               >
@@ -146,9 +148,9 @@ const APIKeySettings = () => {
         </CardHeader>
         <CardContent>
           {keys.length === 0 ? (
-            <div className="text-center py-8 bg-[var(--bg-main)] rounded-xl border border-dashed border-[var(--border-color)]">
-              <Key className="w-8 h-8 text-[var(--text-muted)] mx-auto mb-3 opacity-50" />
-              <p className="text-[var(--text-muted)] font-medium">No API keys saved yet.</p>
+            <div className="text-center py-8 bg-gray-50 dark:bg-dark-surface rounded-xl border border-dashed border-gray-200 dark:border-white/10">
+              <Key className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-3 opacity-50" />
+              <p className="text-gray-500 dark:text-gray-400 font-medium">No API keys saved yet.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -157,11 +159,11 @@ const APIKeySettings = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   key={key.id} 
-                  className="flex items-center justify-between p-4 bg-[var(--bg-main)] rounded-xl border border-[var(--border-color)] group"
+                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-surface rounded-xl border border-gray-100 dark:border-white/5"
                 >
                   <div>
                     <div className="flex items-center space-x-3">
-                      <span className="font-semibold text-[var(--text-main)]">{providers.find(p => p.id === key.provider)?.name || key.provider}</span>
+                      <span className="font-semibold text-gray-900 dark:text-white">{providers.find(p => p.id === key.provider)?.name || key.provider}</span>
                       {key.isValid ? (
                         <Badge variant="success">Valid</Badge>
                       ) : (
@@ -171,13 +173,14 @@ const APIKeySettings = () => {
                         <Badge variant="primary">Default</Badge>
                       )}
                     </div>
-                    <p className="text-sm text-[var(--text-muted)] mt-1.5 font-mono">{key.maskedKey}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5 font-mono">{key.maskedKey}</p>
                   </div>
                   <Button 
                     variant="ghost" 
                     size="icon"
                     onClick={() => handleDelete(key.id)}
-                    className="text-error hover:bg-error/10 hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="text-error hover:bg-error/10 hover:text-error transition-opacity"
+                    aria-label={`Delete ${providers.find(p => p.id === key.provider)?.name || key.provider} key`}
                   >
                     <Trash2 className="w-5 h-5" />
                   </Button>

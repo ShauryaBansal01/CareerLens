@@ -1,4 +1,4 @@
-import { useState, useContext, useRef } from 'react';
+import { useState, useContext, useRef, useEffect } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import TaskContext from '../context/TaskContext';
@@ -21,6 +21,7 @@ const UPLOAD_STEPS = [
 ];
 
 const UploadResume = () => {
+  useEffect(() => { document.title = 'Upload Resume | CareerLens'; }, []);
   const [file, setFile]             = useState(null);
   const [dragOver, setDragOver]     = useState(false);
   const { user } = useContext(AuthContext);
@@ -34,10 +35,23 @@ const UploadResume = () => {
   const resumeData = uploadTask?.status === 'completed' ? uploadTask.result : null;
   const error = uploadTask?.status === 'failed' ? uploadTask.error : null;
 
+  const [fileError, setFileError] = useState('');
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+  const validateFile = (f) => {
+    if (!f) return false;
+    if (f.size > MAX_FILE_SIZE) {
+      setFileError(`File too large (${(f.size / 1024 / 1024).toFixed(1)}MB). Maximum is 5MB.`);
+      return false;
+    }
+    setFileError('');
+    return true;
+  };
+
   const handleFileChange = (e) => {
-    if (e.target.files?.[0]) {
-      setFile(e.target.files[0]);
-      // Clear any previous task when selecting a new file
+    const f = e.target.files?.[0];
+    if (f && validateFile(f)) {
+      setFile(f);
       if (uploadTask && uploadTask.status !== 'running') {
         clearTask('resume-upload');
       }
@@ -48,7 +62,7 @@ const UploadResume = () => {
     e.preventDefault();
     setDragOver(false);
     const dropped = e.dataTransfer.files?.[0];
-    if (dropped) {
+    if (dropped && validateFile(dropped)) {
       setFile(dropped);
       if (uploadTask && uploadTask.status !== 'running') {
         clearTask('resume-upload');
@@ -190,6 +204,18 @@ const UploadResume = () => {
                 )}
               </AnimatePresence>
             </div>
+
+            {/* File Size Error */}
+            {fileError && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="mb-6 flex items-center gap-3 p-4 rounded-lg bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 text-sm font-medium"
+              >
+                <AlertCircle className="w-5 h-5 shrink-0" aria-hidden="true" />
+                {fileError}
+              </motion.div>
+            )}
 
             {/* Error */}
             {error && (

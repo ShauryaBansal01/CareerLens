@@ -18,6 +18,7 @@ import {
 import { motion } from 'framer-motion';
 
 export default function Dashboard() {
+  useEffect(() => { document.title = 'Dashboard | CareerLens'; }, []);
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);

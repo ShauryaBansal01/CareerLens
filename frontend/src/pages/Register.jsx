@@ -1,9 +1,10 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Register = () => {
+  useEffect(() => { document.title = 'Create Account | CareerLens'; }, []);
   const [step, setStep]         = useState(1);
   const [name, setName]         = useState('');
   const [email, setEmail]       = useState('');
@@ -13,9 +14,16 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [otpCooldown, setOtpCooldown] = useState(0);
   
   const { register, sendOtp } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const timer = setInterval(() => setOtpCooldown(prev => prev - 1), 1000);
+    return () => clearInterval(timer);
+  }, [otpCooldown]);
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
@@ -25,6 +33,7 @@ const Register = () => {
     try {
       await sendOtp(email);
       setMessage('OTP has been sent to your email.');
+      setOtpCooldown(30);
       setStep(2);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to send OTP. This email may already be in use.');
@@ -112,11 +121,11 @@ const Register = () => {
               onSubmit={handleSendOtp}
             >
               <div className="mb-4">
-                <label className="apple-label" htmlFor="reg-name">Full name</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1.5" htmlFor="reg-name">Full name</label>
                 <input
                   id="reg-name"
                   type="text"
-                  className="apple-input w-full"
+                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-surface px-4 py-3 text-[15px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors"
                   placeholder="Enter Your Name"
                   value={name}
                   onChange={e => setName(e.target.value)}
@@ -125,11 +134,11 @@ const Register = () => {
               </div>
 
               <div className="mb-4">
-                <label className="apple-label" htmlFor="reg-email">Email address</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1.5" htmlFor="reg-email">Email address</label>
                 <input
                   id="reg-email"
                   type="email"
-                  className="apple-input w-full"
+                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-surface px-4 py-3 text-[15px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors"
                   placeholder="you@example.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
@@ -138,11 +147,11 @@ const Register = () => {
               </div>
 
               <div className="mb-2">
-                <label className="apple-label" htmlFor="reg-password">Password</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1.5" htmlFor="reg-password">Password</label>
                 <input
                   id="reg-password"
                   type="password"
-                  className="apple-input w-full"
+                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-surface px-4 py-3 text-[15px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors"
                   placeholder="Minimum 8 characters"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
@@ -178,12 +187,12 @@ const Register = () => {
               onSubmit={handleRegister}
             >
               <div className="mb-4">
-                <label className="apple-label" htmlFor="reg-otp">6-Digit OTP</label>
+                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1.5" htmlFor="reg-otp">6-Digit OTP</label>
                 <input
                   id="reg-otp"
                   type="text"
                   maxLength={6}
-                  className="apple-input w-full text-center text-2xl tracking-[0.5em] font-mono"
+                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-surface px-4 py-3 text-center text-2xl tracking-[0.5em] font-mono text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors"
                   placeholder="------"
                   value={otp}
                   onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
@@ -200,14 +209,15 @@ const Register = () => {
                 {isLoading ? 'Verifying…' : 'Verify & Create Account'}
               </button>
 
-              <p className="text-center text-sm text-gray-500 dark:text-on-dark-muted mt-6">
+              <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
                 Didn't receive it?{' '}
                 <button
                   type="button"
                   onClick={handleSendOtp}
-                  className="text-accent-700 dark:text-accent-400 no-underline font-bold hover:underline bg-transparent border-none cursor-pointer p-0"
+                  disabled={otpCooldown > 0 || isLoading === true}
+                  className="text-accent-700 dark:text-accent-400 no-underline font-bold hover:underline bg-transparent border-none cursor-pointer p-0 disabled:text-gray-400 dark:disabled:text-gray-600 disabled:cursor-not-allowed"
                 >
-                  Resend OTP
+                  {otpCooldown > 0 ? `Resend in ${otpCooldown}s` : 'Resend OTP'}
                 </button>
               </p>
               

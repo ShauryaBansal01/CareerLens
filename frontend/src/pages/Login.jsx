@@ -1,9 +1,10 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import { motion } from 'framer-motion';
 
 const Login = () => {
+  useEffect(() => { document.title = 'Sign In | CareerLens'; }, []);
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -66,11 +67,11 @@ const Login = () => {
         <form onSubmit={handleSubmit}>
           {/* Email */}
           <div className="mb-4">
-            <label className="apple-label" htmlFor="login-email">Email address</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1.5" htmlFor="login-email">Email address</label>
             <input
               id="login-email"
               type="email"
-              className="apple-input w-full"
+              className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-surface px-4 py-3 text-[15px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors"
               placeholder="you@example.com"
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -81,18 +82,18 @@ const Login = () => {
           {/* Password */}
           <div className="mb-2">
             <div className="flex justify-between items-center mb-1.5">
-              <label className="apple-label !mb-0" htmlFor="login-password">Password</label>
-              <a
-                href="#"
+              <label className="block text-sm font-medium text-gray-900 dark:text-white" htmlFor="login-password">Password</label>
+              <Link
+                to="/forgot-password"
                 className="text-[13px] text-accent-700 dark:text-accent-400 no-underline font-medium hover:underline"
               >
                 Forgot password?
-              </a>
+              </Link>
             </div>
             <input
               id="login-password"
               type="password"
-              className="apple-input w-full"
+              className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-surface px-4 py-3 text-[15px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors"
               placeholder="••••••••"
               value={password}
               onChange={e => setPassword(e.target.value)}

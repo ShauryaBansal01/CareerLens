@@ -7,6 +7,7 @@ import { Save, AlertCircle, Plus, Trash2 } from 'lucide-react';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const Profile = () => {
+  useEffect(() => { document.title = 'My Profile | CareerLens'; }, []);
   const { user } = useContext(AuthContext);
   const [profile, setProfile] = useState({
     basics: { name: '', email: '', phone: '', location: '', summary: '', linkedin: '', github: '', portfolio: '' },
@@ -77,7 +78,7 @@ const Profile = () => {
     if (type === 'experience') newItem = { company: '', role: '', duration: '', description: '' };
     if (type === 'education') newItem = { institution: '', degree: '', duration: '' };
     if (type === 'projects') newItem = { name: '', description: '', techStack: [] };
-    
+
     setProfile(prev => ({
       ...prev,
       [type]: [...prev[type], newItem]
@@ -106,23 +107,23 @@ const Profile = () => {
 
   if (!user) {
     return (
-      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-6 bg-transparent transition-colors duration-300">
-        <div className="glass-card text-center max-w-[400px] w-full">
-          <AlertCircle className="w-10 h-10 text-error mx-auto mb-5" />
-          <h2 className="text-2xl font-bold text-on-surface dark:text-on-dark mb-2">Sign in required</h2>
+      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-6">
+        <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-white/5 p-8 text-center max-w-[400px] w-full">
+          <AlertCircle className="w-10 h-10 text-red-500 dark:text-red-400 mx-auto mb-5" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Sign in required</h2>
         </div>
       </div>
     );
   }
 
   if (loading) {
-    return <div className="min-h-[calc(100vh-64px)] flex items-center justify-center text-on-surface dark:text-on-dark font-medium">Loading Profile...</div>;
+    return <div className="min-h-[calc(100vh-64px)] flex items-center justify-center text-gray-900 dark:text-white font-medium">Loading Profile...</div>;
   }
 
-  const inputClass = "premium-input";
+  const inputClass = "w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-surface px-4 py-3 text-[15px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors";
 
   return (
-    <div className="min-h-[calc(100vh-64px)] px-4 py-12 md:py-16 transition-colors duration-300 relative z-10">
+    <div className="min-h-[calc(100vh-64px)] px-4 py-12 md:py-16 relative z-10">
       <div className="max-w-[800px] mx-auto w-full">
         <motion.div
            initial={{ opacity: 0, y: 16 }}
@@ -130,25 +131,25 @@ const Profile = () => {
            className="mb-8 flex items-center justify-between"
         >
           <div>
-            <h1 className="text-4xl md:text-[40px] font-bold text-on-surface dark:text-on-dark tracking-tighter mb-2">My Profile</h1>
-            <p className="text-[17px] text-gray-500 dark:text-dark-muted">Manage your professional identity. Extracted from your resume AI analysis.</p>
+            <h1 className="text-4xl md:text-[40px] font-bold text-gray-900 dark:text-white tracking-tighter mb-2">My Profile</h1>
+            <p className="text-[17px] text-gray-500 dark:text-gray-400">Manage your professional identity. Extracted from your resume AI analysis.</p>
           </div>
           <button 
             onClick={handleSave} 
             disabled={saving}
-            className="btn-premium flex items-center gap-2 px-6 py-2.5 text-sm"
+            className="bg-accent-700 hover:bg-accent-800 text-white rounded-lg font-bold flex items-center gap-2 px-6 py-2.5 text-sm disabled:opacity-50 transition-colors shadow-sm"
           >
-            {saving ? <span className="premium-spinner border-white/20 border-t-white" /> : <Save size={18} />}
+            {saving ? <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <Save size={18} />}
             {saving ? 'Saving...' : 'Save Profile'}
           </button>
         </motion.div>
 
-        {error && <div className="p-4 mb-6 text-error bg-error/10 rounded-xl">{error}</div>}
-        {success && <div className="p-4 mb-6 text-success bg-success/10 rounded-xl">Profile saved successfully!</div>}
+        {error && <div className="p-4 mb-6 text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl">{error}</div>}
+        {success && <div className="p-4 mb-6 text-green-500 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-xl">Profile saved successfully!</div>}
 
         {/* Basics Section */}
-        <div className="glass-card mb-6">
-          <h3 className="text-xl font-bold text-on-surface dark:text-on-dark mb-4">Basic Information</h3>
+        <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-white/5 p-6 mb-6">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Basic Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input placeholder="Name" value={profile.basics?.name || ''} onChange={e => handleBasicChange('name', e.target.value)} className={inputClass} />
             <input placeholder="Email" value={profile.basics?.email || ''} onChange={e => handleBasicChange('email', e.target.value)} className={inputClass} />
@@ -161,23 +162,23 @@ const Profile = () => {
         </div>
 
         {/* Skills Section */}
-        <div className="glass-card mb-6">
-          <h3 className="text-xl font-bold text-on-surface dark:text-on-dark mb-4">Skills</h3>
-          <p className="text-sm text-gray-500 mb-2">Comma separated skills</p>
+        <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-white/5 p-6 mb-6">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Skills</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Comma separated skills</p>
           <input placeholder="React, Node.js, Python..." value={(profile.skills || []).join(', ')} onChange={handleSkillsChange} className={inputClass} />
         </div>
 
         {/* Experience Section */}
-        <div className="glass-card mb-6">
-          <div className="flex justify-between items-center mb-4 text-on-surface dark:text-on-dark">
-            <h3 className="text-xl font-bold">Experience</h3>
-            <button onClick={() => addArrayItem('experience')} className="text-primary-500 hover:text-primary-400 flex items-center gap-1 text-sm font-medium">
+        <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-white/5 p-6 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Experience</h3>
+            <button onClick={() => addArrayItem('experience')} className="text-accent-700 dark:text-accent-400 hover:text-accent-600 flex items-center gap-1 text-sm font-medium">
               <Plus size={16} /> Add Experience
             </button>
           </div>
           {(profile.experience || []).map((exp, idx) => (
-            <div key={idx} className="glass-panel mb-4 relative">
-              <button onClick={() => removeArrayItem('experience', idx)} className="absolute top-4 right-4 text-gray-400 hover:text-error transition"><Trash2 size={16} /></button>
+            <div key={idx} className="bg-gray-50 dark:bg-dark-surface rounded-xl border border-gray-100 dark:border-white/5 p-4 mb-4 relative">
+              <button onClick={() => removeArrayItem('experience', idx)} className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition" aria-label="Remove experience"><Trash2 size={16} /></button>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 pr-8">
                 <input placeholder="Company" value={exp.company} onChange={e => updateArrayItem('experience', idx, 'company', e.target.value)} className={inputClass} />
                 <input placeholder="Role" value={exp.role} onChange={e => updateArrayItem('experience', idx, 'role', e.target.value)} className={inputClass} />
@@ -190,16 +191,16 @@ const Profile = () => {
         </div>
 
         {/* Projects Section */}
-        <div className="glass-card mb-6">
-          <div className="flex justify-between items-center mb-4 text-on-surface dark:text-on-dark">
-            <h3 className="text-xl font-bold">Projects</h3>
-            <button onClick={() => addArrayItem('projects')} className="text-primary-500 hover:text-primary-400 flex items-center gap-1 text-sm font-medium">
+        <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-white/5 p-6 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Projects</h3>
+            <button onClick={() => addArrayItem('projects')} className="text-accent-700 dark:text-accent-400 hover:text-accent-600 flex items-center gap-1 text-sm font-medium">
               <Plus size={16} /> Add Project
             </button>
           </div>
           {(profile.projects || []).map((proj, idx) => (
-            <div key={idx} className="glass-panel mb-4 relative">
-              <button onClick={() => removeArrayItem('projects', idx)} className="absolute top-4 right-4 text-gray-400 hover:text-error transition"><Trash2 size={16} /></button>
+            <div key={idx} className="bg-gray-50 dark:bg-dark-surface rounded-xl border border-gray-100 dark:border-white/5 p-4 mb-4 relative">
+              <button onClick={() => removeArrayItem('projects', idx)} className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition" aria-label="Remove project"><Trash2 size={16} /></button>
               <div className="grid grid-cols-1 gap-3 mb-3 pr-8">
                 <input placeholder="Project Name" value={proj.name} onChange={e => updateArrayItem('projects', idx, 'name', e.target.value)} className={inputClass} />
                 <input placeholder="Tech Stack (comma separated)" value={(proj.techStack || []).join(', ')} onChange={e => updateArrayItem('projects', idx, 'techStack', e.target.value)} className={inputClass} />
@@ -211,16 +212,16 @@ const Profile = () => {
         </div>
 
         {/* Education Section */}
-        <div className="glass-card mb-6">
-          <div className="flex justify-between items-center mb-4 text-on-surface dark:text-on-dark">
-            <h3 className="text-xl font-bold">Education</h3>
-            <button onClick={() => addArrayItem('education')} className="text-primary-500 hover:text-primary-400 flex items-center gap-1 text-sm font-medium">
+        <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-white/5 p-6 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Education</h3>
+            <button onClick={() => addArrayItem('education')} className="text-accent-700 dark:text-accent-400 hover:text-accent-600 flex items-center gap-1 text-sm font-medium">
               <Plus size={16} /> Add Education
             </button>
           </div>
           {(profile.education || []).map((edu, idx) => (
-            <div key={idx} className="glass-panel mb-4 relative">
-               <button onClick={() => removeArrayItem('education', idx)} className="absolute top-4 right-4 text-gray-400 hover:text-error transition"><Trash2 size={16} /></button>
+            <div key={idx} className="bg-gray-50 dark:bg-dark-surface rounded-xl border border-gray-100 dark:border-white/5 p-4 mb-4 relative">
+               <button onClick={() => removeArrayItem('education', idx)} className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition" aria-label="Remove education"><Trash2 size={16} /></button>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pr-8">
                 <input placeholder="Institution" value={edu.institution} onChange={e => updateArrayItem('education', idx, 'institution', e.target.value)} className={inputClass} />
                 <input placeholder="Degree" value={edu.degree} onChange={e => updateArrayItem('education', idx, 'degree', e.target.value)} className={inputClass} />
@@ -235,9 +236,9 @@ const Profile = () => {
             <button 
               onClick={handleSave} 
               disabled={saving}
-              className="btn-premium flex items-center gap-2 px-8 py-3.5 text-[15px]"
+              className="bg-accent-700 hover:bg-accent-800 text-white rounded-lg font-bold flex items-center gap-2 px-8 py-3.5 text-[15px] disabled:opacity-50 transition-colors shadow-sm"
             >
-              {saving ? <span className="premium-spinner border-white/20 border-t-white" /> : <Save size={18} />}
+              {saving ? <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <Save size={18} />}
               {saving ? 'Saving...' : 'Save Profile'}
             </button>
         </div>

@@ -353,6 +353,7 @@ const panelClass = "rounded-xl border border-border-color bg-slate-50 p-5 dark:b
 
 // ── Main Page ──────────────────────────────────────────────────────────────────
 const ResumeAI = () => {
+  useEffect(() => { document.title = 'Resume Analyzer | CareerLens'; }, []);
   const { user } = useContext(AuthContext);
   const { startTask, getTask, clearTask, getPageState, setPageState } = useContext(TaskContext);
   const navigate = useNavigate();
