@@ -195,6 +195,14 @@ const ResumeLatex = () => {
   const [tailorVersionTitle, setTailorVersionTitle] = useState('');
   const [targetCompany, setTargetCompany] = useState('');
 
+  // Template State
+  const [selectedTemplate, setSelectedTemplate] = useState('modern');
+  const [availableTemplates, setAvailableTemplates] = useState([
+    { name: 'modern', label: 'Modern' },
+    { name: 'classic', label: 'Classic' },
+    { name: 'compact', label: 'Compact' },
+  ]);
+
   // View toggle (Phase 3)
   const [rightPaneView, setRightPaneView] = useState('preview'); // 'preview' | 'source'
 
@@ -388,7 +396,7 @@ const ResumeLatex = () => {
     setShowWizard(false);
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.post(`${API_URL}/resume/latex/generate`, { resumeData }, config);
+      const { data } = await axios.post(`${API_URL}/resume/latex/generate`, { resumeData, template: selectedTemplate }, config);
       setLatexCode(data.rawLatexCode);
       showToast('Generated successfully with AI Magic!');
     } catch (error) {
@@ -411,7 +419,7 @@ const ResumeLatex = () => {
     setShowTailorWizard(false);
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.post(`${API_URL}/resume/latex/tailor`, { jobDescription: jobDescriptionText }, config);
+      const { data } = await axios.post(`${API_URL}/resume/latex/tailor`, { jobDescription: jobDescriptionText, template: selectedTemplate }, config);
       setLatexCode(data.rawLatexCode);
 
       const res = await axios.post(`${API_URL}/resume/versions`, {
@@ -852,6 +860,19 @@ const ResumeLatex = () => {
             )}
             AI Wizard
           </button>
+
+          <div className="flex items-center gap-1.5 ml-1">
+            <span className="text-[10px] text-text-muted font-medium">Template:</span>
+            <select
+              value={selectedTemplate}
+              onChange={e => setSelectedTemplate(e.target.value)}
+              className="text-[11px] font-medium bg-slate-100 dark:bg-dark-card border border-border-color rounded-lg px-2 py-1 text-text-main outline-none cursor-pointer"
+            >
+              {availableTemplates.map(t => (
+                <option key={t.name} value={t.name}>{t.label}</option>
+              ))}
+            </select>
+          </div>
 
           <button
             onClick={() => setShowTailorWizard(true)}

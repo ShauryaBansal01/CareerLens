@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect, useRef } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import TaskContext from '../context/TaskContext';
@@ -54,64 +54,74 @@ const ScoreRing = ({ score, size = 80 }) => {
   );
 };
 
-// ── Collapsible feedback card (with location + quote) ──────────────────────────
+// ── Collapsible feedback card (with location + quote + preview) ────────────────
 const FeedbackCard = ({ item, type }) => {
   const [open, setOpen] = useState(false);
 
   const config = {
     critical: {
-      container: 'bg-red-50/50 dark:bg-red-900/10 border-red-500/25 border-l-[3px] border-l-red-500',
+      dot: 'bg-red-500',
+      container: 'border-red-500/30 hover:border-red-500/50 bg-red-50/40 dark:bg-red-950/15',
       iconBg: 'bg-red-500/10 dark:bg-red-500/20',
       icon: <AlertCircle className="w-4 h-4 text-red-500" />,
       label: 'Critical',
-      labelColor: 'text-red-500 bg-red-500/10',
+      labelColor: 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30',
+      headerColor: 'text-red-600 dark:text-red-400',
     },
     suggested: {
-      container: 'bg-orange-50/50 dark:bg-orange-900/10 border-orange-500/25 border-l-[3px] border-l-orange-500',
+      dot: 'bg-orange-400',
+      container: 'border-orange-400/25 hover:border-orange-400/40 bg-orange-50/40 dark:bg-orange-950/15',
       iconBg: 'bg-orange-500/10 dark:bg-orange-500/20',
       icon: <AlertTriangle className="w-4 h-4 text-orange-500" />,
       label: 'Suggested',
-      labelColor: 'text-orange-500 bg-orange-500/10',
+      labelColor: 'text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30',
+      headerColor: 'text-orange-600 dark:text-orange-400',
     },
     good: {
-      container: 'bg-green-50/50 dark:bg-green-900/10 border-green-500/25 border-l-[3px] border-l-green-500',
-      iconBg: 'bg-green-500/10 dark:bg-green-500/20',
-      icon: <CheckCircle className="w-4 h-4 text-green-500" />,
-      label: 'Good',
-      labelColor: 'text-green-500 bg-green-500/10',
+      dot: 'bg-emerald-500',
+      container: 'border-emerald-500/25 hover:border-emerald-500/40 bg-emerald-50/40 dark:bg-emerald-950/15',
+      iconBg: 'bg-emerald-500/10 dark:bg-emerald-500/20',
+      icon: <CheckCircle className="w-4 h-4 text-emerald-500" />,
+      label: 'Strength',
+      labelColor: 'text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30',
+      headerColor: 'text-emerald-600 dark:text-emerald-400',
     },
   };
 
   const c = config[type];
+  const preview = item.detail ? item.detail.substring(0, 80) + (item.detail.length > 80 ? '...' : '') : '';
 
   return (
-    <div className={`rounded-xl border overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-ambient ${c.container}`}>
+    <div className={`rounded-xl border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${c.container} ${open ? 'border-l-[3px]' : 'border-l-[3px]'}`}>
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full border-none bg-transparent px-4 py-3.5 flex items-center gap-3 cursor-pointer text-left"
+        className="w-full border-none bg-transparent px-4 py-3 flex items-start gap-3 cursor-pointer text-left"
       >
-        <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${c.iconBg}`}>
+        <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${c.iconBg}`}>
           {c.icon}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-text-main tracking-tight">
-            {item.issue}
-          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm font-semibold text-text-main tracking-tight">{item.issue}</p>
+            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${c.labelColor}`}>{c.label}</span>
+          </div>
           {item.location && (
             <p className="text-[11px] font-medium text-text-muted mt-0.5 flex items-center gap-1">
               <MapPin className="w-3 h-3 shrink-0" />
               {item.location}
             </p>
           )}
+          {!open && preview && (
+            <p className="text-[11px] text-text-muted/70 mt-1 leading-relaxed line-clamp-1">{preview}</p>
+          )}
         </div>
-        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${c.labelColor}`}>
-          {c.label}
-        </span>
-        {open ? (
-          <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" />
-        ) : (
-          <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
-        )}
+        <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
+          {open ? (
+            <ChevronUp className="w-4 h-4 text-slate-400" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-slate-400" />
+          )}
+        </div>
       </button>
 
       <AnimatePresence>
@@ -124,10 +134,11 @@ const FeedbackCard = ({ item, type }) => {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 pl-[52px]">
+            <div className="px-4 pb-4 pl-[52px] space-y-2.5">
               {item.quote && item.quote !== '[Section not found]' && (
-                <div className="bg-slate-100/60 dark:bg-slate-800/40 rounded-lg px-3.5 py-2 mb-2.5 border-l-[3px] border-l-slate-400 dark:border-l-slate-500">
-                  <p className="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-0.5">
+                <div className="bg-white/60 dark:bg-slate-800/40 rounded-lg px-3.5 py-2 border-l-[3px] border-l-slate-400 dark:border-l-slate-500">
+                  <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-0.5 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                     From your resume
                   </p>
                   <p className="text-[13px] text-text-main/80 leading-relaxed italic">
@@ -136,18 +147,20 @@ const FeedbackCard = ({ item, type }) => {
                 </div>
               )}
               {item.quote === '[Section not found]' && (
-                <div className="bg-slate-100/60 dark:bg-slate-800/40 rounded-lg px-3.5 py-2 mb-2.5 border-l-[3px] border-l-slate-400 dark:border-l-slate-500">
-                  <p className="text-[12px] text-text-muted italic">
-                    ⚠ This section is missing from your resume
+                <div className="bg-amber-50/60 dark:bg-amber-900/20 rounded-lg px-3.5 py-2 border-l-[3px] border-l-amber-400 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <p className="text-[12px] text-amber-700 dark:text-amber-400 font-medium">
+                    This section is missing from your resume
                   </p>
                 </div>
               )}
-              <p className={`text-[13px] text-text-main/80 leading-relaxed ${item.example ? 'mb-2.5' : 'mb-0'}`}>
+              <p className="text-[13px] text-text-main/80 leading-relaxed">
                 {item.detail}
               </p>
               {item.example && (
-                <div className="bg-blue-50/50 dark:bg-blue-900/10 rounded-lg px-3.5 py-2.5 border-l-[3px] border-l-blue-600">
-                  <p className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">
+                <div className="bg-blue-50/60 dark:bg-blue-950/20 rounded-lg px-3.5 py-2.5 border-l-[3px] border-l-blue-500">
+                  <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" />
                     Example
                   </p>
                   <p className="text-[13px] text-text-main leading-relaxed italic">
@@ -169,17 +182,17 @@ const OptimizeCard = ({ item, type }) => {
 
   const config = {
     add: {
-      container: 'bg-green-50/50 dark:bg-green-900/10 border-green-500/20 border-l-[3px] border-l-green-500',
+      container: 'border-green-500/25 hover:border-green-500/40 bg-green-50/30 dark:bg-green-950/10',
       iconBg: 'bg-green-500/10 dark:bg-green-500/20',
       icon: <Plus className="w-3.5 h-3.5 text-green-600 dark:text-green-500" />,
     },
     remove: {
-      container: 'bg-red-50/50 dark:bg-red-900/10 border-red-500/20 border-l-[3px] border-l-red-500',
+      container: 'border-red-500/20 hover:border-red-500/35 bg-red-50/30 dark:bg-red-950/10',
       iconBg: 'bg-red-500/10 dark:bg-red-500/20',
       icon: <Minus className="w-3.5 h-3.5 text-red-600 dark:text-red-500" />,
     },
     modify: {
-      container: 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-500/20 border-l-[3px] border-l-blue-600',
+      container: 'border-blue-500/25 hover:border-blue-500/40 bg-blue-50/30 dark:bg-blue-950/10',
       iconBg: 'bg-blue-500/10 dark:bg-blue-500/20',
       icon: <RefreshCw className="w-3.5 h-3.5 text-blue-600 dark:text-blue-500" />,
     },
@@ -188,7 +201,7 @@ const OptimizeCard = ({ item, type }) => {
   const c = config[type];
 
   return (
-    <div className={`rounded-xl border overflow-hidden transition-all duration-300 hover:shadow-ambient ${c.container}`}>
+    <div className={`rounded-xl border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${c.container}`}>
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full border-none bg-transparent px-4 py-3 flex items-center gap-3 cursor-pointer text-left"
@@ -221,8 +234,9 @@ const OptimizeCard = ({ item, type }) => {
                 <p className="text-[13px] text-text-muted leading-relaxed">{item.reason}</p>
               )}
               {item.howTo && (
-                <div className="bg-bg-card rounded-lg px-3.5 py-2.5 border border-border-color">
-                  <p className="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">
+                <div className="bg-white/60 dark:bg-slate-800/40 rounded-lg px-3.5 py-2.5 border border-border-color">
+                  <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <Wand2 className="w-3 h-3" />
                     How to add
                   </p>
                   <p className="text-[13px] text-text-main leading-relaxed">{item.howTo}</p>
@@ -230,13 +244,17 @@ const OptimizeCard = ({ item, type }) => {
               )}
               {item.before && (
                 <div className="flex flex-col gap-1.5">
-                  <div className="bg-red-50/50 dark:bg-red-900/10 rounded-lg px-3.5 py-2.5 border border-red-500/15 dark:border-red-500/20">
-                    <p className="text-[11px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wider mb-1">Before</p>
-                    <p className="text-[13px] text-text-main leading-relaxed italic">&ldquo;{item.before}&rdquo;</p>
+                  <div className="bg-red-50/40 dark:bg-red-900/10 rounded-lg px-3.5 py-2.5 border border-red-500/20 dark:border-red-500/25">
+                    <p className="text-[10px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                      <Minus className="w-3 h-3" /> Before
+                    </p>
+                    <p className="text-[13px] text-text-main/80 leading-relaxed line-through decoration-red-400/40">&ldquo;{item.before}&rdquo;</p>
                   </div>
-                  <div className="bg-green-50/50 dark:bg-green-900/10 rounded-lg px-3.5 py-2.5 border border-green-500/15 dark:border-green-500/20">
-                    <p className="text-[11px] font-bold text-green-600 dark:text-green-500 uppercase tracking-wider mb-1">After</p>
-                    <p className="text-[13px] text-text-main leading-relaxed italic">&ldquo;{item.after}&rdquo;</p>
+                  <div className="bg-emerald-50/40 dark:bg-emerald-900/10 rounded-lg px-3.5 py-2.5 border border-emerald-500/20 dark:border-emerald-500/25">
+                    <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                      <Check className="w-3 h-3" /> After
+                    </p>
+                    <p className="text-[13px] text-text-main leading-relaxed">&ldquo;{item.after}&rdquo;</p>
                   </div>
                 </div>
               )}
@@ -250,79 +268,197 @@ const OptimizeCard = ({ item, type }) => {
 
 // ── Diff Card for accept/reject individual changes ─────────────────────────────
 const DiffCard = ({ change, accepted, onToggle }) => {
+  const statusColors = accepted
+    ? 'border-emerald-500/40 bg-emerald-50/20 dark:bg-emerald-900/10 shadow-md shadow-emerald-500/5'
+    : 'border-border-color bg-white/30 dark:bg-slate-800/10 opacity-60';
+
+  const statusDot = accepted ? 'bg-emerald-500' : 'bg-slate-400';
+
   return (
     <motion.div
+      layout
       variants={fadeUp}
-      className={`rounded-xl border overflow-hidden transition-all duration-300 ${
-        accepted
-          ? 'border-emerald-500/30 bg-emerald-50/20 dark:bg-emerald-900/5'
-          : 'border-border-color bg-slate-50/50 dark:bg-slate-800/20 opacity-60'
-      }`}
+      className={`rounded-xl border transition-all duration-400 ${statusColors} relative overflow-hidden`}
     >
+      {/* Accepted/Rejected strip */}
+      <div className={`absolute top-0 left-0 w-1 h-full transition-colors duration-300 ${accepted ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
+
       {/* Header */}
       <div className="px-4 py-3 flex items-center justify-between gap-3 border-b border-border-color">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className={`w-2 h-2 rounded-full shrink-0 ${
-            change.changeType === 'rewrite' ? 'bg-blue-500' :
-            change.changeType === 'enhance' ? 'bg-purple-500' : 'bg-amber-500'
-          }`} />
-          <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider truncate">
-            {change.field}
-          </span>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className={`w-2 h-2 rounded-full shrink-0 transition-colors duration-300 ${statusDot}`} />
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider truncate">
+              {change.field}
+            </span>
+            <Badge variant={
+              change.changeType === 'rewrite' ? 'default' :
+              change.changeType === 'enhance' ? 'secondary' : 'warning'
+            } className="text-[9px] px-1.5 py-0 font-semibold">
+              {change.changeType}
+            </Badge>
+          </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
-            change.changeType === 'rewrite'
-              ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-              : change.changeType === 'enhance'
-              ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
-              : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+          <span className={`text-[10px] font-semibold flex items-center gap-1 transition-all duration-300 ${
+            accepted ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'
           }`}>
-            {change.changeType}
+            {accepted ? (
+              <><CheckCircle2 className="w-3.5 h-3.5" /> Accepted</>
+            ) : (
+              <><XCircle className="w-3.5 h-3.5" /> Pending</>
+            )}
           </span>
           <button
             onClick={onToggle}
-            className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200 ${
+            className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200 border-2 active:scale-95 ${
               accepted
-                ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/25'
-                : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500'
+                ? 'bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/30'
+                : 'bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 hover:border-slate-400 dark:hover:border-slate-500'
             }`}
+            title={accepted ? 'Reject change' : 'Accept change'}
           >
-            {accepted ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+            {accepted ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
           </button>
         </div>
       </div>
 
-      {/* Diff content */}
+      {/* Diff content with highlighting */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:divide-x divide-border-color">
-        {/* Original */}
-        <div className="px-4 py-3 bg-red-50/30 dark:bg-red-900/5">
+        <div className="px-4 py-3 bg-gradient-to-r from-red-50/40 to-transparent dark:from-red-950/10">
           <p className="text-[10px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
             <Minus className="w-3 h-3" /> Original
           </p>
-          <p className="text-[13px] text-text-main/80 leading-relaxed whitespace-pre-wrap">
+          <p className="text-[13px] text-text-main/80 leading-relaxed whitespace-pre-wrap bg-red-500/[0.04] dark:bg-red-500/[0.06] rounded px-1.5 -mx-1.5 py-0.5 line-through decoration-red-400/30">
             {change.original}
           </p>
         </div>
-        {/* Optimized */}
-        <div className="px-4 py-3 bg-emerald-50/30 dark:bg-emerald-900/5 border-t md:border-t-0 border-border-color">
+        <div className="px-4 py-3 bg-gradient-to-l from-emerald-50/40 to-transparent dark:from-emerald-950/10 border-t md:border-t-0 border-border-color">
           <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-            <Plus className="w-3 h-3" /> Optimized
+            <Check className="w-3 h-3" /> Optimized
           </p>
-          <p className="text-[13px] text-text-main/80 leading-relaxed whitespace-pre-wrap">
+          <p className="text-[13px] text-text-main/80 leading-relaxed whitespace-pre-wrap bg-emerald-500/[0.06] dark:bg-emerald-500/[0.08] rounded px-1.5 -mx-1.5 py-0.5">
             {change.optimized}
           </p>
         </div>
       </div>
 
       {/* Reason */}
-      <div className="px-4 py-2 bg-slate-50/50 dark:bg-slate-800/30 border-t border-border-color">
-        <p className="text-[11px] text-text-muted italic flex items-center gap-1.5">
-          <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
+      <div className="px-4 py-2.5 bg-amber-50/30 dark:bg-amber-950/10 border-t border-border-color">
+        <p className="text-[11px] text-text-muted flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+          <span className="font-medium text-text-main/70">Why:</span>
           {change.reason}
         </p>
       </div>
     </motion.div>
+  );
+};
+
+// ── Profile Preview (for Original / Optimized toggle view) ─────────────────────
+const ProfilePreview = ({ profile, label }) => {
+  if (!profile) return null;
+  const { basics, skills, experience, education, projects } = profile;
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      {basics && (
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h2 className="text-lg font-bold text-text-main">{basics.name || 'Untitled'}</h2>
+            <p className="text-sm text-text-muted mt-0.5">{basics.email}{basics.email && basics.phone ? ' · ' : ''}{basics.phone}</p>
+            {(basics.linkedin || basics.github) && (
+              <p className="text-xs text-text-muted mt-0.5">
+                {basics.linkedin && <span className="mr-3">LinkedIn: {basics.linkedin}</span>}
+                {basics.github && <span>GitHub: {basics.github}</span>}
+              </p>
+            )}
+          </div>
+          <Badge variant="outline" className="text-[10px]">{label}</Badge>
+        </div>
+      )}
+
+      {basics?.summary && (
+        <div className="bg-white/50 dark:bg-slate-800/30 rounded-lg px-4 py-3 border border-border-color">
+          <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1">Summary</p>
+          <p className="text-[13px] text-text-main/80 leading-relaxed">{basics.summary}</p>
+        </div>
+      )}
+
+      {/* Experience */}
+      {experience?.length > 0 && (
+        <div>
+          <p className="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <Building2 className="w-3 h-3" /> Experience ({experience.length})
+          </p>
+          <div className="space-y-2">
+            {experience.map((exp, i) => (
+              <div key={i} className="bg-white/50 dark:bg-slate-800/30 rounded-lg px-4 py-3 border border-border-color">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div>
+                    <p className="text-sm font-semibold text-text-main">{exp.role || 'Role'}</p>
+                    <p className="text-xs text-text-muted">{exp.company || 'Company'}{exp.duration ? ` · ${exp.duration}` : ''}</p>
+                  </div>
+                </div>
+                {exp.description && (
+                  <div className="mt-1.5 text-[13px] text-text-main/80 leading-relaxed whitespace-pre-wrap">
+                    {Array.isArray(exp.description)
+                      ? exp.description.map((d, j) => <p key={j} className="mb-0.5">• {d}</p>)
+                      : <p>{exp.description}</p>}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Education */}
+      {education?.length > 0 && (
+        <div>
+          <p className="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-2">Education ({education.length})</p>
+          <div className="space-y-2">
+            {education.map((edu, i) => (
+              <div key={i} className="bg-white/50 dark:bg-slate-800/30 rounded-lg px-4 py-3 border border-border-color">
+                <p className="text-sm font-semibold text-text-main">{edu.degree || 'Degree'} at {edu.institution || 'School'}</p>
+                {edu.duration && <p className="text-xs text-text-muted mt-0.5">{edu.duration}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Skills */}
+      {skills?.length > 0 && (
+        <div className="bg-white/50 dark:bg-slate-800/30 rounded-lg px-4 py-3 border border-border-color">
+          <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">Skills</p>
+          <div className="flex flex-wrap gap-1.5">
+            {(Array.isArray(skills) ? skills : []).map((s, i) => (
+              <span key={i} className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-accent-500/10 text-accent-700 dark:text-accent-300 border border-accent-500/20">
+                {s}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Projects */}
+      {projects?.length > 0 && (
+        <div>
+          <p className="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-2">Projects ({projects.length})</p>
+          <div className="space-y-2">
+            {projects.map((proj, i) => (
+              <div key={i} className="bg-white/50 dark:bg-slate-800/30 rounded-lg px-4 py-3 border border-border-color">
+                <p className="text-sm font-semibold text-text-main">{proj.name || 'Project'}</p>
+                {proj.techStack && <p className="text-xs text-text-muted mt-0.5">{Array.isArray(proj.techStack) ? proj.techStack.join(', ') : proj.techStack}</p>}
+                {proj.description && <p className="text-[13px] text-text-main/80 leading-relaxed mt-1">{proj.description}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -382,8 +518,13 @@ const ResumeAI = () => {
   const [acceptedChanges, setAcceptedChanges] = useState(persisted?.acceptedChanges || {});
   const [savingOptimized, setSavingOptimized] = useState(false);
   const [generatingLatex, setGeneratingLatex] = useState(false);
+  const [generatedVersionId, setGeneratedVersionId] = useState(null);
+  const [generatingLatexError, setGeneratingLatexError] = useState('');
   const [saveSuccess, setSaveSuccess] = useState('');
+  const [acceptAllStatus, setAcceptAllStatus] = useState(''); // '' | 'saving' | 'done'
   const [localError, setLocalError] = useState('');
+  const [originalProfile, setOriginalProfile] = useState(null);
+  const [viewMode, setViewMode] = useState('changes');
 
   // Pre-accept all changes when optimize completes
   useEffect(() => {
@@ -396,12 +537,72 @@ const ResumeAI = () => {
     }
   }, [optimizeData]);
 
+  // Auto-generate LaTeX when optimize completes and all changes are pre-accepted
+  const prevOptimizeDataRef = useRef(null);
+  useEffect(() => {
+    if (!optimizeData?.optimizedProfile) return;
+    if (prevOptimizeDataRef.current === optimizeData) return;
+    prevOptimizeDataRef.current = optimizeData;
+    setGeneratedVersionId(null);
+    setGeneratingLatexError('');
+    generateLatexSilent(optimizeData.optimizedProfile);
+  }, [optimizeData]);
+
   // Persist local state to context on change
   useEffect(() => {
     setPageState('resume-ai', { jobDesc, optimizeResult, acceptedChanges });
   }, [jobDesc, optimizeResult, acceptedChanges, setPageState]);
 
   const cfg = { headers: { Authorization: `Bearer ${user?.token}` } };
+
+  // ── Silent LaTeX generation (no navigation) ──────────────────────────────────
+  const generateLatexSilent = async (profile) => {
+    setGeneratingLatex(true);
+    setGeneratingLatexError('');
+    try {
+      const resumeData = {
+        personalInfo: {
+          name: profile.basics?.name || '',
+          email: profile.basics?.email || '',
+          phone: profile.basics?.phone || '',
+          linkedin: profile.basics?.linkedin || '',
+          github: profile.basics?.github || '',
+        },
+        summary: profile.basics?.summary || '',
+        skills: (profile.skills || []).join(', '),
+        experience: (profile.experience || []).map(exp => ({
+          company: exp.company || '',
+          role: exp.role || '',
+          dates: exp.duration || '',
+          bulletPoints: exp.description || '',
+        })),
+        education: (profile.education || []).map(edu => ({
+          school: edu.institution || '',
+          degree: edu.degree || '',
+          dates: edu.duration || '',
+        })),
+        projects: (profile.projects || []).map(proj => ({
+          name: proj.name || '',
+          techStack: (proj.techStack || []).join(', '),
+          description: proj.description || '',
+        })),
+        enhanceWithAI: false,
+      };
+
+      const { data } = await axios.post(`${API_URL}/resume/latex/generate`, { resumeData }, cfg);
+      const versionRes = await axios.post(`${API_URL}/resume/versions`, {
+        title: 'AI Optimized Resume',
+        rawLatexCode: data.rawLatexCode,
+        source: 'ai-optimized',
+      }, cfg);
+
+      setGeneratedVersionId(versionRes.data._id);
+    } catch (err) {
+      setGeneratingLatexError(err.response?.data?.message || 'Failed to generate LaTeX.');
+    } finally {
+      setGeneratingLatex(false);
+    }
+  };
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleImprove = async () => {
@@ -449,6 +650,11 @@ const ResumeAI = () => {
   // ── Optimize from Feedback Handler ───────────────────────────────────────────
   const handleOptimizeFromFeedback = async () => {
     setSaveSuccess('');
+    setViewMode('changes');
+    // Fetch original profile for the toggle view
+    axios.get(`${API_URL}/profile`, cfg).then(res => {
+      setOriginalProfile(res.data);
+    }).catch(() => {});
     startTask(
       'resume-optimize-feedback',
       'Optimizing Resume',
@@ -472,12 +678,29 @@ const ResumeAI = () => {
     setAcceptedChanges(prev => ({ ...prev, [changeId]: !prev[changeId] }));
   };
 
-  const acceptAll = () => {
+  const acceptAll = async () => {
     const accepted = {};
     (optimizeData?.sections || []).forEach(s =>
       (s.changes || []).forEach(c => { accepted[c.id] = true; })
     );
     setAcceptedChanges(accepted);
+    if (!optimizeData?.optimizedProfile) return;
+    setAcceptAllStatus('saving');
+    try {
+      const profile = optimizeData.optimizedProfile;
+      await axios.put(`${API_URL}/profile`, {
+        basics: profile.basics,
+        skills: profile.skills,
+        experience: profile.experience,
+        education: profile.education,
+        projects: profile.projects,
+      }, cfg);
+      setAcceptAllStatus('done');
+      setTimeout(() => setAcceptAllStatus(''), 4000);
+    } catch (err) {
+      setLocalError(err.response?.data?.message || 'Failed to save optimized profile.');
+      setAcceptAllStatus('');
+    }
   };
 
   const rejectAll = () => {
@@ -513,53 +736,16 @@ const ResumeAI = () => {
     }
   };
 
-  // ── Generate LaTeX from optimized content ────────────────────────────────────
-  const handleGenerateLatex = async () => {
-    if (!optimizeData?.optimizedProfile) return;
-    setGeneratingLatex(true);
-    try {
-      const profile = optimizeData.optimizedProfile;
-      const resumeData = {
-        personalInfo: {
-          name: profile.basics?.name || '',
-          email: profile.basics?.email || '',
-          phone: profile.basics?.phone || '',
-          linkedin: profile.basics?.linkedin || '',
-          github: profile.basics?.github || '',
-        },
-        summary: profile.basics?.summary || '',
-        skills: (profile.skills || []).join(', '),
-        experience: (profile.experience || []).map(exp => ({
-          company: exp.company || '',
-          role: exp.role || '',
-          dates: exp.duration || '',
-          bulletPoints: exp.description || '',
-        })),
-        education: (profile.education || []).map(edu => ({
-          school: edu.institution || '',
-          degree: edu.degree || '',
-          dates: edu.duration || '',
-        })),
-        projects: (profile.projects || []).map(proj => ({
-          name: proj.name || '',
-          techStack: (proj.techStack || []).join(', '),
-          description: proj.description || '',
-        })),
-        enhanceWithAI: false,
-      };
+  // ── View or retry LaTeX for optimized content ────────────────────────────────
+  const handleViewLatex = () => {
+    if (generatedVersionId) {
+      navigate('/resume-latex', { state: { versionId: generatedVersionId } });
+    }
+  };
 
-      const { data } = await axios.post(`${API_URL}/resume/latex/generate`, { resumeData }, cfg);
-      const versionRes = await axios.post(`${API_URL}/resume/versions`, {
-        title: 'AI Optimized Resume',
-        rawLatexCode: data.rawLatexCode,
-        source: 'ai-optimized',
-      }, cfg);
-
-      navigate('/resume-latex', { state: { versionId: versionRes.data._id } });
-    } catch (err) {
-      setLocalError(err.response?.data?.message || 'Failed to generate LaTeX.');
-    } finally {
-      setGeneratingLatex(false);
+  const handleRetryLatex = () => {
+    if (optimizeData?.optimizedProfile) {
+      generateLatexSilent(optimizeData.optimizedProfile);
     }
   };
 
@@ -660,27 +846,78 @@ const ResumeAI = () => {
               {improveFeedback && (
                 <motion.div key="improve-results" variants={stagger} initial="hidden" animate="show">
 
-                  {/* Score banner + Optimize button */}
+                  {/* Score Dashboard — consolidated: score ring + dimension bars + ATS summary */}
                   <motion.div
                     variants={fadeUp}
-                    className={`${panelClass} flex items-center gap-5 mb-7`}
+                    className={`${panelClass} mb-7`}
                   >
-                    <ScoreRing score={improveFeedback.score || 0} size={80} />
-                    <div className="flex-1">
-                      <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest mb-1.5">
-                        Resume Score
-                      </p>
-                      <p className="text-lg font-semibold text-text-main leading-snug tracking-tight mb-2">
+                    <div className="flex items-start gap-6 flex-wrap">
+                      {/* Left: Score ring */}
+                      <div className="flex flex-col items-center shrink-0">
+                        <ScoreRing score={improveFeedback.score || 0} size={88} />
+                        <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider mt-1.5">Overall</span>
+                      </div>
+
+                      {/* Right: Dimension bars */}
+                      <div className="flex-1 min-w-[200px] space-y-1.5">
+                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">Dimension Breakdown</p>
+                        {improveFeedback.dimensionScores && Object.entries(improveFeedback.dimensionScores).map(([key, dim]) => {
+                          const barColor = dim.score >= 75 ? '#10b981' : dim.score >= 50 ? '#f59e0b' : '#ef4444';
+                          return (
+                            <div key={key} className="flex items-center gap-2.5">
+                              <span className="text-[11px] text-text-muted w-28 shrink-0 text-right">{dim.label || key}</span>
+                              <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${dim.score}%`, backgroundColor: barColor }} />
+                              </div>
+                              <span className="text-[11px] font-bold w-8 text-right" style={{ color: barColor }}>{dim.score}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* ATS compliance summary (inline, auto-fetched) */}
+                    {improveFeedback.atsAnalysis && (
+                      <div className="mt-4 pt-3 border-t border-border-color">
+                        <div className="flex items-center flex-wrap gap-x-4 gap-y-1.5">
+                          <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">ATS Compliance</span>
+                          <span className="text-[11px] font-semibold" style={{
+                            color: improveFeedback.atsAnalysis.overallScore >= 70 ? '#10b981' : improveFeedback.atsAnalysis.overallScore >= 40 ? '#f59e0b' : '#ef4444'
+                          }}>
+                            Score: {improveFeedback.atsAnalysis.overallScore}/100
+                          </span>
+                          <span className="flex items-center gap-1 text-[11px] text-text-muted">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                            {improveFeedback.atsAnalysis.checks?.filter(c => c.passed).length || 0}/{improveFeedback.atsAnalysis.checks?.length || 0} checks passed
+                          </span>
+                          {improveFeedback.atsAnalysis.criticalIssues?.length > 0 && (
+                            <span className="flex items-center gap-1 text-[11px] text-red-500">
+                              <AlertCircle className="w-3 h-3" />
+                              {improveFeedback.atsAnalysis.criticalIssues.length} critical {improveFeedback.atsAnalysis.criticalIssues.length === 1 ? 'issue' : 'issues'}
+                            </span>
+                          )}
+                          {improveFeedback.atsAnalysis.warnings?.length > 0 && (
+                            <span className="flex items-center gap-1 text-[11px] text-amber-500">
+                              <AlertTriangle className="w-3 h-3" />
+                              {improveFeedback.atsAnalysis.warnings.length} warnings
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Summary + actions */}
+                    <div className="mt-3 pt-3 border-t border-border-color flex items-start justify-between gap-4 flex-wrap">
+                      <p className="text-sm font-medium text-text-main leading-relaxed flex-1 min-w-[200px]">
                         {improveFeedback.summary}
                       </p>
-                      <div className="flex items-center gap-3 flex-wrap">
+                      <div className="flex items-center gap-3 shrink-0">
                         <button
                           onClick={() => { clearTask('resume-improve'); clearTask('resume-optimize-feedback'); handleImprove(); }}
-                          className="text-xs text-blue-600 dark:text-blue-400 bg-transparent border-none cursor-pointer p-0 flex items-center gap-1 hover:underline"
+                          className="text-xs text-blue-600 dark:text-blue-400 bg-transparent border-none cursor-pointer flex items-center gap-1 hover:underline"
                         >
                           <RefreshCw className="w-3 h-3" /> Re-analyze
                         </button>
-                        <div className="w-px h-3.5 bg-slate-300 dark:bg-slate-600" />
                         <Button
                           onClick={handleOptimizeFromFeedback}
                           disabled={optimizing}
@@ -705,11 +942,22 @@ const ResumeAI = () => {
 
                   {/* Critical */}
                   {improveFeedback.critical?.length > 0 && (
-                    <motion.div variants={fadeUp} className="mb-5">
-                      <p className="text-xs font-bold text-red-500 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        Critical — Fix Before Applying ({improveFeedback.critical.length})
-                      </p>
+                    <motion.div variants={fadeUp} className="mb-6">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-1 h-8 rounded-full bg-red-500 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                            <p className="text-xs font-bold text-red-500 uppercase tracking-widest">
+                              Critical — Fix Before Applying
+                            </p>
+                            <span className="text-[10px] font-bold text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded-full shrink-0">
+                              {improveFeedback.critical.length}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-text-muted mt-0.5">These issues will negatively impact your application — address them first</p>
+                        </div>
+                      </div>
                       <div className="flex flex-col gap-2">
                         {improveFeedback.critical.map((item, i) => (
                           <FeedbackCard key={i} item={item} type="critical" />
@@ -720,11 +968,22 @@ const ResumeAI = () => {
 
                   {/* Suggested */}
                   {improveFeedback.suggested?.length > 0 && (
-                    <motion.div variants={fadeUp} className="mb-5">
-                      <p className="text-xs font-bold text-orange-500 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
-                        <AlertTriangle className="w-3.5 h-3.5" />
-                        Suggested Improvements ({improveFeedback.suggested.length})
-                      </p>
+                    <motion.div variants={fadeUp} className="mb-6">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-1 h-8 rounded-full bg-orange-400 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4 text-orange-500 shrink-0" />
+                            <p className="text-xs font-bold text-orange-500 uppercase tracking-widest">
+                              Suggested Improvements
+                            </p>
+                            <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-1.5 py-0.5 rounded-full shrink-0">
+                              {improveFeedback.suggested.length}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-text-muted mt-0.5">Strongly recommended changes to strengthen your profile</p>
+                        </div>
+                      </div>
                       <div className="flex flex-col gap-2">
                         {improveFeedback.suggested.map((item, i) => (
                           <FeedbackCard key={i} item={item} type="suggested" />
@@ -736,10 +995,21 @@ const ResumeAI = () => {
                   {/* Good */}
                   {improveFeedback.good?.length > 0 && (
                     <motion.div variants={fadeUp}>
-                      <p className="text-xs font-bold text-green-500 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        What You're Doing Well ({improveFeedback.good.length})
-                      </p>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-1 h-8 rounded-full bg-emerald-500 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                            <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest">
+                              What You're Doing Well
+                            </p>
+                            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded-full shrink-0">
+                              {improveFeedback.good.length}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-text-muted mt-0.5">These strengths are working in your favor — keep them</p>
+                        </div>
+                      </div>
                       <div className="flex flex-col gap-2">
                         {improveFeedback.good.map((item, i) => (
                           <FeedbackCard key={i} item={item} type="good" />
@@ -798,141 +1068,237 @@ const ResumeAI = () => {
 
           {optimizeData && !optimizing && (
             <Card
-              className="mb-6"
+              className="mb-6 overflow-hidden"
             >
-              {/* Header */}
-              <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
-                <div>
-                  <div className="flex items-center gap-2.5 mb-1.5">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest">
-                      Optimization Results
-                    </p>
-                  </div>
-                  <h2 className="text-2xl font-bold text-text-main tracking-tight mb-1.5">
-                    Review Changes
-                  </h2>
-                  <p className="text-sm text-text-muted max-w-[520px]">
-                    {optimizeData.summary} — Review each change and accept or reject individual improvements.
-                  </p>
-                </div>
-                {optimizeData.estimatedScoreIncrease > 0 && (
-                  <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 rounded-xl border border-emerald-500/20">
-                    <ArrowRight className="w-4 h-4 text-emerald-600 dark:text-emerald-400 rotate-[-90deg]" />
-                    <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                      +{optimizeData.estimatedScoreIncrease} pts
+              {/* Summary Bar */}
+              <div className="bg-gradient-to-r from-emerald-50/60 via-white to-emerald-50/30 dark:from-emerald-950/10 dark:via-transparent dark:to-emerald-950/5 border-b border-border-color px-5 py-3.5">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Changes</p>
+                    </div>
+                    <span className="text-sm font-semibold text-text-main">{getAcceptedCount()}/{getTotalCount()}</span>
+                    <div className="w-24 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                        style={{ width: `${getTotalCount() > 0 ? (getAcceptedCount() / getTotalCount()) * 100 : 0}%` }}
+                      />
+                    </div>
+                    <span className="text-[11px] text-text-muted">
+                      {(optimizeData.sections || []).length} section{(optimizeData.sections || []).length !== 1 ? 's' : ''}
                     </span>
                   </div>
-                )}
-              </div>
-
-              {/* Bulk actions */}
-              <div className="flex items-center justify-between mb-5 pb-4 border-b border-border-color">
-                <p className="text-sm text-text-muted">
-                  <span className="font-semibold text-text-main">{getAcceptedCount()}</span> of{' '}
-                  <span className="font-semibold text-text-main">{getTotalCount()}</span> changes accepted
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={acceptAll}
-                    size="sm"
-                    variant="outline"
-                    className="text-emerald-700 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" /> Accept All
-                  </Button>
-                  <Button
-                    onClick={rejectAll}
-                    size="sm"
-                    variant="outline"
-                    className="text-text-muted border-border-color hover:bg-slate-200 dark:hover:bg-slate-700"
-                  >
-                    <XCircle className="w-3.5 h-3.5 mr-1.5" /> Reject All
-                  </Button>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* View toggle pills */}
+                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 border border-border-color">
+                      {['original', 'changes', 'optimized'].map(mode => (
+                        <button
+                          key={mode}
+                          onClick={() => setViewMode(mode)}
+                          className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md transition-all cursor-pointer border-none ${
+                            viewMode === mode
+                              ? 'bg-white dark:bg-slate-700 text-text-main shadow-sm'
+                              : 'text-text-muted hover:text-text-main bg-transparent'
+                          }`}
+                        >
+                          {mode === 'original' ? 'Original' : mode === 'changes' ? 'Changes' : 'Optimized'}
+                        </button>
+                      ))}
+                    </div>
+                    <Button
+                      onClick={acceptAll}
+                      size="sm"
+                      disabled={acceptAllStatus === 'saving'}
+                      className={`gap-1.5 px-3 py-1.5 text-xs font-bold ${
+                        acceptAllStatus === 'done'
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-accent-700 hover:bg-accent-800 text-white shadow-sm'
+                      }`}
+                    >
+                      {acceptAllStatus === 'saving' ? (
+                        <><div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving…</>
+                      ) : acceptAllStatus === 'done' ? (
+                        <><CheckCircle2 className="w-3.5 h-3.5" /> Saved ✓</>
+                      ) : (
+                        <><CheckCircle2 className="w-3.5 h-3.5" /> Accept All & Save</>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={rejectAll}
+                      size="sm"
+                      variant="ghost"
+                      className="text-text-muted hover:bg-slate-200 dark:hover:bg-slate-700 gap-1.5 px-3 py-1"
+                    >
+                      <XCircle className="w-3.5 h-3.5" /> Reject All
+                    </Button>
+                    {optimizeData.estimatedScoreIncrease > 0 && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+                        className="flex items-center gap-1.5 bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg shadow-lg shadow-emerald-500/25"
+                      >
+                        <Zap className="w-3.5 h-3.5" />
+                        <span className="text-[11px] font-bold">+{optimizeData.estimatedScoreIncrease} pts</span>
+                      </motion.div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Section-by-section diffs */}
-              <motion.div variants={stagger} initial="hidden" animate="show" className="flex flex-col gap-6">
-                {(optimizeData.sections || []).map((section, sIdx) => (
-                  <motion.div key={sIdx} variants={fadeUp}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className={`w-1.5 h-4 rounded-full ${
-                        section.sectionType === 'experience' ? 'bg-blue-500' :
-                        section.sectionType === 'projects' ? 'bg-purple-500' :
-                        section.sectionType === 'skills' ? 'bg-amber-500' :
-                        section.sectionType === 'education' ? 'bg-teal-500' :
-                        'bg-indigo-500'
-                      }`} />
-                      <h3 className="text-sm font-bold text-text-main tracking-tight">
-                        {section.sectionName}
-                      </h3>
-                      <span className="text-[10px] font-medium text-text-muted uppercase tracking-wider">
-                        {section.changes?.length} change{section.changes?.length !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                    <div className="flex flex-col gap-2.5">
-                      {(section.changes || []).map((change, cIdx) => (
-                        <DiffCard
-                          key={change.id || `${sIdx}-${cIdx}`}
-                          change={change}
-                          accepted={!!acceptedChanges[change.id]}
-                          onToggle={() => toggleChange(change.id)}
-                        />
-                      ))}
-                    </div>
+              {/* Header */}
+              <div className="px-5 pt-5 pb-1">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div>
+                    <h2 className="text-xl font-bold text-text-main tracking-tight mb-1">
+                      Review Changes
+                    </h2>
+                    <p className="text-sm text-text-muted max-w-[520px]">
+                      {optimizeData.summary} — Review each change and accept or reject individual improvements.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content: Changes / Original / Optimized */}
+              <div className="px-5 pb-2">
+                {viewMode === 'changes' && (
+                  <motion.div variants={stagger} initial="hidden" animate="show" className="flex flex-col gap-5">
+                    {(optimizeData.sections || []).map((section, sIdx) => {
+                      const sectionAccepted = (section.changes || []).filter(c => !!acceptedChanges[c.id]).length;
+                      const sectionTotal = (section.changes || []).length;
+                      const sectionProgress = sectionTotal > 0 ? (sectionAccepted / sectionTotal) * 100 : 0;
+                      const sectionTypeColor = {
+                        experience: 'bg-blue-500',
+                        projects: 'bg-purple-500',
+                        skills: 'bg-amber-500',
+                        education: 'bg-teal-500',
+                      }[section.sectionType] || 'bg-indigo-500';
+
+                      return (
+                        <motion.div key={sIdx} variants={fadeUp} className="rounded-xl border border-border-color bg-white/30 dark:bg-slate-800/10 overflow-hidden">
+                          {/* Section header with controls */}
+                          <div className="px-4 py-2.5 flex items-center justify-between gap-3 border-b border-border-color bg-slate-50/30 dark:bg-slate-800/20">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className={`w-1.5 h-5 rounded-full shrink-0 ${sectionTypeColor}`} />
+                              <h3 className="text-sm font-bold text-text-main tracking-tight">{section.sectionName}</h3>
+                              <span className="text-[10px] font-medium text-text-muted">{sectionTotal} change{sectionTotal !== 1 ? 's' : ''}</span>
+                              <div className="w-16 h-1 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden hidden sm:block">
+                                <div className={`h-full rounded-full transition-all duration-500 ${sectionProgress === 100 ? 'bg-emerald-500' : 'bg-blue-400'}`} style={{ width: `${sectionProgress}%` }} />
+                              </div>
+                              {sectionAccepted > 0 && (
+                                <Badge variant="success" className="text-[9px] px-1.5 py-0 font-semibold">
+                                  {sectionAccepted}/{sectionTotal}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                onClick={() => section.changes?.forEach(c => { if (!acceptedChanges[c.id]) toggleChange(c.id); })}
+                                className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-transparent border border-emerald-500/20 rounded-lg px-2 py-1 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors cursor-pointer"
+                              >
+                                Accept All
+                              </button>
+                              <button
+                                onClick={() => section.changes?.forEach(c => { if (acceptedChanges[c.id]) toggleChange(c.id); })}
+                                className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 bg-transparent border border-border-color rounded-lg px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
+                              >
+                                Reject All
+                              </button>
+                            </div>
+                          </div>
+                          <div className="p-3 flex flex-col gap-2">
+                            {(section.changes || []).map((change, cIdx) => (
+                              <DiffCard
+                                key={change.id || `${sIdx}-${cIdx}`}
+                                change={change}
+                                accepted={!!acceptedChanges[change.id]}
+                                onToggle={() => toggleChange(change.id)}
+                              />
+                            ))}
+                          </div>
+                        </motion.div>
+                      );
+                    })}
                   </motion.div>
-                ))}
-              </motion.div>
+                )}
+                {viewMode === 'original' && (
+                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="py-2">
+                    {originalProfile ? (
+                      <ProfilePreview profile={originalProfile} label="Original" />
+                    ) : (
+                      <div className="flex items-center gap-2 text-text-muted text-sm py-8 justify-center">
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        Loading original profile…
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+                {viewMode === 'optimized' && (
+                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="py-2">
+                    <ProfilePreview profile={optimizeData.optimizedProfile} label="Optimized" />
+                  </motion.div>
+                )}
+              </div>
 
               {/* Save success message */}
               {saveSuccess && (
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-5 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl px-4 py-3 flex items-center gap-2.5 border border-emerald-500/20"
+                  className="mx-5 mb-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl px-4 py-3 flex items-center gap-2.5 border border-emerald-500/20"
                 >
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <p className="text-sm text-emerald-700 dark:text-emerald-400 font-medium">{saveSuccess}</p>
                 </motion.div>
               )}
 
-              {/* Action buttons */}
-              <div className="mt-6 pt-5 border-t border-border-color flex flex-wrap items-center gap-3">
-                <Button
-                  onClick={handleSaveToProfile}
-                  disabled={savingOptimized || getAcceptedCount() === 0}
-                  variant="secondary"
-                >
-                  {savingOptimized ? (
-                    <>
-                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Saving…
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4" />
-                      Save to Profile
-                    </>
-                  )}
-                </Button>
+              {/* Sticky action buttons */}
+              <div className="px-5 py-4 border-t border-border-color bg-gradient-to-t from-white/80 to-transparent dark:from-slate-900/80 sticky bottom-0">
+                <div className="flex flex-wrap items-center gap-3 justify-between">
+                  <p className="text-xs text-text-muted">
+                    <span className="font-semibold text-text-main">{getAcceptedCount()}</span> of{' '}
+                    <span className="font-semibold text-text-main">{getTotalCount()}</span> changes ready to apply
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={handleSaveToProfile}
+                      disabled={savingOptimized || getAcceptedCount() === 0}
+                      variant="secondary"
+                      size="sm"
+                    >
+                      {savingOptimized ? (
+                        <>
+                          <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Saving…
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" />
+                          Save to Profile
+                        </>
+                      )}
+                    </Button>
 
-                <Button
-                  onClick={handleGenerateLatex}
-                  disabled={generatingLatex || getAcceptedCount() === 0}
-                >
-                  {generatingLatex ? (
-                    <>
-                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Generating LaTeX…
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="w-4 h-4" />
-                      Generate Optimized LaTeX
-                    </>
-                  )}
-                </Button>
+                    {generatingLatex ? (
+                      <Button disabled size="sm" variant="ghost" className="text-text-muted">
+                        <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Preparing LaTeX…
+                      </Button>
+                    ) : generatedVersionId ? (
+                      <Button onClick={handleViewLatex} size="sm" variant="default" className="gap-1.5">
+                        <FileText className="w-4 h-4" />
+                        View LaTeX
+                      </Button>
+                    ) : generatingLatexError ? (
+                      <Button onClick={handleRetryLatex} size="sm" variant="ghost" className="text-amber-600 dark:text-amber-400 gap-1.5">
+                        <RefreshCw className="w-4 h-4" />
+                        Retry LaTeX
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
               </div>
             </Card>
           )}
