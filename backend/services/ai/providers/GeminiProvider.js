@@ -1,6 +1,11 @@
 const { GoogleGenAI } = require('@google/genai');
 const BaseProvider = require('./BaseProvider');
 
+const MODEL_TIER = {
+  fast: 'gemini-2.5-flash',
+  pro: 'gemini-2.5-pro',
+};
+
 class GeminiProvider extends BaseProvider {
   constructor(apiKey) {
     super(apiKey);
@@ -9,7 +14,6 @@ class GeminiProvider extends BaseProvider {
   }
 
   async initialize() {
-    // Basic initialization, can be used to verify the key
     return true;
   }
 
@@ -24,18 +28,18 @@ class GeminiProvider extends BaseProvider {
           ...(options.maxOutputTokens ? { maxOutputTokens: options.maxOutputTokens } : {}),
         }
       });
-      
+
       return {
         text: response.text,
         usage: {
-          promptTokens: 0, // Gemini SDK may not always provide this in a standard way depending on version, fallback to 0
+          promptTokens: 0,
           completionTokens: 0,
           totalTokens: 0,
           estimatedCostUSD: 0
         }
       };
     } catch (error) {
-      console.error("[GeminiProvider] generateText Error:", error);
+      console.error('[GeminiProvider] generateText Error:', error);
       throw error;
     }
   }
@@ -52,9 +56,9 @@ class GeminiProvider extends BaseProvider {
           ...(options.maxOutputTokens ? { maxOutputTokens: options.maxOutputTokens } : {}),
         }
       });
-      
+
       const parsedData = JSON.parse(response.text);
-      
+
       return {
         data: parsedData,
         usage: {
@@ -65,13 +69,12 @@ class GeminiProvider extends BaseProvider {
         }
       };
     } catch (error) {
-      console.error("[GeminiProvider] generateJSON Error:", error);
+      console.error('[GeminiProvider] generateJSON Error:', error);
       throw error;
     }
   }
 
   async checkHealth() {
-    // Generate a simple prompt to verify the key
     await this.generateText("Hello", { maxOutputTokens: 1 });
     return true;
   }
