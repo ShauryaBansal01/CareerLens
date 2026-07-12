@@ -31,6 +31,11 @@ const resumeVersionSchema = new mongoose.Schema({
     type: String,
     enum: ['upload', 'ai-wizard', 'ai-optimized', 'ai-tailored', 'ai-section-edit', 'manual-edit'],
     default: 'manual-edit'
+  },
+  template: {
+    type: String,
+    enum: ['modern', 'classic', 'compact'],
+    default: 'modern'
   }
 }, { timestamps: true });
 

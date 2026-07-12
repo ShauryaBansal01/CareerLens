@@ -16,6 +16,15 @@ const LATEX_INSTRUCTIONS = fs.readFileSync(
   'utf-8'
 );
 
+const FEW_SHOT_EXAMPLES = `
+EXAMPLE STRONG BULLET POINTS (use this style):
+- Engineered a distributed payment processing system handling $2M+ monthly transactions, reducing settlement time by 60% through async queue optimization
+- Designed and implemented 12 RESTful microservices serving 50K+ daily active users with 99.95% uptime
+- Led a cross-functional team of 5 engineers to migrate a monolithic application to AWS ECS, cutting infrastructure costs by 40%
+- Optimized database query performance through strategic indexing and caching, reducing p95 latency from 800ms to 120ms
+- Built an automated CI/CD pipeline using GitHub Actions and Terraform, decreasing deployment time from 45min to 8min
+`;
+
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const callGeminiWithRetry = async (params, maxRetries = 4) => {
@@ -364,6 +373,55 @@ good = things already done well (2-3 items)`;
     });
 
     const feedback = safeParseJSON(response.text);
+
+    // Enrich with multi-dimensional scoring
+    try {
+      const scoreService = require('../services/scoreService');
+      const scoreResult = await scoreService.scoreWithAI(req.ai, resume.rawLatexCode || '', {
+        rawText: resume.rawText || '',
+        extractedSkills: resume.extractedSkills || [],
+      }, '');
+      feedback.dimensionScores = scoreResult.dimensions;
+      feedback.dimensionDetails = scoreResult.details;
+      if (scoreResult.suggestions) {
+        const existingIssues = new Set((feedback.suggested || []).map(s => s.issue?.toLowerCase()));
+        const newSuggestions = scoreResult.suggestions.filter(s => !existingIssues.has(s.toLowerCase()));
+        if (newSuggestions.length > 0) {
+          feedback.suggested = [
+            ...(feedback.suggested || []),
+            ...newSuggestions.map(s => ({
+              issue: s,
+              location: 'Overall Structure',
+              quote: '[Score analysis]',
+              detail: s,
+            }))
+          ];
+        }
+      }
+    } catch (scoreError) {
+      console.warn('Dimension scoring enrichment failed:', scoreError.message);
+    }
+
+    // Enrich with ATS analysis (runs automatically — no separate call needed)
+    try {
+      const atsService = require('../services/atsService');
+      const atsResult = await atsService.analyzeATS(resume.rawLatexCode || '', {
+        rawText: resume.rawText || '',
+        extractedSkills: resume.extractedSkills || [],
+      }, '');
+      feedback.atsAnalysis = {
+        overallScore: atsResult.overallScore,
+        parseability: atsResult.parseability,
+        formatCompliance: atsResult.formatCompliance,
+        keywordAnalysis: atsResult.keywordAnalysis,
+        checks: atsResult.checks,
+        criticalIssues: atsResult.criticalIssues,
+        warnings: atsResult.warnings,
+      };
+    } catch (atsError) {
+      console.warn('ATS analysis enrichment failed:', atsError.message);
+    }
+
     res.status(200).json(feedback);
   } catch (error) {
     console.error('Resume Improve Error:', error);
@@ -473,6 +531,19 @@ keywords = top 5-8 ATS keywords from the job description missing in the resume`;
     });
 
     const optimization = safeParseJSON(response.text);
+
+    // Enrich with dimension scoring
+    try {
+      const scoreService = require('../services/scoreService');
+      const scoreResult = await scoreService.scoreWithAI(req.ai, resume.rawLatexCode || '', {
+        rawText: resume.rawText || '',
+        extractedSkills: resume.extractedSkills || [],
+      }, jobDescription);
+      optimization.dimensionScores = scoreResult.dimensions;
+    } catch (scoreError) {
+      console.warn('Dimension scoring enrichment failed:', scoreError.message);
+    }
+
     res.status(200).json(optimization);
   } catch (error) {
     console.error('Resume Optimize Error:', error);
@@ -529,7 +600,7 @@ exports.saveLatexCode = async (req, res) => {
 // @access  Private
 exports.generateLatexTemplate = async (req, res) => {
   try {
-    const { resumeData } = req.body;
+    const { resumeData, template } = req.body;
     let resumeContext = "";
     let enhancePrompt = "";
 
@@ -561,7 +632,12 @@ Experience: ${resume.experience}
       enhancePrompt = "Format this extracted data into a clean ATS-friendly LaTeX resume.";
     }
 
-    const prompt = `${LATEX_INSTRUCTIONS}
+    const templateFile = path.join(__dirname, '..', 'utils', 'templates', `${template || 'modern'}.tex`);
+    const templateInstructions = fs.readFileSync(templateFile, 'utf-8');
+
+    const prompt = `${templateInstructions}
+
+${FEW_SHOT_EXAMPLES}
 
 Your task is to generate a resume based on the provided JSON data.
 
@@ -597,7 +673,7 @@ Ensure it compiles directly with pdflatex without any errors. Only return the ra
 // @access  Private
 exports.tailorLatexToJob = async (req, res) => {
   try {
-    const { jobDescription } = req.body;
+    const { jobDescription, template } = req.body;
     
     if (!jobDescription || jobDescription.trim().length < 20) {
       return res.status(400).json({ message: 'Please provide a valid job description (minimum 20 characters).' });
@@ -645,7 +721,12 @@ Experience: ${resume.experience}
 Raw Text (first 8000 chars): ${(resume.rawText || '').substring(0, 8000)}`;
     }
 
-    const prompt = `${LATEX_INSTRUCTIONS}
+    const templateFile = path.join(__dirname, '..', 'utils', 'templates', `${template || 'modern'}.tex`);
+    const templateInstructions = fs.readFileSync(templateFile, 'utf-8');
+
+    const prompt = `${templateInstructions}
+
+${FEW_SHOT_EXAMPLES}
 
 CRITICAL INSTRUCTION FOR CONTENT (TAILORING):
 - You MUST aggressively tailor the candidate's existing experience and skills to match the Job Description.
@@ -1068,5 +1149,67 @@ Return EXACTLY this JSON (no markdown):
   } catch (error) {
     console.error('Rewrite Section Error:', error);
     res.status(500).json({ message: 'Failed to rewrite section.' });
+  }
+};
+
+// @desc    Calculate ATS compatibility score
+// @route   POST /api/resume/ats-score
+// @access  Private
+exports.getATSScore = async (req, res) => {
+  try {
+    const { jobDescription, template } = req.body;
+
+    const resume = await Resume.findOne({ user: req.user.id });
+    if (!resume) {
+      return res.status(404).json({ message: 'No resume found. Please upload your resume first.' });
+    }
+
+    const profile = await UserProfile.findOne({ user: req.user.id });
+    const resumeData = {
+      rawLatexCode: resume.rawLatexCode || '',
+      rawText: resume.rawText || '',
+      extractedSkills: resume.extractedSkills || [],
+    };
+
+    const atsService = require('../services/atsService');
+    const scoreService = require('../services/scoreService');
+
+    const atsResult = await atsService.analyzeATS(resume.rawLatexCode || '', resumeData, jobDescription || '');
+
+    const dimensionResult = await scoreService.scoreWithAI(req.ai, resume.rawLatexCode || '', resumeData, jobDescription || '');
+
+    res.status(200).json({
+      atsScore: atsResult.overallScore,
+      atsAnalysis: atsResult,
+      dimensionScores: dimensionResult.dimensions,
+      totalScore: dimensionResult.totalScore,
+      suggestions: dimensionResult.suggestions,
+      aiSummary: dimensionResult.aiSummary || '',
+    });
+  } catch (error) {
+    console.error('ATS Score Error:', error);
+    res.status(500).json({ message: 'Failed to calculate ATS score.' });
+  }
+};
+
+// @desc    Get template options
+// @route   GET /api/resume/templates
+// @access  Private
+exports.getTemplates = async (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const templatesDir = path.join(__dirname, '..', 'utils', 'templates');
+    const files = fs.readdirSync(templatesDir).filter(f => f.endsWith('.tex'));
+
+    const templates = files.map(f => ({
+      name: f.replace('.tex', ''),
+      label: f.replace('.tex', '').charAt(0).toUpperCase() + f.replace('.tex', '').slice(1),
+    }));
+
+    res.status(200).json(templates);
+  } catch (error) {
+    console.error('Get Templates Error:', error);
+    res.status(500).json({ message: 'Failed to get templates.' });
   }
 };
