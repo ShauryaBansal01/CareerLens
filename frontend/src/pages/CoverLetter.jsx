@@ -16,7 +16,21 @@ const CoverLetter = () => {
   const persisted = getPageState('cover-letter-page');
   const [jobDescription, setJobDescription] = useState(persisted?.jobDescription || '');
   const [tone, setTone] = useState(persisted?.tone || 'Professional');
+  const [editedLetter, setEditedLetter] = useState('');
   const [copied, setCopied] = useState(false);
+
+  // Sync generated result into editable state
+  useEffect(() => {
+    if (coverLetter) {
+      setEditedLetter(coverLetter);
+    }
+  }, [coverLetter]);
+
+  const handleKeyDown = (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      generateCoverLetter();
+    }
+  };
 
   // Persist inputs to context on change
   useEffect(() => {
@@ -69,7 +83,7 @@ const CoverLetter = () => {
 
   const copyToClipboard = () => {
     if (!coverLetter) return;
-    navigator.clipboard.writeText(coverLetter);
+    navigator.clipboard.writeText(editedLetter);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -105,7 +119,7 @@ const CoverLetter = () => {
         </motion.div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-xl flex items-center gap-2">
+          <div role="alert" className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-xl flex items-center gap-2">
             <AlertCircle size={18} />
             <span className="text-[15px] font-medium">{error}</span>
           </div>
@@ -130,6 +144,7 @@ const CoverLetter = () => {
                 placeholder="E.g. We are looking for a Senior Frontend Engineer to join our core product team. You should have 5+ years of experience in React, TypeScript, and Tailwind..."
                 value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
+                onKeyDown={handleKeyDown}
               />
               <div className="flex items-center justify-between mt-2 mb-6">
                 <p className="text-xs text-text-muted">
@@ -211,16 +226,16 @@ const CoverLetter = () => {
                ) : coverLetter ? (
                  <textarea
                    className="flex-1 h-full min-h-[400px] resize-none text-[15px] leading-relaxed font-sans bg-transparent border-none p-0 focus:ring-0 whitespace-pre-wrap shadow-none text-text-main outline-none"
-                   value={coverLetter}
-                   onChange={(e) => { /* Read only, ideally should be editable later if needed */ }}
-                   readOnly
+                   value={editedLetter}
+                   onChange={(e) => setEditedLetter(e.target.value)}
                  />
-               ) : (
-                 <div className="flex-1 flex flex-col items-center justify-center text-text-muted">
-                    <FileText size={48} className="mb-4 opacity-50" />
-                    <p className="text-[15px]">Your generated cover letter will appear here.</p>
-                 </div>
-               )}
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-text-muted">
+                     <FileText size={48} className="mb-4 opacity-50" />
+                     <p className="text-[15px] mb-1">Your generated cover letter will appear here.</p>
+                     <p className="text-[13px]">Paste a job description on the left and click Generate.</p>
+                  </div>
+                )}
             </Card>
           </motion.div>
 

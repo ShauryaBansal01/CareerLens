@@ -488,6 +488,25 @@ const Spinner = ({ label, messages }) => {
 const panelClass = "rounded-xl border border-border-color bg-slate-50 p-5 dark:bg-slate-900/60";
 
 // ── Main Page ──────────────────────────────────────────────────────────────────
+const EXAMPLE_JD = `We are looking for a Senior Frontend Engineer to join our core product team. You will build and maintain high-performance React applications used by millions of users worldwide.
+
+Requirements:
+• 5+ years of experience in frontend development
+• Deep expertise in React, TypeScript, and modern CSS (Tailwind, CSS Modules)
+• Experience with state management (Redux, Zustand, or Context API)
+• Strong understanding of web performance optimization (Core Web Vitals, lazy loading, code splitting)
+• Experience with RESTful APIs and GraphQL
+• Familiarity with testing frameworks (Jest, React Testing Library, Cypress)
+• Bachelor's degree in Computer Science or equivalent
+
+Nice to have:
+• Experience with Next.js or Remix
+• Knowledge of Node.js backend development
+• Experience with CI/CD pipelines
+• Open source contributions
+
+We offer competitive salary, equity, remote-first culture, and annual learning budget.`;
+
 const ResumeAI = () => {
   useEffect(() => { document.title = 'Resume Analyzer | CareerLens'; }, []);
   const { user } = useContext(AuthContext);
@@ -525,6 +544,14 @@ const ResumeAI = () => {
   const [localError, setLocalError] = useState('');
   const [originalProfile, setOriginalProfile] = useState(null);
   const [viewMode, setViewMode] = useState('changes');
+
+  const handleKeyDown = (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      if (!improveFeedback && !improveLoading) {
+        handleImprove();
+      }
+    }
+  };
 
   // Pre-accept all changes when optimize completes
   useEffect(() => {
@@ -764,7 +791,7 @@ const ResumeAI = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-8" onKeyDown={handleKeyDown}>
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-text-main sm:text-3xl">Resume Analyzer</h1>
@@ -835,7 +862,7 @@ const ResumeAI = () => {
 
             {/* Error */}
             {improveError && (
-              <div className="bg-red-50 dark:bg-red-900/10 rounded-xl px-4 py-3.5 flex items-center gap-2.5">
+              <div role="alert" className="bg-red-50 dark:bg-red-900/10 rounded-xl px-4 py-3.5 flex items-center gap-2.5">
                 <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
                 <p className="text-sm text-red-600 dark:text-red-400">{improveError}</p>
               </div>
@@ -1335,26 +1362,49 @@ const ResumeAI = () => {
               <textarea
                 value={jobDesc}
                 onChange={e => { setJobDesc(e.target.value); setOptimizeError(''); }}
-                placeholder={"Paste the full job description, role requirements, or company overview here…\n\nExample: 'We are looking for a React Developer with experience in TypeScript, Next.js, AWS, and GraphQL. The ideal candidate has 2+ years of frontend experience and has shipped production-grade applications...'"}
+                onKeyDown={(e) => {
+                  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    handleOptimize();
+                  }
+                }}
+                placeholder={"Paste the full job description, role requirements, or company overview here…"}
                 className="block min-h-[220px] w-full resize-y rounded-xl border border-border-color bg-bg-card px-4 py-3 text-sm leading-6 text-text-main outline-none transition placeholder:text-text-muted/60 focus:border-accent-500 focus:ring-4 focus:ring-accent-500/10"
               />
               <div className="flex justify-between mt-1.5">
                 <p className={`text-xs ${jobDesc.length < 20 ? 'text-red-500' : 'text-text-muted'}`}>
                   {jobDesc.length} characters {jobDesc.length < 20 ? `(need ${20 - jobDesc.length} more)` : ''}
                 </p>
-                {jobDesc.length > 0 && (
-                  <button
-                    onClick={() => { setJobDesc(''); setOptimizeResult(null); setOptimizeError(''); }}
-                    className="text-xs text-text-muted bg-transparent border-none cursor-pointer hover:underline"
-                  >
-                    Clear
-                  </button>
-                )}
+                <div className="flex items-center gap-3">
+                  {jobDesc.length === 0 && (
+                    <button
+                      onClick={() => { setJobDesc(EXAMPLE_JD); setOptimizeError(''); }}
+                      className="text-xs text-indigo-500 dark:text-indigo-400 bg-transparent border-none cursor-pointer hover:underline font-medium"
+                    >
+                      Load Example JD
+                    </button>
+                  )}
+                  {jobDesc.length > 0 && (
+                    <button
+                      onClick={() => setJobDesc('')}
+                      className="text-xs text-text-muted bg-transparent border-none cursor-pointer hover:underline"
+                    >
+                      Clear
+                    </button>
+                  )}
+                  {optimizeResult && (
+                    <button
+                      onClick={() => { setOptimizeResult(null); setOptimizeError(''); }}
+                      className="text-xs text-text-muted bg-transparent border-none cursor-pointer hover:underline"
+                    >
+                      Clear Results
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
             {optimizeError && (
-              <div className="bg-red-50 dark:bg-red-900/10 rounded-xl p-3 px-4 flex items-center gap-2.5 mb-4">
+              <div role="alert" className="bg-red-50 dark:bg-red-900/10 rounded-xl p-3 px-4 flex items-center gap-2.5 mb-4">
                 <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
                 <p className="text-[13px] text-red-600 dark:text-red-400">{optimizeError}</p>
               </div>

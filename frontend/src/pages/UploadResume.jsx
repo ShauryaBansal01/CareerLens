@@ -35,6 +35,12 @@ const UploadResume = () => {
   const resumeData = uploadTask?.status === 'completed' ? uploadTask.result : null;
   const error = uploadTask?.status === 'failed' ? uploadTask.error : null;
 
+  const handleKeyDown = (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      handleUpload(e);
+    }
+  };
+
   const [fileError, setFileError] = useState('');
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -211,6 +217,7 @@ const UploadResume = () => {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 className="mb-6 flex items-center gap-3 p-4 rounded-lg bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 text-sm font-medium"
+                role="alert"
               >
                 <AlertCircle className="w-5 h-5 shrink-0" aria-hidden="true" />
                 {fileError}
@@ -223,6 +230,7 @@ const UploadResume = () => {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 className="mb-6 flex items-center gap-3 p-4 rounded-lg bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 text-sm font-medium"
+                role="alert"
               >
                 <AlertCircle className="w-5 h-5 shrink-0" aria-hidden="true" />
                 {error}
@@ -292,11 +300,14 @@ const UploadResume = () => {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 mt-8 pt-6 border-t border-border-color">
+                  <Link to="/resume-ai" className="flex-1">
+                    <Button className="w-full">Go to Resume Analyzer</Button>
+                  </Link>
                   <Link to="/resume-latex" className="flex-1">
-                    <Button className="w-full">Go to LaTeX Builder</Button>
+                    <Button variant="outline" className="w-full">Go to LaTeX Builder</Button>
                   </Link>
                   <Link to="/" className="flex-1">
-                    <Button variant="outline" className="w-full">Go to Dashboard</Button>
+                    <Button variant="ghost" className="w-full">Go to Dashboard</Button>
                   </Link>
                 </div>
               </CardContent>

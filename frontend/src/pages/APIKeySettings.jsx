@@ -78,28 +78,30 @@ const APIKeySettings = () => {
     }
   };
 
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
   if (loading) {
-    return <div className="min-h-[60vh] flex items-center justify-center"><div className="text-gray-500 dark:text-gray-400 font-medium">Loading settings...</div></div>;
+    return <div className="min-h-[60vh] flex items-center justify-center"><div className="space-y-3 w-64"><div className="h-4 animate-pulse bg-slate-200 dark:bg-slate-700 rounded w-3/4 mx-auto" /><div className="h-4 animate-pulse bg-slate-200 dark:bg-slate-700 rounded w-1/2 mx-auto" /><div className="h-4 animate-pulse bg-slate-200 dark:bg-slate-700 rounded w-2/3 mx-auto" /></div></div>;
   }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+        <h1 className="text-3xl font-bold tracking-tight text-text-main">
           API Key Management
         </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-2">Bring Your Own Key (BYOK) for AI features.</p>
+        <p className="text-text-muted mt-2">Bring Your Own Key (BYOK) for AI features.</p>
       </div>
 
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl flex items-center shadow-sm">
+        <div role="alert" className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl flex items-center shadow-sm">
           <AlertCircle className="mr-2 w-5 h-5 shrink-0" /> {error}
         </div>
       )}
       
       {success && (
-        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 px-4 py-3 rounded-xl flex items-center shadow-sm">
+        <div role="status" className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 px-4 py-3 rounded-xl flex items-center shadow-sm">
           <CheckCircle2 className="mr-2 w-5 h-5 shrink-0" /> {success}
         </div>
       )}
@@ -112,10 +114,10 @@ const APIKeySettings = () => {
         <CardContent>
           <form onSubmit={handleSave} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1.5" htmlFor="api-provider">Provider</label>
+              <label className="block text-sm font-medium text-text-main mb-1.5" htmlFor="api-provider">Provider</label>
               <select
                 id="api-provider"
-                className="w-full bg-white dark:bg-dark-card border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors"
+                className="w-full bg-bg-card border border-border-color rounded-xl px-4 py-2.5 text-text-main focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors"
                 value={formState.provider}
                 onChange={(e) => setFormState({ ...formState, provider: e.target.value })}
               >
@@ -148,9 +150,9 @@ const APIKeySettings = () => {
         </CardHeader>
         <CardContent>
           {keys.length === 0 ? (
-            <div className="text-center py-8 bg-gray-50 dark:bg-dark-surface rounded-xl border border-dashed border-gray-200 dark:border-white/10">
-              <Key className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-3 opacity-50" />
-              <p className="text-gray-500 dark:text-gray-400 font-medium">No API keys saved yet.</p>
+            <div className="text-center py-8 bg-bg-main rounded-xl border border-dashed border-border-color">
+              <Key className="w-8 h-8 text-text-muted mx-auto mb-3 opacity-50" />
+              <p className="text-text-muted font-medium">No API keys saved yet. Add one above to get started.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -159,11 +161,11 @@ const APIKeySettings = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   key={key.id} 
-                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-surface rounded-xl border border-gray-100 dark:border-white/5"
+                  className="flex items-center justify-between p-4 bg-bg-main rounded-xl border border-border-color"
                 >
                   <div>
                     <div className="flex items-center space-x-3">
-                      <span className="font-semibold text-gray-900 dark:text-white">{providers.find(p => p.id === key.provider)?.name || key.provider}</span>
+                      <span className="font-semibold text-text-main">{providers.find(p => p.id === key.provider)?.name || key.provider}</span>
                       {key.isValid ? (
                         <Badge variant="success">Valid</Badge>
                       ) : (
@@ -173,12 +175,12 @@ const APIKeySettings = () => {
                         <Badge variant="primary">Default</Badge>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5 font-mono">{key.maskedKey}</p>
+                    <p className="text-sm text-text-muted mt-1.5 font-mono">{key.maskedKey}</p>
                   </div>
                   <Button 
                     variant="ghost" 
                     size="icon"
-                    onClick={() => handleDelete(key.id)}
+                    onClick={() => setConfirmDeleteId(key.id)}
                     className="text-error hover:bg-error/10 hover:text-error transition-opacity"
                     aria-label={`Delete ${providers.find(p => p.id === key.provider)?.name || key.provider} key`}
                   >
@@ -190,6 +192,25 @@ const APIKeySettings = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Confirmation modal for delete */}
+      {confirmDeleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirmDeleteId(null)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-bg-card rounded-2xl border border-border-color shadow-xl p-6 max-w-sm mx-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold text-text-main mb-2">Delete API Key?</h3>
+            <p className="text-sm text-text-muted mb-6">This action cannot be undone. Are you sure you want to delete this API key?</p>
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" onClick={() => setConfirmDeleteId(null)}>Cancel</Button>
+              <Button variant="destructive" onClick={() => { handleDelete(confirmDeleteId); setConfirmDeleteId(null); }}>Delete</Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
     </div>
   );

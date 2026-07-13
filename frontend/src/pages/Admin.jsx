@@ -27,13 +27,21 @@ const Admin = () => {
     setTimeout(() => setFeedback(null), 4000);
   };
 
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
   useEffect(() => {
-    if (!user || user.role !== 'admin') {
+    if (!user) return;
+    if (user.role !== 'admin') {
       navigate('/');
     } else {
+      setCheckingAuth(false);
       fetchStats();
     }
   }, [user, navigate]);
+
+  if (!user || checkingAuth) {
+    return <div className="min-h-[60vh] flex items-center justify-center"><div className="w-8 h-8 border-2 border-accent-600 border-t-transparent rounded-full animate-spin" /></div>;
+  }
 
   const fetchStats = async () => {
     setStatsLoading(true);
@@ -85,9 +93,7 @@ const Admin = () => {
     }
   };
 
-  if (!user || user.role !== 'admin') return null;
-
-  const inputClass = "w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-surface px-4 py-3 text-[15px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors";
+  const inputClass = "w-full rounded-xl border border-border-color bg-bg-card px-4 py-3 text-[15px] text-text-main placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors";
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 pb-20 pt-4 bg-gray-50 dark:bg-[#0f0f13] min-h-screen">

@@ -150,10 +150,10 @@ export default function Landing() {
             <span className="text-sm font-bold text-text-main tracking-tight">CareerLens</span>
           </div>
           <p className="text-xs text-text-muted">&copy; {new Date().getFullYear()} CareerLens. All rights reserved.</p>
-          <div className="flex items-center gap-6">
-            <a href="#" className="text-xs text-text-muted hover:text-text-main transition-colors">Terms</a>
-            <a href="#" className="text-xs text-text-muted hover:text-text-main transition-colors">Privacy</a>
-          </div>
+              <div className="flex items-center gap-6">
+                <a href="#" className="text-xs text-text-muted hover:text-text-main transition-colors">Terms</a>
+                <a href="#" className="text-xs text-text-muted hover:text-text-main transition-colors">Privacy</a>
+              </div>
         </div>
       </footer>
     </main>

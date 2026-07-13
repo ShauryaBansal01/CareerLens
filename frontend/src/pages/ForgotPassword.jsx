@@ -2,7 +2,7 @@ import { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, KeyRound, Lock, CheckCircle } from 'lucide-react';
+import { Mail, KeyRound, Lock, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
 const ForgotPassword = () => {
   useEffect(() => { document.title = 'Reset Password | CareerLens'; }, []);
@@ -15,6 +15,8 @@ const ForgotPassword = () => {
   const [otp, setOtp] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [otpCooldown, setOtpCooldown] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -85,15 +87,15 @@ const ForgotPassword = () => {
     }
   };
 
-  const inputClass = "w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-surface px-4 py-3 text-[15px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors";
+  const inputClass = "w-full rounded-xl border border-border-color bg-bg-card px-4 py-3 text-[15px] text-text-main placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors";
 
   return (
-    <div className="min-h-[calc(100vh-54px)] flex items-center justify-center p-4 sm:p-10 bg-gray-50 dark:bg-dark-surface">
+    <div className="min-h-[calc(100vh-54px)] flex items-center justify-center p-4 sm:p-10 bg-bg-main">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
-        className="w-full max-w-[440px] bg-white dark:bg-dark-card rounded-2xl p-8 sm:p-11 shadow-sm"
+        className="w-full max-w-[440px] bg-bg-card rounded-2xl p-8 sm:p-11 shadow-sm border border-border-color"
       >
         {/* Logo */}
         <div className="flex items-center gap-2.5 mb-8">
@@ -106,10 +108,10 @@ const ForgotPassword = () => {
         </div>
 
         {/* Heading */}
-        <h1 className="text-[32px] font-bold text-gray-900 dark:text-white tracking-tight mb-1.5">
+        <h1 className="text-[32px] font-bold text-text-main tracking-tight mb-1.5">
           {step === 1 ? 'Reset your password.' : step === 2 ? 'Check your email.' : 'Set new password.'}
         </h1>
-        <p className="text-[15px] text-gray-500 dark:text-gray-400 mb-8">
+        <p className="text-[15px] text-text-muted mb-8">
           {step === 1
             ? "Enter your email and we'll send you a reset OTP."
             : step === 2
@@ -122,6 +124,7 @@ const ForgotPassword = () => {
           {error && (
             <motion.div
               key="error"
+              role="alert"
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, height: 0, marginBottom: 0 }}
@@ -133,6 +136,7 @@ const ForgotPassword = () => {
           {message && !error && (
             <motion.div
               key="message"
+              role="status"
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, height: 0, marginBottom: 0 }}
@@ -154,12 +158,13 @@ const ForgotPassword = () => {
               onSubmit={handleSendOtp}
             >
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1.5" htmlFor="reset-email">Email address</label>
+                <label className="block text-sm font-medium text-text-main mb-1.5" htmlFor="reset-email">Email address</label>
                 <input
                   id="reset-email"
                   type="email"
                   className={inputClass}
                   placeholder="you@example.com"
+                  autoFocus
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
@@ -179,7 +184,7 @@ const ForgotPassword = () => {
                 {isLoading ? 'Sending OTP…' : 'Send OTP'}
               </button>
 
-              <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
+              <p className="text-center text-sm text-text-muted mt-6">
                 Remember your password?{' '}
                 <Link
                   to="/login"
@@ -200,12 +205,12 @@ const ForgotPassword = () => {
               onSubmit={handleVerifyOtp}
             >
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1.5" htmlFor="reset-otp">6-Digit OTP</label>
+                <label className="block text-sm font-medium text-text-main mb-1.5" htmlFor="reset-otp">6-Digit OTP</label>
                 <input
                   id="reset-otp"
                   type="text"
                   maxLength={6}
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-surface px-4 py-3 text-center text-2xl tracking-[0.5em] font-mono text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors"
+                  className="w-full rounded-xl border border-border-color bg-bg-card px-4 py-3 text-center text-2xl tracking-[0.5em] font-mono text-text-main placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors"
                   placeholder="------"
                   value={otp}
                   onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
@@ -227,7 +232,7 @@ const ForgotPassword = () => {
                 {isLoading ? 'Verifying…' : 'Verify OTP'}
               </button>
 
-              <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
+              <p className="text-center text-sm text-text-muted mt-6">
                 Didn't receive it?{' '}
                 <button
                   type="button"
@@ -260,31 +265,51 @@ const ForgotPassword = () => {
               onSubmit={handleResetPassword}
             >
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1.5" htmlFor="new-password">New Password</label>
-                <input
-                  id="new-password"
-                  type="password"
-                  className={inputClass}
-                  placeholder="Minimum 6 characters"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
+                <label className="block text-sm font-medium text-text-main mb-1.5" htmlFor="new-password">New Password</label>
+                <div className="relative">
+                  <input
+                    id="new-password"
+                    type={showPassword ? 'text' : 'password'}
+                    className={inputClass + ' pr-10'}
+                    placeholder="Minimum 6 characters"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main bg-transparent border-none cursor-pointer p-1"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
 
               <div className="mb-2">
                 <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1.5" htmlFor="confirm-password">Confirm Password</label>
-                <input
-                  id="confirm-password"
-                  type="password"
-                  className={inputClass}
-                  placeholder="Re-enter your new password"
-                  value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
+                <div className="relative">
+                  <input
+                    id="confirm-password"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    className={inputClass + ' pr-10'}
+                    placeholder="Re-enter your new password"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main bg-transparent border-none cursor-pointer p-1"
+                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
 
               <button

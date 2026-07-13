@@ -8,6 +8,7 @@ import {
   ChevronRight, ChevronLeft, Clock, Upload, Pencil, Cpu, Check,
 } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
+import { ThemeContext } from '../context/ThemeContext';
 import { useContext } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -157,7 +158,9 @@ const SectionRewritePanel = ({ section, rewrite, loading, onAccept, onReject, on
 
 const ResumeLatex = () => {
   const { user } = useContext(AuthContext);
+  const { theme } = useContext(ThemeContext);
   const location = useLocation();
+  const monacoTheme = theme === 'dark' ? 'vs-dark' : 'vs';
 
   const [latexCode, setLatexCode] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
@@ -332,9 +335,10 @@ const ResumeLatex = () => {
     }
   };
 
+  const [confirmDeleteVersionId, setConfirmDeleteVersionId] = useState(null);
+
   const deleteVersion = async (id, e) => {
     if (e) e.stopPropagation();
-    if (!window.confirm("Are you sure you want to delete this version?")) return;
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
       await axios.delete(`${API_URL}/resume/versions/${id}`, config);
@@ -951,7 +955,7 @@ const ResumeLatex = () => {
             <Editor
               height="100%"
               defaultLanguage="latex"
-              theme="vs-dark"
+              theme={monacoTheme}
               value={latexCode}
               onChange={handleEditorChange}
               onMount={handleEditorDidMount}
@@ -1036,7 +1040,7 @@ const ResumeLatex = () => {
                 <Editor
                   height="100%"
                   defaultLanguage="latex"
-                  theme="vs-dark"
+                  theme={monacoTheme}
                   value={latexCode}
                   options={{
                     readOnly: true,
@@ -1114,7 +1118,7 @@ const ResumeLatex = () => {
                           <RotateCcw className="w-3 h-3" />
                         </button>
                         <button
-                          onClick={(e) => deleteVersion(v._id, e)}
+                          onClick={(e) => { e.stopPropagation(); setConfirmDeleteVersionId(v._id); }}
                           className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                           aria-label="Delete version"
                         >
@@ -1145,6 +1149,44 @@ const ResumeLatex = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Confirmation modal for version delete */}
+      <AnimatePresence>
+        {confirmDeleteVersionId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={() => setConfirmDeleteVersionId(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xl p-6 max-w-sm w-full"
+              onClick={e => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Delete this version?</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">This action cannot be undone. Are you sure you want to delete this version?</p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setConfirmDeleteVersionId(null)}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors border-none cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => { deleteVersion(confirmDeleteVersionId); setConfirmDeleteVersionId(null); }}
+                  className="px-4 py-2 rounded-lg text-sm font-bold text-white bg-red-600 hover:bg-red-700 transition-colors border-none cursor-pointer"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

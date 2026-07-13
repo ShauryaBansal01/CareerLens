@@ -13,9 +13,12 @@ import {
   PenTool, 
   Activity,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  CheckCircle2,
+  X,
+  Rocket
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Dashboard() {
   useEffect(() => { document.title = 'Dashboard | CareerLens'; }, []);
@@ -23,28 +26,61 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+  const [apiStatus, setApiStatus] = useState('checking');
+  const [showOnboarding, setShowOnboarding] = useState(
+    !localStorage.getItem('cl-onboarding-dismissed')
+  );
+
+  const dismissOnboarding = () => {
+    setShowOnboarding(false);
+    localStorage.setItem('cl-onboarding-dismissed', 'true');
+  };
+
+  const fetchStats = async () => {
+    setFetchError(null);
+    setLoading(true);
+    try {
+      const res = await api.get('/resume');
+      const resume = res.data;
+      setStats({
+        totalResumes: resume ? 1 : 0,
+        lastUpdated: resume ? new Date(resume.updatedAt).toLocaleDateString() : 'Never',
+        activeResume: resume || null
+      });
+    } catch (err) {
+      if (err.response?.status === 401) return;
+      if (err.response?.status === 404) {
+        setStats({ totalResumes: 0, lastUpdated: 'Never', activeResume: null });
+      } else {
+        setFetchError('Failed to load dashboard stats. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchStats(); }, []);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const handleFocus = () => { fetchStats(); };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
+  useEffect(() => {
+    const checkHealth = async () => {
       try {
-        const res = await api.get('/resume');
-        const resume = res.data;
-        setStats({
-          totalResumes: resume ? 1 : 0,
-          lastUpdated: resume ? new Date(resume.updatedAt).toLocaleDateString() : 'Never',
-          activeResume: resume || null
-        });
-      } catch (err) {
-        if (err.response?.status === 404) {
-          setStats({ totalResumes: 0, lastUpdated: 'Never', activeResume: null });
-        } else {
-          console.error('Failed to fetch stats:', err);
-        }
-      } finally {
-        setLoading(false);
+        const res = await fetch(import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000');
+        if (res.ok) setApiStatus('operational');
+        else setApiStatus('degraded');
+      } catch {
+        setApiStatus('down');
       }
     };
-    fetchStats();
+    checkHealth();
+    const interval = setInterval(checkHealth, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const actions = [
@@ -71,6 +107,56 @@ export default function Dashboard() {
           </Button>
         </div>
       </div>
+
+      {/* Error banner with retry */}
+      {fetchError && (
+        <div role="alert" className="flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400">
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          <p className="text-sm flex-1">{fetchError}</p>
+          <Button variant="outline" size="sm" onClick={fetchStats}>Retry</Button>
+        </div>
+      )}
+
+      {/* Onboarding welcome banner */}
+      <AnimatePresence>
+        {showOnboarding && !stats?.activeResume && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            className="relative overflow-hidden rounded-2xl border border-accent-200 dark:border-accent-800 bg-gradient-to-br from-accent-50 via-white to-secondary-50 dark:from-accent-950/30 dark:via-slate-900 dark:to-secondary-950/20 p-6"
+          >
+            <button
+              onClick={dismissOnboarding}
+              className="absolute top-3 right-3 p-1.5 rounded-lg text-text-muted hover:text-text-main hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors"
+              aria-label="Dismiss welcome banner"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-accent-100 dark:bg-accent-900/30 flex items-center justify-center shrink-0">
+                <Rocket className="w-6 h-6 text-accent-600 dark:text-accent-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg font-bold text-text-main mb-1">Welcome to CareerLens!</h2>
+                <p className="text-sm text-text-muted mb-4 max-w-xl">
+                  Get started by uploading your resume. Our AI will analyze it, give you an ATS score,
+                  and suggest improvements to help you land more interviews.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Button onClick={() => navigate('/upload')} size="sm" className="gap-2">
+                    <UploadCloud className="w-4 h-4" />
+                    Upload Your Resume
+                  </Button>
+                  <Button onClick={dismissOnboarding} variant="outline" size="sm">
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -105,13 +191,26 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-text-main flex items-center gap-2">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-              </span>
-              Operational
+              {apiStatus === 'checking' ? (
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-slate-500"></span>
+                </span>
+              ) : apiStatus === 'operational' ? (
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </span>
+              ) : (
+                <span className="relative flex h-3 w-3">
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </span>
+              )}
+              {apiStatus === 'checking' ? 'Checking...' : apiStatus === 'operational' ? 'Operational' : 'Unreachable'}
             </div>
-            <p className="text-xs text-text-muted mt-1">All systems normal</p>
+            <p className="text-xs text-text-muted mt-1">
+              {apiStatus === 'operational' ? 'All systems normal' : apiStatus === 'checking' ? 'Verifying connection...' : 'Backend may be down'}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -161,8 +260,11 @@ export default function Dashboard() {
               <div className="text-center py-8 px-4 border-2 border-dashed border-border-color rounded-xl">
                 <UploadCloud className="mx-auto h-8 w-8 text-slate-400 mb-3" aria-hidden="true" />
                 <h3 className="text-sm font-semibold text-text-main">No resume uploaded</h3>
-                <p className="text-sm text-text-muted mt-1 mb-4">Upload a resume to get started with analysis.</p>
-                <Button onClick={() => navigate('/upload')} size="sm">Upload Resume</Button>
+                <p className="text-sm text-text-muted mt-1 mb-2">Upload a resume to get started with AI analysis, ATS scoring, and LaTeX generation.</p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                  <Button onClick={() => navigate('/upload')} size="sm">Upload Resume</Button>
+                  <Button onClick={() => navigate('/resume-ai')} variant="outline" size="sm">Try Analyzer</Button>
+                </div>
               </div>
             )}
           </CardContent>

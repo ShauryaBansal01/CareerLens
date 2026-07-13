@@ -2,6 +2,7 @@ import { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Eye, EyeOff } from 'lucide-react';
 
 const Register = () => {
   useEffect(() => { document.title = 'Create Account | CareerLens'; }, []);
@@ -9,6 +10,7 @@ const Register = () => {
   const [name, setName]         = useState('');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [otp, setOtp]           = useState('');
   
   const [isLoading, setIsLoading] = useState(false);
@@ -29,6 +31,10 @@ const Register = () => {
     e.preventDefault();
     setError('');
     setMessage('');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
     setIsLoading(true);
     try {
       await sendOtp(email);
@@ -57,12 +63,12 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-54px)] flex items-center justify-center p-4 sm:p-10 bg-gray-50 dark:bg-dark-surface">
+    <div className="min-h-[calc(100vh-54px)] flex items-center justify-center p-4 sm:p-10 bg-bg-main">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
-        className="w-full max-w-[440px] bg-white dark:bg-dark-card rounded-2xl p-8 sm:p-11 shadow-sm"
+        className="w-full max-w-[440px] bg-bg-card rounded-2xl p-8 sm:p-11 shadow-sm border border-border-color"
       >
         {/* Logo mark */}
         <div className="flex items-center gap-2.5 mb-8">
@@ -75,10 +81,10 @@ const Register = () => {
         </div>
 
         {/* Heading */}
-        <h1 className="text-[32px] font-bold text-gray-900 dark:text-white tracking-tight mb-1.5">
+        <h1 className="text-[32px] font-bold text-text-main tracking-tight mb-1.5">
           {step === 1 ? 'Create your account.' : 'Verify your email.'}
         </h1>
-        <p className="text-[15px] text-gray-500 dark:text-on-dark-muted mb-8">
+        <p className="text-[15px] text-text-muted mb-8">
           {step === 1 
             ? 'Start your AI-powered career journey today.' 
             : `We sent a 6-digit code to ${email}.`}
@@ -89,6 +95,7 @@ const Register = () => {
           {error && (
             <motion.div
               key="error"
+              role="alert"
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, height: 0, marginBottom: 0 }}
@@ -100,6 +107,7 @@ const Register = () => {
           {message && !error && (
             <motion.div
               key="message"
+              role="status"
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, height: 0, marginBottom: 0 }}
@@ -121,24 +129,25 @@ const Register = () => {
               onSubmit={handleSendOtp}
             >
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1.5" htmlFor="reg-name">Full name</label>
+                <label className="block text-sm font-medium text-text-main mb-1.5" htmlFor="reg-name">Full name</label>
                 <input
                   id="reg-name"
                   type="text"
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-surface px-4 py-3 text-[15px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors"
+                  className="w-full rounded-xl border border-border-color bg-bg-card px-4 py-3 text-[15px] text-text-main placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors"
                   placeholder="Enter Your Name"
                   value={name}
                   onChange={e => setName(e.target.value)}
                   required
+                  autoFocus
                 />
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1.5" htmlFor="reg-email">Email address</label>
+                <label className="block text-sm font-medium text-text-main mb-1.5" htmlFor="reg-email">Email address</label>
                 <input
                   id="reg-email"
                   type="email"
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-surface px-4 py-3 text-[15px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors"
+                  className="w-full rounded-xl border border-border-color bg-bg-card px-4 py-3 text-[15px] text-text-main placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors"
                   placeholder="you@example.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
@@ -147,17 +156,27 @@ const Register = () => {
               </div>
 
               <div className="mb-2">
-                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1.5" htmlFor="reg-password">Password</label>
-                <input
-                  id="reg-password"
-                  type="password"
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-surface px-4 py-3 text-[15px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors"
-                  placeholder="Minimum 8 characters"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                  minLength={8}
-                />
+                <label className="block text-sm font-medium text-text-main mb-1.5" htmlFor="reg-password">Password</label>
+                <div className="relative">
+                  <input
+                    id="reg-password"
+                    type={showPassword ? 'text' : 'password'}
+                    className="w-full rounded-xl border border-border-color bg-bg-card px-4 py-3 pr-10 text-[15px] text-text-main placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors"
+                    placeholder="Minimum 8 characters"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    required
+                    minLength={8}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main bg-transparent border-none cursor-pointer p-1"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
 
               <button
@@ -168,7 +187,7 @@ const Register = () => {
                 {isLoading ? 'Sending OTP…' : 'Continue'}
               </button>
 
-              <p className="text-center text-sm text-gray-500 dark:text-on-dark-muted mt-6">
+              <p className="text-center text-sm text-text-muted mt-6">
                 Already have an account?{' '}
                 <Link
                   to="/login"
@@ -187,12 +206,12 @@ const Register = () => {
               onSubmit={handleRegister}
             >
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1.5" htmlFor="reg-otp">6-Digit OTP</label>
+                <label className="block text-sm font-medium text-text-main mb-1.5" htmlFor="reg-otp">6-Digit OTP</label>
                 <input
                   id="reg-otp"
                   type="text"
                   maxLength={6}
-                  className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-surface px-4 py-3 text-center text-2xl tracking-[0.5em] font-mono text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors"
+                  className="w-full rounded-xl border border-border-color bg-bg-card px-4 py-3 text-center text-2xl tracking-[0.5em] font-mono text-text-main placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors"
                   placeholder="------"
                   value={otp}
                   onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
@@ -209,7 +228,7 @@ const Register = () => {
                 {isLoading ? 'Verifying…' : 'Verify & Create Account'}
               </button>
 
-              <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
+              <p className="text-center text-sm text-text-muted mt-6">
                 Didn't receive it?{' '}
                 <button
                   type="button"

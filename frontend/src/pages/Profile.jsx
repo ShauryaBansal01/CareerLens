@@ -1,8 +1,9 @@
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Save, AlertCircle, Plus, Trash2 } from 'lucide-react';
+import { Button } from '../components/ui/Button';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -20,6 +21,7 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null); // { type, index }
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -108,19 +110,19 @@ const Profile = () => {
   if (!user) {
     return (
       <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-6">
-        <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-white/5 p-8 text-center max-w-[400px] w-full">
-          <AlertCircle className="w-10 h-10 text-red-500 dark:text-red-400 mx-auto mb-5" />
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Sign in required</h2>
+        <div className="bg-bg-card rounded-2xl border border-border-color p-8 text-center max-w-[400px] w-full">
+          <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-5" />
+          <h2 className="text-2xl font-bold text-text-main mb-2">Sign in required</h2>
         </div>
       </div>
     );
   }
 
   if (loading) {
-    return <div className="min-h-[calc(100vh-64px)] flex items-center justify-center text-gray-900 dark:text-white font-medium">Loading Profile...</div>;
+    return <div className="min-h-[calc(100vh-64px)] flex items-center justify-center"><div className="space-y-3 w-64"><div className="h-4 animate-pulse bg-slate-200 dark:bg-slate-700 rounded w-3/4 mx-auto" /><div className="h-4 animate-pulse bg-slate-200 dark:bg-slate-700 rounded w-1/2 mx-auto" /><div className="h-4 animate-pulse bg-slate-200 dark:bg-slate-700 rounded w-2/3 mx-auto" /></div></div>;
   }
 
-  const inputClass = "w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-surface px-4 py-3 text-[15px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors";
+  const inputClass = "w-full rounded-xl border border-border-color bg-bg-card px-4 py-3 text-[15px] text-text-main placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-colors";
 
   return (
     <div className="min-h-[calc(100vh-64px)] px-4 py-12 md:py-16 relative z-10">
@@ -131,8 +133,8 @@ const Profile = () => {
            className="mb-8 flex items-center justify-between"
         >
           <div>
-            <h1 className="text-4xl md:text-[40px] font-bold text-gray-900 dark:text-white tracking-tighter mb-2">My Profile</h1>
-            <p className="text-[17px] text-gray-500 dark:text-gray-400">Manage your professional identity. Extracted from your resume AI analysis.</p>
+            <h1 className="text-4xl md:text-[40px] font-bold text-text-main tracking-tighter mb-2">My Profile</h1>
+            <p className="text-[17px] text-text-muted">Manage your professional identity. Extracted from your resume AI analysis.</p>
           </div>
           <button 
             onClick={handleSave} 
@@ -144,12 +146,12 @@ const Profile = () => {
           </button>
         </motion.div>
 
-        {error && <div className="p-4 mb-6 text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl">{error}</div>}
-        {success && <div className="p-4 mb-6 text-green-500 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-xl">Profile saved successfully!</div>}
+        {error && <div role="alert" className="p-4 mb-6 text-red-500 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">{error}</div>}
+        {success && <div role="status" className="p-4 mb-6 text-green-500 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">Profile saved successfully!</div>}
 
         {/* Basics Section */}
-        <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-white/5 p-6 mb-6">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Basic Information</h3>
+        <div className="bg-bg-card rounded-2xl border border-border-color p-6 mb-6">
+          <h3 className="text-xl font-bold text-text-main mb-4">Basic Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input placeholder="Name" value={profile.basics?.name || ''} onChange={e => handleBasicChange('name', e.target.value)} className={inputClass} />
             <input placeholder="Email" value={profile.basics?.email || ''} onChange={e => handleBasicChange('email', e.target.value)} className={inputClass} />
@@ -162,23 +164,23 @@ const Profile = () => {
         </div>
 
         {/* Skills Section */}
-        <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-white/5 p-6 mb-6">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Skills</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Comma separated skills</p>
+        <div className="bg-bg-card rounded-2xl border border-border-color p-6 mb-6">
+          <h3 className="text-xl font-bold text-text-main mb-4">Skills</h3>
+          <p className="text-sm text-text-muted mb-2">Comma separated skills</p>
           <input placeholder="React, Node.js, Python..." value={(profile.skills || []).join(', ')} onChange={handleSkillsChange} className={inputClass} />
         </div>
 
         {/* Experience Section */}
-        <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-white/5 p-6 mb-6">
+        <div className="bg-bg-card rounded-2xl border border-border-color p-6 mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Experience</h3>
+            <h3 className="text-xl font-bold text-text-main">Experience</h3>
             <button onClick={() => addArrayItem('experience')} className="text-accent-700 dark:text-accent-400 hover:text-accent-600 flex items-center gap-1 text-sm font-medium">
               <Plus size={16} /> Add Experience
             </button>
           </div>
           {(profile.experience || []).map((exp, idx) => (
-            <div key={idx} className="bg-gray-50 dark:bg-dark-surface rounded-xl border border-gray-100 dark:border-white/5 p-4 mb-4 relative">
-              <button onClick={() => removeArrayItem('experience', idx)} className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition" aria-label="Remove experience"><Trash2 size={16} /></button>
+            <div key={idx} className="bg-bg-main rounded-xl border border-border-color p-4 mb-4 relative">
+              <button onClick={() => setConfirmDelete({ type: 'experience', index: idx })} className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition" aria-label="Remove experience"><Trash2 size={16} /></button>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 pr-8">
                 <input placeholder="Company" value={exp.company} onChange={e => updateArrayItem('experience', idx, 'company', e.target.value)} className={inputClass} />
                 <input placeholder="Role" value={exp.role} onChange={e => updateArrayItem('experience', idx, 'role', e.target.value)} className={inputClass} />
@@ -187,20 +189,20 @@ const Profile = () => {
               <textarea placeholder="Description" value={exp.description} onChange={e => updateArrayItem('experience', idx, 'description', e.target.value)} className={`${inputClass} min-h-[80px]`} />
             </div>
           ))}
-          {(!profile.experience || profile.experience.length === 0) && <p className="text-gray-500 text-sm">No experience added.</p>}
+          {(!profile.experience || profile.experience.length === 0) && <p className="text-text-muted text-sm">No experience added. Click "Add Experience" to start.</p>}
         </div>
 
         {/* Projects Section */}
-        <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-white/5 p-6 mb-6">
+        <div className="bg-bg-card rounded-2xl border border-border-color p-6 mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Projects</h3>
+            <h3 className="text-xl font-bold text-text-main">Projects</h3>
             <button onClick={() => addArrayItem('projects')} className="text-accent-700 dark:text-accent-400 hover:text-accent-600 flex items-center gap-1 text-sm font-medium">
               <Plus size={16} /> Add Project
             </button>
           </div>
           {(profile.projects || []).map((proj, idx) => (
-            <div key={idx} className="bg-gray-50 dark:bg-dark-surface rounded-xl border border-gray-100 dark:border-white/5 p-4 mb-4 relative">
-              <button onClick={() => removeArrayItem('projects', idx)} className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition" aria-label="Remove project"><Trash2 size={16} /></button>
+            <div key={idx} className="bg-bg-main rounded-xl border border-border-color p-4 mb-4 relative">
+              <button onClick={() => setConfirmDelete({ type: 'projects', index: idx })} className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition" aria-label="Remove project"><Trash2 size={16} /></button>
               <div className="grid grid-cols-1 gap-3 mb-3 pr-8">
                 <input placeholder="Project Name" value={proj.name} onChange={e => updateArrayItem('projects', idx, 'name', e.target.value)} className={inputClass} />
                 <input placeholder="Tech Stack (comma separated)" value={(proj.techStack || []).join(', ')} onChange={e => updateArrayItem('projects', idx, 'techStack', e.target.value)} className={inputClass} />
@@ -208,20 +210,20 @@ const Profile = () => {
               <textarea placeholder="Description" value={proj.description} onChange={e => updateArrayItem('projects', idx, 'description', e.target.value)} className={`${inputClass} min-h-[80px]`} />
             </div>
           ))}
-          {(!profile.projects || profile.projects.length === 0) && <p className="text-gray-500 text-sm">No projects added.</p>}
+          {(!profile.projects || profile.projects.length === 0) && <p className="text-text-muted text-sm">No projects added. Click "Add Project" to start.</p>}
         </div>
 
         {/* Education Section */}
-        <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-white/5 p-6 mb-6">
+        <div className="bg-bg-card rounded-2xl border border-border-color p-6 mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Education</h3>
+            <h3 className="text-xl font-bold text-text-main">Education</h3>
             <button onClick={() => addArrayItem('education')} className="text-accent-700 dark:text-accent-400 hover:text-accent-600 flex items-center gap-1 text-sm font-medium">
               <Plus size={16} /> Add Education
             </button>
           </div>
           {(profile.education || []).map((edu, idx) => (
-            <div key={idx} className="bg-gray-50 dark:bg-dark-surface rounded-xl border border-gray-100 dark:border-white/5 p-4 mb-4 relative">
-               <button onClick={() => removeArrayItem('education', idx)} className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition" aria-label="Remove education"><Trash2 size={16} /></button>
+            <div key={idx} className="bg-bg-main rounded-xl border border-border-color p-4 mb-4 relative">
+               <button onClick={() => setConfirmDelete({ type: 'education', index: idx })} className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition" aria-label="Remove education"><Trash2 size={16} /></button>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pr-8">
                 <input placeholder="Institution" value={edu.institution} onChange={e => updateArrayItem('education', idx, 'institution', e.target.value)} className={inputClass} />
                 <input placeholder="Degree" value={edu.degree} onChange={e => updateArrayItem('education', idx, 'degree', e.target.value)} className={inputClass} />
@@ -229,7 +231,7 @@ const Profile = () => {
               </div>
             </div>
           ))}
-          {(!profile.education || profile.education.length === 0) && <p className="text-gray-500 text-sm">No education added.</p>}
+          {(!profile.education || profile.education.length === 0) && <p className="text-text-muted text-sm">No education added. Click "Add Education" to start.</p>}
         </div>
 
         <div className="flex justify-end mb-12">
@@ -244,6 +246,34 @@ const Profile = () => {
         </div>
 
       </div>
+
+      {/* Confirmation modal for delete */}
+      <AnimatePresence>
+        {confirmDelete && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={() => setConfirmDelete(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-bg-card rounded-2xl border border-border-color shadow-xl p-6 max-w-sm w-full"
+              onClick={e => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-bold text-text-main mb-2">Delete this item?</h3>
+              <p className="text-sm text-text-muted mb-6">This action cannot be undone. Are you sure you want to remove this {confirmDelete.type.slice(0, -1)} entry?</p>
+              <div className="flex gap-3 justify-end">
+                <Button variant="outline" onClick={() => setConfirmDelete(null)}>Cancel</Button>
+                <Button variant="destructive" onClick={() => { removeArrayItem(confirmDelete.type, confirmDelete.index); setConfirmDelete(null); }}>Delete</Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
