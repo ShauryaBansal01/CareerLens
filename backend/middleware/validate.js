@@ -1,0 +1,69 @@
+const { z } = require('zod');
+
+const validate = (schema) => (req, res, next) => {
+  try {
+    schema.parse(req.body);
+    next();
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      const messages = err.errors.map(e => e.message);
+      return res.status(400).json({ message: messages.join('; ') });
+    }
+    next(err);
+  }
+};
+
+const schemas = {
+  login: z.object({
+    email: z.string().email('Valid email is required'),
+    password: z.string().min(1, 'Password is required'),
+  }),
+  register: z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters').max(100),
+    email: z.string().email('Valid email is required'),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    role: z.string().optional(),
+    otp: z.string().length(6, 'OTP must be 6 digits').optional(),
+  }),
+  sendOtp: z.object({
+    email: z.string().email('Valid email is required'),
+  }),
+  resetPassword: z.object({
+    email: z.string().email('Valid email is required'),
+    otp: z.string().length(6, 'OTP must be 6 digits'),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+  }),
+  profileUpdate: z.object({
+    basics: z.object({
+      name: z.string().optional(),
+      email: z.string().email().optional(),
+      phone: z.string().optional(),
+      linkedin: z.string().optional(),
+      github: z.string().optional(),
+      summary: z.string().optional(),
+    }).optional(),
+    skills: z.array(z.string()).optional(),
+    experience: z.array(z.object({
+      company: z.string().optional(),
+      role: z.string().optional(),
+      duration: z.string().optional(),
+      description: z.union([z.string(), z.array(z.string())]).optional(),
+    })).optional(),
+    education: z.array(z.object({
+      institution: z.string().optional(),
+      degree: z.string().optional(),
+      duration: z.string().optional(),
+    })).optional(),
+    projects: z.array(z.object({
+      name: z.string().optional(),
+      techStack: z.array(z.string()).optional(),
+      description: z.string().optional(),
+    })).optional(),
+  }),
+  coverLetter: z.object({
+    jobDescription: z.string().min(20, 'Job description must be at least 20 characters'),
+    tone: z.enum(['Professional', 'Enthusiastic', 'Confident', 'Creative']).optional(),
+  }),
+};
+
+module.exports = { validate, schemas };
