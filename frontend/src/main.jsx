@@ -15,10 +15,10 @@ class ErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: '40px', background: '#fee2e2', color: '#9f1239', height: '100vh', overflow: 'auto' }}>
+        <div style={{ padding: '40px', background: 'var(--bg-main)', color: 'var(--text-main)', height: '100vh', overflow: 'auto' }}>
           <h1 style={{ fontSize: '30px', fontWeight: 'bold' }}>Application Crashed</h1>
           <p style={{ marginTop: '10px', fontSize: '20px' }}>{this.state.error && this.state.error.toString()}</p>
-          <pre style={{ marginTop: '20px', padding: '20px', background: '#111827', color: '#38bdf8', borderRadius: '10px' }}>
+          <pre style={{ marginTop: '20px', padding: '20px', background: 'var(--bg-card)', color: '#38bdf8', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
             {this.state.errorInfo && this.state.errorInfo.componentStack}
           </pre>
         </div>

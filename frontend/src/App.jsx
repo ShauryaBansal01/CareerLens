@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-ro
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { TaskProvider } from './context/TaskContext';
-import { useContext, useState, lazy, Suspense } from 'react';
+import { useContext, useState, lazy, Suspense, useEffect } from 'react';
 import AuthContext from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -17,7 +17,7 @@ import Admin from './pages/Admin';
 import Profile from './pages/Profile';
 import CoverLetter from './pages/CoverLetter';
 import APIKeySettings from './pages/APIKeySettings';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { Menu, Sparkles, X } from 'lucide-react';
 import { Button } from './components/ui/Button';
 import { AppLayout } from './components/layout/AppLayout';
@@ -127,10 +127,22 @@ const RootRoute = () => {
 };
 
 function App() {
+  const [reducedMotion, setReducedMotion] = useState(
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const handler = (e) => setReducedMotion(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
   return (
     <ThemeProvider>
       <AuthProvider>
         <TaskProvider>
+        <MotionConfig reducedMotion={reducedMotion ? 'always' : 'never'}>
         <Router>
           <div className="min-h-screen bg-bg-main text-text-main font-sans antialiased">
             <Routes>
@@ -154,6 +166,7 @@ function App() {
             </Routes>
           </div>
         </Router>
+        </MotionConfig>
         </TaskProvider>
       </AuthProvider>
     </ThemeProvider>

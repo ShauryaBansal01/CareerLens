@@ -53,7 +53,7 @@ export function Sidebar() {
         to={item.href}
         onClick={() => isMobile && setMobileMenuOpen(false)}
         className={cn(
-          "group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500",
+          "group flex items-center gap-3 rounded-md px-3 py-2 min-h-[44px] text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500",
           isActive
             ? "bg-slate-100 dark:bg-slate-800 text-accent-700 dark:text-white"
             : "text-text-muted hover:bg-slate-50 hover:text-text-main dark:hover:bg-slate-900"
@@ -181,13 +181,9 @@ export function Sidebar() {
                 <p className="truncate text-xs text-text-muted">{user?.email}</p>
               </div>
             </div>
-            <button
-              onClick={logout}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-700"
-            >
-              <LogOut className="h-4 w-4" aria-hidden="true" />
+            <Button variant="outline" onClick={logout} className="w-full justify-center mt-4" icon={LogOut}>
               Sign out
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -240,7 +236,7 @@ export function Sidebar() {
                     onClick={() => setMobileMenuOpen(false)}
                     aria-label="Close sidebar"
                   >
-                    <X className="h-6 w-6 text-white" aria-hidden="true" />
+                    <X className="h-6 w-6 text-text-main" aria-hidden="true" />
                   </button>
                 </div>
                 <SidebarContent isMobile={true} />

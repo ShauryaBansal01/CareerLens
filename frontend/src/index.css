@@ -73,9 +73,34 @@
 }
 
 @layer utilities {
+  .bg-bg-main { background-color: var(--bg-main); }
+  .bg-bg-card { background-color: var(--bg-card); }
+  .text-text-main { color: var(--text-main); }
+  .text-text-muted { color: var(--text-muted); }
+  .border-border-color { border-color: var(--border-color); }
+
+  .glass-panel {
+    border-radius: 1rem;
+    border: 1px solid var(--border-color);
+    background-color: color-mix(in srgb, var(--bg-card) 80%, transparent);
+    padding: 1.25rem;
+  }
+
+  .premium-pill-error {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #ef4444;
+    background-color: color-mix(in srgb, #ef4444 10%, transparent);
+    border: 1px solid color-mix(in srgb, #ef4444 20%, transparent);
+  }
+
   .page-top {
     padding-top: 72px;
-    /* Height of new navbar + padding */
   }
 
   /* Custom Scrollbar */
