@@ -25,6 +25,7 @@ const { protect } = require('../middleware/authMiddleware');
 const injectAI = require('../middleware/injectAI');
 const { aiLimiter } = require('../middleware/rateLimiter');
 const { aiCache } = require('../middleware/aiCache');
+const { validate, schemas } = require('../middleware/validate');
 
 // Setup multer memory storage
 const storage = multer.memoryStorage();
@@ -45,7 +46,7 @@ router.post('/improve', protect, aiLimiter, aiCache, injectAI, improveResume);
 router.post('/optimize', protect, aiLimiter, aiCache, injectAI, optimizeForCompany);
 router.post('/optimize-from-feedback', protect, aiLimiter, aiCache, injectAI, optimizeResumeFromFeedback);
 router.post('/rewrite-section', protect, aiLimiter, injectAI, rewriteSection);
-router.post('/cover-letter', protect, aiLimiter, injectAI, generateCoverLetter);
+router.post('/cover-letter', protect, aiLimiter, validate(schemas.coverLetter), injectAI, generateCoverLetter);
 router.post('/ats-score', protect, aiLimiter, injectAI, getATSScore);
 router.get('/templates', protect, getTemplates);
 
