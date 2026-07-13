@@ -46,6 +46,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('user');
+    window.dispatchEvent(new CustomEvent('cl:logout'));
     setUser(null);
   };
 

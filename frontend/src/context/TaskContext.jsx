@@ -1,4 +1,4 @@
-import { createContext, useState, useCallback, useRef } from 'react';
+import { createContext, useState, useCallback, useRef, useEffect } from 'react';
 
 const TaskContext = createContext();
 
@@ -12,6 +12,15 @@ export const TaskProvider = ({ children }) => {
   const [tasks, setTasks] = useState({});
   const [pageStates, setPageStates] = useState({});
   const abortControllers = useRef({});
+
+  useEffect(() => {
+    const handleLogout = () => {
+      setPageStates({});
+      setTasks({});
+    };
+    window.addEventListener('cl:logout', handleLogout);
+    return () => window.removeEventListener('cl:logout', handleLogout);
+  }, []);
 
   const updateTask = useCallback((id, patch) => {
     setTasks(prev => ({
