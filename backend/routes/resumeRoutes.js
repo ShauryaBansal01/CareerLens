@@ -43,9 +43,9 @@ const upload = multer({
 router.post('/upload', protect, aiLimiter, injectAI, upload.single('resume'), uploadResume);
 router.get('/', protect, getResume);
 router.post('/improve', protect, aiLimiter, aiCache, injectAI, improveResume);
-router.post('/optimize', protect, aiLimiter, aiCache, injectAI, optimizeForCompany);
-router.post('/optimize-from-feedback', protect, aiLimiter, aiCache, injectAI, optimizeResumeFromFeedback);
-router.post('/rewrite-section', protect, aiLimiter, injectAI, rewriteSection);
+router.post('/optimize', protect, aiLimiter, validate(schemas.optimizeForCompany), aiCache, injectAI, optimizeForCompany);
+router.post('/optimize-from-feedback', protect, aiLimiter, validate(schemas.optimizeResumeFromFeedback), aiCache, injectAI, optimizeResumeFromFeedback);
+router.post('/rewrite-section', protect, aiLimiter, validate(schemas.rewriteSection), injectAI, rewriteSection);
 router.post('/cover-letter', protect, aiLimiter, validate(schemas.coverLetter), injectAI, generateCoverLetter);
 router.post('/ats-score', protect, aiLimiter, injectAI, getATSScore);
 router.get('/templates', protect, getTemplates);
@@ -54,7 +54,7 @@ router.get('/templates', protect, getTemplates);
 router.get('/latex', protect, getLatexCode);
 router.post('/latex', protect, saveLatexCode);
 router.post('/latex/generate', protect, aiLimiter, injectAI, generateLatexTemplate);
-router.post('/latex/tailor', protect, aiLimiter, injectAI, tailorLatexToJob);
+router.post('/latex/tailor', protect, aiLimiter, validate(schemas.tailorLatexToJob), injectAI, tailorLatexToJob);
 
 // Versioning Routes
 router.route('/versions')

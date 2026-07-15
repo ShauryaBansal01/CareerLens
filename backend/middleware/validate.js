@@ -64,6 +64,27 @@ const schemas = {
     jobDescription: z.string().min(20, 'Job description must be at least 20 characters'),
     tone: z.enum(['Professional', 'Enthusiastic', 'Confident', 'Creative']).optional(),
   }),
+  optimizeForCompany: z.object({
+    jobDescription: z.string().min(20, 'Job description must be at least 20 characters'),
+  }),
+  tailorLatexToJob: z.object({
+    jobDescription: z.string().min(20, 'Job description must be at least 20 characters'),
+    template: z.string().optional(),
+  }),
+  optimizeResumeFromFeedback: z.object({
+    feedback: z.object({
+      critical: z.array(z.any()).optional(),
+      suggested: z.array(z.any()).optional(),
+      good: z.array(z.any()).optional(),
+    }).refine(data => data.critical?.length || data.suggested?.length, {
+      message: 'Feedback must contain at least critical or suggested items',
+    }),
+  }),
+  rewriteSection: z.object({
+    section: z.string().min(1, 'Section name is required'),
+    currentText: z.string().min(1, 'Current text is required'),
+    instructions: z.string().min(1, 'Instructions are required'),
+  }),
 };
 
 module.exports = { validate, schemas };
