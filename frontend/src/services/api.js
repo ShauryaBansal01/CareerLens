@@ -23,8 +23,19 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Don't intercept 401s on auth endpoints (login/register) — those are expected
+      const url = error.config?.url || '';
+      const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
+
+      if (!isAuthEndpoint) {
+        localStorage.removeItem('user');
+        window.dispatchEvent(new CustomEvent('cl:logout'));
+
+        // Redirect to login only if not already there
+        if (!window.location.pathname.startsWith('/login')) {
+          window.location.href = '/login';
+        }
+      }
     }
     return Promise.reject(error);
   }

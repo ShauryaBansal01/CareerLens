@@ -22,7 +22,7 @@ import {
   AlertCircle,
   XCircle,
 } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
+
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -211,22 +211,15 @@ export function Sidebar() {
       </div>
 
       {/* Mobile Menu Backdrop */}
-      <AnimatePresence>
+      <>
         {mobileMenuOpen && (
           <div className="relative z-50 lg:hidden">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+            <div
               className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm"
               onClick={() => setMobileMenuOpen(false)}
             />
             <div className="fixed inset-0 flex">
-              <motion.div
-                initial={{ x: '-100%' }}
-                animate={{ x: 0 }}
-                exit={{ x: '-100%' }}
-                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              <div
                 className="relative mr-16 flex w-full max-w-xs flex-1 flex-col bg-bg-card pb-4 pt-5"
               >
                 <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
@@ -240,11 +233,11 @@ export function Sidebar() {
                   </button>
                 </div>
                 <SidebarContent isMobile={true} />
-              </motion.div>
+              </div>
             </div>
           </div>
         )}
-      </AnimatePresence>
+      </>
     </>
   );
 }

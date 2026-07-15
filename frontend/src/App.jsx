@@ -6,18 +6,19 @@ import { useContext, useState, lazy, Suspense, useEffect } from 'react';
 import AuthContext from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import UploadResume from './pages/UploadResume';
-import Dashboard from './pages/Dashboard';
 import Landing from './pages/Landing';
-import ResumeAI from './pages/ResumeAI';
 import NotFound from './pages/NotFound';
 import ForgotPassword from './pages/ForgotPassword';
+
+// Lazy-load all authenticated pages — they're behind a login gate
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const UploadResume = lazy(() => import('./pages/UploadResume'));
+const ResumeAI = lazy(() => import('./pages/ResumeAI'));
 const ResumeLatex = lazy(() => import('./pages/ResumeLatex'));
-import Admin from './pages/Admin';
-import Profile from './pages/Profile';
-import CoverLetter from './pages/CoverLetter';
-import APIKeySettings from './pages/APIKeySettings';
-import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
+const CoverLetter = lazy(() => import('./pages/CoverLetter'));
+const Profile = lazy(() => import('./pages/Profile'));
+const APIKeySettings = lazy(() => import('./pages/APIKeySettings'));
+const Admin = lazy(() => import('./pages/Admin'));
 import { Menu, Sparkles, X } from 'lucide-react';
 import { Button } from './components/ui/Button';
 import { AppLayout } from './components/layout/AppLayout';
@@ -59,12 +60,12 @@ const GuestNav = () => {
           {open ? <X className="h-4 w-4" aria-hidden="true" /> : <Menu className="h-4 w-4" aria-hidden="true" />}
         </button>
       </div>
-      <AnimatePresence>
+      <>
         {open && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
+          <div
+            
+            
+            
             className="border-t border-border-color bg-bg-main md:hidden overflow-hidden"
           >
             <div className="flex flex-col gap-2 p-4">
@@ -76,18 +77,24 @@ const GuestNav = () => {
               <Link to="/login" className="focus-visible:outline-none"><Button variant="outline" className="mt-2 w-full">Log in</Button></Link>
               <Link to="/register" className="focus-visible:outline-none"><Button className="w-full mt-2">Get Started</Button></Link>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
     </header>
   );
 };
+
+const LoadingSpinner = () => (
+  <div className="min-h-screen flex items-center justify-center bg-bg-main">
+    <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-500 border-t-transparent" />
+  </div>
+);
 
 const AppRoute = ({ children, requireAuth = true }) => {
   const { user, loading } = useContext(AuthContext);
   
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-bg-main"><div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-500 border-t-transparent" /></div>;
+    return <LoadingSpinner />;
   }
 
   if (requireAuth && !user) {
@@ -99,32 +106,33 @@ const AppRoute = ({ children, requireAuth = true }) => {
   }
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -8 }}
-        transition={{ duration: 0.2 }}
-      >
+    <>
+      <div className="animate-fade-in">
         {requireAuth ? (
-          <AppLayout>{children}</AppLayout>
+          <AppLayout>
+            <Suspense fallback={<LoadingSpinner />}>
+              {children}
+            </Suspense>
+          </AppLayout>
         ) : (
           <>
             <GuestNav />
             {children}
           </>
         )}
-      </motion.div>
-    </AnimatePresence>
+      </div>
+    </>
   );
 };
 
 const RootRoute = () => {
   const { user, loading } = useContext(AuthContext);
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-bg-main"><div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-500 border-t-transparent" /></div>;
-  if (user) return <AppLayout><Dashboard /></AppLayout>;
-  return <><GuestNav /><Landing /></>;
+  if (loading) return <LoadingSpinner />;
+  if (user) return <div className="animate-fade-in"><AppLayout><Suspense fallback={<LoadingSpinner />}><Dashboard /></Suspense></AppLayout></div>;
+  return <div className="animate-fade-in"><GuestNav /><Landing /></div>;
 };
+
+import { Toaster } from 'react-hot-toast';
 
 function App() {
   const [reducedMotion, setReducedMotion] = useState(
@@ -140,9 +148,19 @@ function App() {
 
   return (
     <ThemeProvider>
+      <Toaster 
+        position="bottom-right" 
+        toastOptions={{
+          style: {
+            background: 'var(--color-bg-elevated)',
+            color: 'var(--color-text-main)',
+            border: '1px solid var(--color-border)',
+          }
+        }} 
+      />
       <AuthProvider>
         <TaskProvider>
-        <MotionConfig reducedMotion={reducedMotion ? 'always' : 'never'}>
+
         <Router>
           <div className="min-h-screen bg-bg-main text-text-main font-sans antialiased">
             <Routes>
@@ -159,14 +177,14 @@ function App() {
               <Route path="/profile" element={<AppRoute><Profile /></AppRoute>} />
               <Route path="/resume-ai" element={<AppRoute><ResumeAI /></AppRoute>} />
               <Route path="/cover-letter" element={<AppRoute><CoverLetter /></AppRoute>} />
-              <Route path="/resume-latex" element={<AppRoute><Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-bg-main"><div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-500 border-t-transparent" /></div>}><ResumeLatex /></Suspense></AppRoute>} />
+              <Route path="/resume-latex" element={<AppRoute><ResumeLatex /></AppRoute>} />
               <Route path="/settings/keys" element={<AppRoute><APIKeySettings /></AppRoute>} />
               <Route path="/admin" element={<AppRoute><Admin /></AppRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
         </Router>
-        </MotionConfig>
+
         </TaskProvider>
       </AuthProvider>
     </ThemeProvider>
