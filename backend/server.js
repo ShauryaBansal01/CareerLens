@@ -1,6 +1,5 @@
 const dotenv = require('dotenv');
 dotenv.config();
-const cluster = require('cluster');
 const os = require('os');
 const express = require('express');
 const cors = require('cors');
@@ -17,33 +16,15 @@ const adminRoutes = require('./routes/adminRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 
 const PORT = process.env.PORT || 5000;
-const numCPUs = os.cpus().length;
 
-// Skip clustering when SINGLE_PROCESS=true (needed for Render free tier — 512MB RAM)
-const useCluster = cluster.isPrimary && process.env.SINGLE_PROCESS !== 'true';
+// ── Single Process: run the Express app ─────────────────────────
 
-if (useCluster) {
-  // ── Primary Process: fork workers ────────────────────────────────────────
-  console.log(`🚀 Primary process ${process.pid} starting ${numCPUs} workers...`);
+// Connect to database
+connectDB();
 
-  for (let i = 0; i < numCPUs; i++) {
-    cluster.fork();
-  }
+const app = express();
 
-  // Auto-restart crashed workers
-  cluster.on('exit', (worker, code, signal) => {
-    console.warn(`⚠️  Worker ${worker.process.pid} died (code: ${code}, signal: ${signal}). Restarting...`);
-    cluster.fork();
-  });
-} else {
-  // ── Worker / Single Process: run the Express app ─────────────────────────
-
-  // Connect to database (each worker gets its own connection pool)
-  connectDB();
-
-  const app = express();
-
-  // ── Performance & Security Middleware ──────────────────────────────────
+// ── Performance & Security Middleware ──────────────────────────────────
   app.use(compression());   // Gzip all responses — reduces bandwidth by 60-80%
   app.use(helmet());        // Set secure HTTP headers
 
@@ -71,7 +52,36 @@ if (useCluster) {
   app.use('/api/profile', profileRoutes);
   app.use('/api/keys', require('./routes/apiKeyRoutes'));
 
-  app.listen(PORT, () => {
-    console.log(`✅ Worker ${process.pid} listening on port ${PORT}`);
+  // ── Global Error Handler (must be AFTER all routes) ───────────────────
+  app.use((err, req, res, _next) => {
+    console.error('Unhandled error:', err.stack || err.message || err);
+
+    const statusCode = err.statusCode || 500;
+    const message =
+      process.env.NODE_ENV === 'production'
+        ? 'Internal server error'
+        : err.message || 'Internal server error';
+
+    res.status(statusCode).json({ message });
   });
-}
+
+  const server = app.listen(PORT, () => {
+    console.log(`✅ Server listening on port ${PORT}`);
+  });
+
+  // ── Graceful Shutdown ─────────────────────────────────────────────────
+  const { cleanup: cleanupAiCache } = require('./middleware/aiCache');
+
+  const shutdown = (signal) => {
+    console.log(`\n${signal} received. Shutting down gracefully...`);
+    cleanupAiCache();
+    server.close(() => {
+      console.log('HTTP server closed.');
+      process.exit(0);
+    });
+    // Force exit after 10s if server hasn't closed
+    setTimeout(() => process.exit(1), 10000);
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));

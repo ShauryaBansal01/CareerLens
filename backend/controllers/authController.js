@@ -5,7 +5,10 @@ const sendEmail = require('../utils/sendEmail');
 
 // Generate JWT
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'secret123', {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is not set');
+  }
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: '30d',
   });
 };
@@ -64,7 +67,7 @@ exports.sendOtp = async (req, res) => {
 // @access  Public
 exports.registerUser = async (req, res) => {
   try {
-    const { name, email, password, role, otp } = req.body;
+    const { name, email, password, otp } = req.body;
 
     if (!otp) {
       return res.status(400).json({ message: 'OTP is required' });
@@ -90,7 +93,7 @@ exports.registerUser = async (req, res) => {
       name,
       email,
       password,
-      role: role || 'user'
+      // role is always 'user' — admin accounts are created via admin endpoints only
     });
 
     // Clean up OTP after successful registration
