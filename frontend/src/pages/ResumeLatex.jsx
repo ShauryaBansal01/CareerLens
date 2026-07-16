@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import Editor from '@monaco-editor/react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, Download, Save, Sparkles, FileText, CheckCircle2, AlertCircle,
   X, Plus, Trash2, Target, Code2, Eye, Wand2, RotateCcw, RefreshCw,
@@ -45,10 +44,10 @@ const SectionRewritePanel = ({ section, rewrite, loading, onAccept, onReject, on
   }, [rewrite]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
+    <div
+      
+      
+      
       className="absolute inset-0 z-30 bg-white dark:bg-slate-900 flex flex-col"
     >
       {/* Header */}
@@ -151,7 +150,7 @@ const SectionRewritePanel = ({ section, rewrite, loading, onAccept, onReject, on
           Click a section to rewrite it with AI
         </div>
       )}
-    </motion.div>
+    </div>
   );
 };
 
@@ -604,16 +603,16 @@ const ResumeLatex = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-140px)] flex flex-col bg-bg-card border border-border-color rounded-xl overflow-hidden relative shadow-sm">
+    <div className="h-[calc(100vh-140px)] flex flex-col bg-bg-card border border-border-color rounded-xl overflow-hidden relative shadow-sm animate-fade-in-slow">
 
       {/* Wizard Modal */}
-      <AnimatePresence>
+      <>
         {showWizard && (
           <div key="wizard-modal" className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            <div
+              
+              
+              
               className="bg-white dark:bg-dark-card rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden border border-white/10 dark:border-white/5"
             >
               <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-dark-card/50">
@@ -723,19 +722,19 @@ const ResumeLatex = () => {
                   </button>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
-      </AnimatePresence>
+      </>
 
       {/* Tailor to Job Modal */}
-      <AnimatePresence>
+      <>
         {showTailorWizard && (
           <div key="tailor-modal" className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            <div
+              
+              
+              
               className="bg-white dark:bg-dark-card rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden border border-white/10 dark:border-white/5"
             >
               <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-dark-card/50">
@@ -777,19 +776,19 @@ const ResumeLatex = () => {
                   Tailor Resume
                 </button>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
-      </AnimatePresence>
+      </>
 
       {/* Save As Modal */}
-      <AnimatePresence>
+      <>
         {showSaveAsModal && (
           <div key="save-modal" className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            <div
+              
+              
+              
               className="bg-white dark:bg-dark-card rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-white/10 dark:border-white/5"
             >
               <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-dark-card/50">
@@ -818,10 +817,10 @@ const ResumeLatex = () => {
                   Save Version
                 </button>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
-      </AnimatePresence>
+      </>
 
       {/* Top Toolbar */}
       <header className="bg-bg-card border-b border-border-color px-4 py-3 flex justify-between items-center z-10 shrink-0">
@@ -837,10 +836,10 @@ const ResumeLatex = () => {
 
         <div className="flex items-center gap-2">
           {message && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0 }}
+            <div
+              
+              
+              
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium mr-2 ${
                 messageType === 'success'
                 ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
@@ -849,7 +848,7 @@ const ResumeLatex = () => {
             >
               {messageType === 'success' ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
               {message}
-            </motion.div>
+            </div>
           )}
 
           <button
@@ -975,7 +974,7 @@ const ResumeLatex = () => {
         </div>
 
         {/* Right Pane: Preview / Source */}
-        <div className={`h-full bg-gray-200 dark:bg-dark-card flex flex-col relative ${showVersionSidebar ? 'w-[40%]' : 'w-1/2'}`}>
+        <div className="flex-1 h-full bg-gray-200 dark:bg-dark-card flex flex-col relative min-w-0">
           {/* Tab switcher */}
           <div className="bg-gray-300 dark:bg-dark-surface text-[11px] px-2 py-1 font-sans border-b border-white/10 dark:border-white/5 shadow-sm z-10 flex items-center justify-between">
             <div className="flex items-center gap-0.5">
@@ -1057,7 +1056,7 @@ const ResumeLatex = () => {
           </div>
 
           {/* Section Rewrite Panel overlay */}
-          <AnimatePresence>
+          <>
             {showRewritePanel && (
               <SectionRewritePanel
                 section={selectedSection}
@@ -1069,19 +1068,19 @@ const ResumeLatex = () => {
                 onClose={handleRejectRewrite}
               />
             )}
-          </AnimatePresence>
+          </>
         </div>
 
         {/* Version History Sidebar (Phase 4) */}
-        <AnimatePresence>
+        <>
           {showVersionSidebar && (
-            <motion.div
+            <div
               key="version-sidebar"
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 260, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="h-full bg-white dark:bg-slate-900 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden shrink-0"
+              
+              
+              
+              
+              className="w-72 h-full bg-white dark:bg-slate-900 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden shrink-0"
             >
               <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                 <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
@@ -1145,25 +1144,25 @@ const ResumeLatex = () => {
                   </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        </>
       </div>
 
       {/* Confirmation modal for version delete */}
-      <AnimatePresence>
+      <>
         {confirmDeleteVersionId && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <div
+            
+            
+            
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
             onClick={() => setConfirmDeleteVersionId(null)}
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+            <div
+              
+              
+              
               className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xl p-6 max-w-sm w-full"
               onClick={e => e.stopPropagation()}
             >
@@ -1183,10 +1182,10 @@ const ResumeLatex = () => {
                   Delete
                 </button>
               </div>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
     </div>
   );
 };

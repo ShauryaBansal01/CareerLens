@@ -3,7 +3,7 @@ import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import TaskContext from '../context/TaskContext';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'react-hot-toast';
 import { UploadCloud, FileText, AlertCircle, CheckCircle } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -93,6 +93,7 @@ const UploadResume = () => {
             Authorization: `Bearer ${user.token}`,
           },
         });
+        toast.success('Resume analyzed successfully!');
         return res.data;
       },
       '/upload',
@@ -140,13 +141,9 @@ const UploadResume = () => {
                 className="hidden"
                 tabIndex={-1}
               />
-              <AnimatePresence mode="wait">
+              <>
                 {loading ? (
-                  <motion.div
-                    key="loading"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0 }}
+                  <div
                     className="text-center py-4"
                   >
                     <div className="relative w-16 h-16 mx-auto mb-4">
@@ -160,13 +157,9 @@ const UploadResume = () => {
                     <p className="text-sm text-text-muted">
                       Please wait, this usually takes 5-15 seconds.
                     </p>
-                  </motion.div>
+                  </div>
                 ) : !file ? (
-                  <motion.div
-                    key="empty"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                  <div
                     className="text-center"
                   >
                     <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
@@ -180,13 +173,9 @@ const UploadResume = () => {
                       <Badge variant="secondary">PDF only</Badge>
                       <Badge variant="secondary">Max 5MB</Badge>
                     </div>
-                  </motion.div>
+                  </div>
                 ) : (
-                  <motion.div
-                    key="filled"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0 }}
+                  <div
                     className="text-center"
                   >
                     <div className="w-12 h-12 bg-accent-50 dark:bg-accent-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -206,35 +195,31 @@ const UploadResume = () => {
                     >
                       Remove file
                     </Button>
-                  </motion.div>
+                  </div>
                 )}
-              </AnimatePresence>
+              </>
             </div>
 
             {/* File Size Error */}
             {fileError && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
+              <div
                 className="mb-6 flex items-center gap-3 p-4 rounded-lg bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 text-sm font-medium"
                 role="alert"
               >
                 <AlertCircle className="w-5 h-5 shrink-0" aria-hidden="true" />
                 {fileError}
-              </motion.div>
+              </div>
             )}
 
             {/* Error */}
             {error && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
+              <div
                 className="mb-6 flex items-center gap-3 p-4 rounded-lg bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 text-sm font-medium"
                 role="alert"
               >
                 <AlertCircle className="w-5 h-5 shrink-0" aria-hidden="true" />
                 {error}
-              </motion.div>
+              </div>
             )}
 
             {/* Submit */}
@@ -251,11 +236,9 @@ const UploadResume = () => {
       </Card>
 
       {/* Results */}
-      <AnimatePresence>
+      <>
         {resumeData && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+          <div
             className="space-y-6"
           >
             <Card>
@@ -312,9 +295,9 @@ const UploadResume = () => {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
     </div>
   );
 };

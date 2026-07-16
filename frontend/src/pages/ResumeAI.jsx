@@ -3,7 +3,6 @@ import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import TaskContext from '../context/TaskContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   AlertCircle, CheckCircle, AlertTriangle, Sparkles,
   Building2, ChevronDown, ChevronUp, Plus, Minus,
@@ -124,14 +123,14 @@ const FeedbackCard = ({ item, type }) => {
         </div>
       </button>
 
-      <AnimatePresence>
+      <>
         {open && (
-          <motion.div
+          <div
             key="improve-content"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            
+            
+            
+            
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 pl-[52px] space-y-2.5">
@@ -169,9 +168,9 @@ const FeedbackCard = ({ item, type }) => {
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
     </div>
   );
 };
@@ -219,14 +218,14 @@ const OptimizeCard = ({ item, type }) => {
         )}
       </button>
 
-      <AnimatePresence>
+      <>
         {open && (
-          <motion.div
+          <div
             key="optimize-content"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.18 }}
+            
+            
+            
+            
             className="overflow-hidden"
           >
             <div className="px-4 pb-3.5 pl-[52px] flex flex-col gap-2">
@@ -259,9 +258,9 @@ const OptimizeCard = ({ item, type }) => {
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
     </div>
   );
 };
@@ -275,9 +274,9 @@ const DiffCard = ({ change, accepted, onToggle }) => {
   const statusDot = accepted ? 'bg-emerald-500' : 'bg-slate-400';
 
   return (
-    <motion.div
-      layout
-      variants={fadeUp}
+    <div
+      
+      
       className={`rounded-xl border transition-all duration-400 ${statusColors} relative overflow-hidden`}
     >
       {/* Accepted/Rejected strip */}
@@ -351,7 +350,7 @@ const DiffCard = ({ change, accepted, onToggle }) => {
           {change.reason}
         </p>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
@@ -803,7 +802,7 @@ const ResumeAI = () => {
         {/* ══════════════════════════════════════════════════════════════════════
             SECTION 1 — Improve Your Resume
         ══════════════════════════════════════════════════════════════════════ */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}>
+        <div   >
           <Card className="p-6 mb-6">
 
             {/* Header */}
@@ -869,13 +868,13 @@ const ResumeAI = () => {
             )}
 
             {/* Results */}
-            <AnimatePresence>
+            <>
               {improveFeedback && (
-                <motion.div key="improve-results" variants={stagger} initial="hidden" animate="show">
+                <div key="improve-results"   >
 
                   {/* Score Dashboard — consolidated: score ring + dimension bars + ATS summary */}
-                  <motion.div
-                    variants={fadeUp}
+                  <div
+                    
                     className={`${panelClass} mb-7`}
                   >
                     <div className="flex items-start gap-6 flex-wrap">
@@ -965,11 +964,11 @@ const ResumeAI = () => {
                         </Button>
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
 
                   {/* Critical */}
                   {improveFeedback.critical?.length > 0 && (
-                    <motion.div variants={fadeUp} className="mb-6">
+                    <div  className="mb-6">
                       <div className="flex items-center gap-3 mb-3">
                         <div className="w-1 h-8 rounded-full bg-red-500 shrink-0" />
                         <div className="flex-1 min-w-0">
@@ -990,12 +989,12 @@ const ResumeAI = () => {
                           <FeedbackCard key={i} item={item} type="critical" />
                         ))}
                       </div>
-                    </motion.div>
+                    </div>
                   )}
 
                   {/* Suggested */}
                   {improveFeedback.suggested?.length > 0 && (
-                    <motion.div variants={fadeUp} className="mb-6">
+                    <div  className="mb-6">
                       <div className="flex items-center gap-3 mb-3">
                         <div className="w-1 h-8 rounded-full bg-orange-400 shrink-0" />
                         <div className="flex-1 min-w-0">
@@ -1016,12 +1015,12 @@ const ResumeAI = () => {
                           <FeedbackCard key={i} item={item} type="suggested" />
                         ))}
                       </div>
-                    </motion.div>
+                    </div>
                   )}
 
                   {/* Good */}
                   {improveFeedback.good?.length > 0 && (
-                    <motion.div variants={fadeUp}>
+                    <div >
                       <div className="flex items-center gap-3 mb-3">
                         <div className="w-1 h-8 rounded-full bg-emerald-500 shrink-0" />
                         <div className="flex-1 min-w-0">
@@ -1042,24 +1041,24 @@ const ResumeAI = () => {
                           <FeedbackCard key={i} item={item} type="good" />
                         ))}
                       </div>
-                    </motion.div>
+                    </div>
                   )}
-                </motion.div>
+                </div>
               )}
-            </AnimatePresence>
+            </>
           </Card>
-        </motion.div>
+        </div>
 
         {/* ══════════════════════════════════════════════════════════════════════
             SECTION 1B — Optimization Results (Diff Viewer)
         ══════════════════════════════════════════════════════════════════════ */}
-        <AnimatePresence>
+        <>
           {optimizing && (
-            <motion.div
+            <div
               key="optimize-loading"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -16 }}
+              
+              
+              
               className="mb-6"
             >
               <Card className="p-6">
@@ -1073,15 +1072,15 @@ const ResumeAI = () => {
                   ]} 
                 />
               </Card>
-            </motion.div>
+            </div>
           )}
 
           {(optimizeFeedbackError || localError) && !optimizing && (
-            <motion.div
+            <div
               key="optimize-error"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -16 }}
+              
+              
+              
               className="mb-6"
             >
               <Card className="p-6">
@@ -1090,7 +1089,7 @@ const ResumeAI = () => {
                   <p className="text-sm text-red-600 dark:text-red-400">{optimizeFeedbackError || localError}</p>
                 </div>
               </Card>
-            </motion.div>
+            </div>
           )}
 
           {optimizeData && !optimizing && (
@@ -1160,15 +1159,15 @@ const ResumeAI = () => {
                       <XCircle className="w-3.5 h-3.5" /> Reject All
                     </Button>
                     {optimizeData.estimatedScoreIncrease > 0 && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+                      <div
+                        
+                        
+                        
                         className="flex items-center gap-1.5 bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg shadow-lg shadow-emerald-500/25"
                       >
                         <Zap className="w-3.5 h-3.5" />
                         <span className="text-[11px] font-bold">+{optimizeData.estimatedScoreIncrease} pts</span>
-                      </motion.div>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1191,7 +1190,7 @@ const ResumeAI = () => {
               {/* Content: Changes / Original / Optimized */}
               <div className="px-5 pb-2">
                 {viewMode === 'changes' && (
-                  <motion.div variants={stagger} initial="hidden" animate="show" className="flex flex-col gap-5">
+                  <div    className="flex flex-col gap-5">
                     {(optimizeData.sections || []).map((section, sIdx) => {
                       const sectionAccepted = (section.changes || []).filter(c => !!acceptedChanges[c.id]).length;
                       const sectionTotal = (section.changes || []).length;
@@ -1204,7 +1203,7 @@ const ResumeAI = () => {
                       }[section.sectionType] || 'bg-indigo-500';
 
                       return (
-                        <motion.div key={sIdx} variants={fadeUp} className="rounded-xl border border-border-color bg-white/30 dark:bg-slate-800/10 overflow-hidden">
+                        <div key={sIdx}  className="rounded-xl border border-border-color bg-white/30 dark:bg-slate-800/10 overflow-hidden">
                           {/* Section header with controls */}
                           <div className="px-4 py-2.5 flex items-center justify-between gap-3 border-b border-border-color bg-slate-50/30 dark:bg-slate-800/20">
                             <div className="flex items-center gap-2.5 min-w-0">
@@ -1245,13 +1244,13 @@ const ResumeAI = () => {
                               />
                             ))}
                           </div>
-                        </motion.div>
+                        </div>
                       );
                     })}
-                  </motion.div>
+                  </div>
                 )}
                 {viewMode === 'original' && (
-                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="py-2">
+                  <div   className="py-2">
                     {originalProfile ? (
                       <ProfilePreview profile={originalProfile} label="Original" />
                     ) : (
@@ -1260,25 +1259,25 @@ const ResumeAI = () => {
                         Loading original profile…
                       </div>
                     )}
-                  </motion.div>
+                  </div>
                 )}
                 {viewMode === 'optimized' && (
-                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="py-2">
+                  <div   className="py-2">
                     <ProfilePreview profile={optimizeData.optimizedProfile} label="Optimized" />
-                  </motion.div>
+                  </div>
                 )}
               </div>
 
               {/* Save success message */}
               {saveSuccess && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
+                <div
+                  
+                  
                   className="mx-5 mb-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl px-4 py-3 flex items-center gap-2.5 border border-emerald-500/20"
                 >
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <p className="text-sm text-emerald-700 dark:text-emerald-400 font-medium">{saveSuccess}</p>
-                </motion.div>
+                </div>
               )}
 
               {/* Sticky action buttons */}
@@ -1329,12 +1328,12 @@ const ResumeAI = () => {
               </div>
             </Card>
           )}
-        </AnimatePresence>
+        </>
 
         {/* ══════════════════════════════════════════════════════════════════════
             SECTION 2 — Optimize Resume for Company
         ══════════════════════════════════════════════════════════════════════ */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
+        <div   >
           <Card className="p-6">
 
             {/* Header */}
@@ -1424,13 +1423,13 @@ const ResumeAI = () => {
             {optimizeLoading && <Spinner label="Cross-referencing your resume with the job description…" />}
 
             {/* Results */}
-            <AnimatePresence>
+            <>
               {optimizeResult && (
-                <motion.div key="optimize-results" variants={stagger} initial="hidden" animate="show">
+                <div key="optimize-results"   >
 
                   {/* Match score + summary */}
-                  <motion.div
-                    variants={fadeUp}
+                  <div
+                    
                     className="glass-panel flex items-center gap-5 mb-7"
                   >
                     <ScoreRing score={optimizeResult.matchScore || 0} size={80} />
@@ -1452,11 +1451,11 @@ const ResumeAI = () => {
                         </div>
                       )}
                     </div>
-                  </motion.div>
+                  </div>
 
                   {/* ADD */}
                   {optimizeResult.add?.length > 0 && (
-                    <motion.div variants={fadeUp} className="mb-5">
+                    <div  className="mb-5">
                       <p className="text-xs font-bold text-green-500 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
                         <Plus className="w-3.5 h-3.5" />
                         Add These ({optimizeResult.add.length})
@@ -1466,12 +1465,12 @@ const ResumeAI = () => {
                           <OptimizeCard key={i} item={item} type="add" />
                         ))}
                       </div>
-                    </motion.div>
+                    </div>
                   )}
 
                   {/* REMOVE */}
                   {optimizeResult.remove?.length > 0 && (
-                    <motion.div variants={fadeUp} className="mb-5">
+                    <div  className="mb-5">
                       <p className="text-xs font-bold text-red-500 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
                         <Minus className="w-3.5 h-3.5" />
                         Remove These ({optimizeResult.remove.length})
@@ -1481,12 +1480,12 @@ const ResumeAI = () => {
                           <OptimizeCard key={i} item={item} type="remove" />
                         ))}
                       </div>
-                    </motion.div>
+                    </div>
                   )}
 
                   {/* MODIFY */}
                   {optimizeResult.modify?.length > 0 && (
-                    <motion.div variants={fadeUp}>
+                    <div >
                       <p className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
                         <RefreshCw className="w-3.5 h-3.5" />
                         Modify These ({optimizeResult.modify.length})
@@ -1496,23 +1495,23 @@ const ResumeAI = () => {
                           <OptimizeCard key={i} item={item} type="modify" />
                         ))}
                       </div>
-                    </motion.div>
+                    </div>
                   )}
 
                   {/* Re-run */}
-                  <motion.div variants={fadeUp} className="mt-6 pt-5 border-t border-border-color flex justify-end">
+                  <div  className="mt-6 pt-5 border-t border-border-color flex justify-end">
                     <button
                       onClick={() => { setOptimizeResult(null); setJobDesc(''); }}
                       className="text-[13px] text-text-muted bg-transparent border-none cursor-pointer flex items-center gap-1.5 hover:underline"
                     >
                       <RefreshCw className="w-3.5 h-3.5" /> Try another job description
                     </button>
-                  </motion.div>
-                </motion.div>
+                  </div>
+                </div>
               )}
-            </AnimatePresence>
+            </>
           </Card>
-        </motion.div>
+        </div>
 
     </div>
   );

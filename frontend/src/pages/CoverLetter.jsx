@@ -1,7 +1,7 @@
 import { useState, useContext, useEffect } from 'react';
 import axios from 'axios';
-import { motion } from 'framer-motion';
 import { FileText, Copy, Check, Sparkles, AlertCircle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import AuthContext from '../context/AuthContext';
 import TaskContext from '../context/TaskContext';
 import { Card } from '../components/ui/Card';
@@ -18,6 +18,12 @@ const CoverLetter = () => {
   const [tone, setTone] = useState(persisted?.tone || 'Professional');
   const [editedLetter, setEditedLetter] = useState('');
   const [copied, setCopied] = useState(false);
+
+  // Derive state from TaskContext (must be above the useEffect that reads coverLetter)
+  const clTask = getTask('cover-letter');
+  const loading = clTask?.status === 'running';
+  const coverLetter = clTask?.status === 'completed' ? clTask.result : '';
+  const error = clTask?.status === 'failed' ? clTask.error : null;
 
   // Sync generated result into editable state
   useEffect(() => {
@@ -36,12 +42,6 @@ const CoverLetter = () => {
   useEffect(() => {
     setPageState('cover-letter-page', { jobDescription, tone });
   }, [jobDescription, tone, setPageState]);
-
-  // Derive state from TaskContext
-  const clTask = getTask('cover-letter');
-  const loading = clTask?.status === 'running';
-  const coverLetter = clTask?.status === 'completed' ? clTask.result : '';
-  const error = clTask?.status === 'failed' ? clTask.error : null;
 
   const generateCoverLetter = async () => {
     if (!jobDescription || jobDescription.trim().length < 20) {
@@ -85,6 +85,7 @@ const CoverLetter = () => {
     if (!coverLetter) return;
     navigator.clipboard.writeText(editedLetter);
     setCopied(true);
+    toast.success('Copied to clipboard!');
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -104,9 +105,7 @@ const CoverLetter = () => {
     <div className="min-h-[calc(100vh-64px)] px-4 py-8 md:py-12 relative z-10">
       <div className="max-w-[1200px] mx-auto w-full">
         {/* Header */}
-        <motion.div
-           initial={{ opacity: 0, y: 16 }}
-           animate={{ opacity: 1, y: 0 }}
+        <div
            className="mb-8"
         >
           <div className="flex items-center gap-3 mb-2">
@@ -116,7 +115,7 @@ const CoverLetter = () => {
             <h1 className="text-3xl md:text-4xl font-bold text-text-main tracking-tight">AI Cover Letter</h1>
           </div>
           <p className="text-[17px] text-text-muted ml-[52px]">Instantly draft ATS-optimized cover letters tailored precisely to the job description.</p>
-        </motion.div>
+        </div>
 
         {error && (
           <div role="alert" className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-xl flex items-center gap-2">
@@ -128,9 +127,7 @@ const CoverLetter = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
           {/* Input Panel */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
+          <div
             className="flex flex-col gap-6"
           >
             <Card className="flex flex-col h-full p-6">
@@ -191,12 +188,10 @@ const CoverLetter = () => {
                 </Button>
               </div>
             </Card>
-          </motion.div>
+          </div>
 
           {/* Results Panel */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
+          <div
             className="h-full"
           >
             <Card className="flex flex-col h-full min-h-[400px] p-6">
@@ -237,7 +232,7 @@ const CoverLetter = () => {
                   </div>
                 )}
             </Card>
-          </motion.div>
+          </div>
 
         </div>
       </div>
