@@ -1,18 +1,10 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import {
-  Sparkles, ArrowRight, LayoutDashboard, UploadCloud, Code2,
-  FileText, Map, Target
+  Sparkles, ArrowRight, LayoutDashboard, UploadCloud, Code2, FileText, Map, Target
 } from 'lucide-react';
-import { Button } from '../components/ui/Button';
-
-const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } } };
-const stagger = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
-
 const FeatureCard = ({ title, desc, icon: Icon, index }) => (
-  <motion.div
-    variants={fadeUp}
+  <div
     className="group bg-bg-card border border-border-color rounded-2xl p-8 shadow-sm hover:shadow-soft-hover hover:-translate-y-1 transition-all duration-300"
   >
     <div className="h-12 w-12 rounded-xl bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
@@ -20,7 +12,7 @@ const FeatureCard = ({ title, desc, icon: Icon, index }) => (
     </div>
     <h3 className="text-xl font-bold text-text-main mb-3">{title}</h3>
     <p className="text-text-muted leading-relaxed">{desc}</p>
-  </motion.div>
+  </div>
 );
 
 const features = [
@@ -47,25 +39,25 @@ export default function Landing() {
         </div>
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <motion.div variants={stagger} initial="hidden" animate="show" className="mx-auto max-w-4xl">
-            <motion.div variants={fadeUp} className="mx-auto inline-flex items-center gap-2 rounded-full border border-accent-200 bg-accent-50 dark:bg-accent-900/20 px-4 py-2 text-xs font-bold text-accent-700 dark:text-accent-400 mb-8 shadow-sm">
+          <div className="mx-auto max-w-4xl">
+            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-accent-200 bg-accent-50 dark:bg-accent-900/20 px-4 py-2 text-xs font-bold text-accent-700 dark:text-accent-400 mb-8 shadow-sm">
               <Sparkles className="h-3.5 w-3.5" />
               AI career tools for professionals
-            </motion.div>
+            </div>
 
-            <motion.h1 variants={fadeUp} className="text-4xl font-extrabold tracking-tight sm:text-6xl text-text-main mb-6 leading-[1.1]">
+            <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl text-text-main mb-6 leading-[1.1]">
               Build, analyze, and tailor your resume with{' '}
               <span className="bg-gradient-to-r from-accent-600 to-secondary-500 bg-clip-text text-transparent">
                 CareerLens
               </span>
-            </motion.h1>
+            </h1>
 
-            <motion.p variants={fadeUp} className="text-lg sm:text-xl text-text-muted mb-10 leading-relaxed max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-text-muted mb-10 leading-relaxed max-w-2xl mx-auto">
               Upload your resume, generate AI-powered feedback, tailor it to any job description,
               manage LaTeX versions, and create cover letters — all in one place.
-            </motion.p>
+            </p>
 
-            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/register" className="w-full sm:w-auto">
                 <Button size="lg" className="w-full sm:w-auto text-base px-8 py-6 h-auto">
                   Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
@@ -76,52 +68,39 @@ export default function Landing() {
                   Log In
                 </Button>
               </Link>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* ── Features ──────────────────────────────────────────────── */}
       <section id="features" className="py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: '-80px' }}
-            variants={stagger}
+          <div
             className="text-center max-w-2xl mx-auto mb-16"
           >
-            <motion.h2 variants={fadeUp} className="text-3xl font-bold tracking-tight text-text-main sm:text-4xl">
+            <h2 className="text-3xl font-bold tracking-tight text-text-main sm:text-4xl">
               Everything you need to land your next role
-            </motion.h2>
-            <motion.p variants={fadeUp} className="mt-4 text-lg text-text-muted">
+            </h2>
+            <p className="mt-4 text-lg text-text-muted">
               A complete suite of AI-powered tools designed to optimize every step of your job search.
-            </motion.p>
-          </motion.div>
+            </p>
+          </div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: '-80px' }}
-            variants={stagger}
+          <div
             className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             {features.map((f, i) => (
               <FeatureCard key={i} {...f} index={i} />
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* ── CTA ───────────────────────────────────────────────────── */}
       <section className="border-t border-border-color bg-bg-card py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
+          <div>
             <div className="w-14 h-14 rounded-2xl bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-400 flex items-center justify-center mx-auto mb-6">
               <Sparkles className="h-7 w-7" />
             </div>
@@ -136,7 +115,7 @@ export default function Landing() {
                 Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
-          </motion.div>
+          </div>
         </div>
       </section>
 

@@ -1,6 +1,5 @@
 import { useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { FileQuestion, Home, LayoutDashboard } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
 
@@ -12,9 +11,7 @@ const NotFound = () => {
 
   return (
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-6 bg-bg-main">
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
+      <div
         className="text-center max-w-[420px]"
       >
         <div className="w-16 h-16 rounded-2xl bg-accent-100 dark:bg-accent-900/30 flex items-center justify-center mx-auto mb-6">
@@ -31,7 +28,7 @@ const NotFound = () => {
           {user ? <LayoutDashboard size={16} /> : <Home size={16} />}
           {user ? 'Go to Dashboard' : 'Back to Home'}
         </Link>
-      </motion.div>
+      </div>
     </div>
   );
 };

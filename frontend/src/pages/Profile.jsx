@@ -1,7 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Save, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
@@ -127,9 +126,7 @@ const Profile = () => {
   return (
     <div className="min-h-[calc(100vh-64px)] px-4 py-12 md:py-16 relative z-10">
       <div className="max-w-[800px] mx-auto w-full">
-        <motion.div
-           initial={{ opacity: 0, y: 16 }}
-           animate={{ opacity: 1, y: 0 }}
+        <div
            className="mb-8 flex items-center justify-between"
         >
           <div>
@@ -144,7 +141,7 @@ const Profile = () => {
             {saving ? <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <Save size={18} />}
             {saving ? 'Saving...' : 'Save Profile'}
           </button>
-        </motion.div>
+        </div>
 
         {error && <div role="alert" className="p-4 mb-6 text-red-500 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">{error}</div>}
         {success && <div role="status" className="p-4 mb-6 text-green-500 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">Profile saved successfully!</div>}
@@ -248,19 +245,13 @@ const Profile = () => {
       </div>
 
       {/* Confirmation modal for delete */}
-      <AnimatePresence>
+      <>
         {confirmDelete && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
             onClick={() => setConfirmDelete(null)}
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+            <div
               className="bg-bg-card rounded-2xl border border-border-color shadow-xl p-6 max-w-sm w-full"
               onClick={e => e.stopPropagation()}
             >
@@ -270,10 +261,10 @@ const Profile = () => {
                 <Button variant="outline" onClick={() => setConfirmDelete(null)}>Cancel</Button>
                 <Button variant="destructive" onClick={() => { removeArrayItem(confirmDelete.type, confirmDelete.index); setConfirmDelete(null); }}>Delete</Button>
               </div>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
     </div>
   );
 };
