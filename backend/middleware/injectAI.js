@@ -1,5 +1,4 @@
 const APIKey = require('../models/APIKey');
-const User = require('../models/User');
 const AIServiceFactory = require('../services/ai/AIServiceFactory');
 
 /**
@@ -19,8 +18,7 @@ const injectAI = async (req, res, next) => {
     let targetProvider = req.headers['x-ai-provider'];
     
     if (!targetProvider) {
-      const user = await User.findById(req.user._id);
-      targetProvider = user.defaultAIProvider || 'gemini';
+      targetProvider = req.user.defaultAIProvider || 'gemini';
     }
 
     // 2. Fetch the user's key for this provider

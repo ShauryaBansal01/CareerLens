@@ -68,7 +68,7 @@ function invalidateUserCache(userId) {
  * Periodically clean up expired entries to prevent memory leaks.
  * Runs every 10 minutes.
  */
-setInterval(() => {
+const cleanupInterval = setInterval(() => {
   const now = Date.now();
   for (const [key, entry] of cache) {
     if (now >= entry.expiresAt) {
@@ -77,4 +77,14 @@ setInterval(() => {
   }
 }, 10 * 60 * 1000);
 
-module.exports = { aiCache, invalidateUserCache };
+// Prevent the timer from keeping the process alive during shutdown
+cleanupInterval.unref();
+
+/**
+ * Clear the cleanup interval for graceful shutdown.
+ */
+function cleanup() {
+  clearInterval(cleanupInterval);
+}
+
+module.exports = { aiCache, invalidateUserCache, cleanup };
