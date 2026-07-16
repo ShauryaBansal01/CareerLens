@@ -3,12 +3,10 @@ const Resume = require('../models/Resume');
 const ResumeVersion = require('../models/ResumeVersion');
 const UserProfile = require('../models/UserProfile');
 const pdfParse = require('pdf-parse');
-const { GoogleGenAI } = require('@google/genai');
 const fs = require('fs');
 const path = require('path');
 const { invalidateUserCache } = require('../middleware/aiCache');
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const { buildResumeContext } = require('../utils/buildResumeContext');
 
 // Load LaTeX prompt instructions from external file to avoid JS string escaping issues
 const LATEX_INSTRUCTIONS = fs.readFileSync(
@@ -24,29 +22,6 @@ EXAMPLE STRONG BULLET POINTS (use this style):
 - Optimized database query performance through strategic indexing and caching, reducing p95 latency from 800ms to 120ms
 - Built an automated CI/CD pipeline using GitHub Actions and Terraform, decreasing deployment time from 45min to 8min
 `;
-
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-const callGeminiWithRetry = async (params, maxRetries = 4) => {
-  const model = 'gemini-2.5-flash';
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      return await ai.models.generateContent({ ...params, model });
-    } catch (error) {
-      if ((error.status === 503 || error.status === 429) && i < maxRetries - 1) {
-        let delayMs = [5000, 15000, 30000][i] || 30000;
-        const match = String(error).match(/retry in ([\d\.]+)s/);
-        if (match && match[1]) {
-          delayMs = Math.ceil(parseFloat(match[1]) * 1000) + 2000;
-        }
-        console.warn(`Gemini 429/503. Retrying in ${Math.round(delayMs / 1000)}s... (attempt ${i + 1}/${maxRetries})`);
-        await sleep(delayMs);
-      } else {
-        throw error;
-      }
-    }
-  }
-};
 
 /**
  * Safely parse JSON from LLM responses. Handles:
@@ -109,9 +84,7 @@ exports.uploadResume = async (req, res) => {
     let rawLatexCode = '';
 
     // ── Run both AI calls in PARALLEL for ~2x speed ──────────────────────
-    const extractionPromise = callGeminiWithRetry({
-      model: 'gemini-2.5-flash',
-      contents: `You are an expert technical recruiter AI. Extract the candidate's core technical skills, education, experience, and projects from the following resume. 
+    const extractionPrompt = `You are an expert technical recruiter AI. Extract the candidate's core technical skills, education, experience, and projects from the following resume. 
         Return EXACTLY a valid JSON object with the following schema:
         {
           "skills": ["skill1", "skill2"],
@@ -128,14 +101,12 @@ exports.uploadResume = async (req, res) => {
         Do not include markdown blocks, just the raw JSON.
         
         Resume Text:
-        ${rawText.substring(0, 15000)}`,
-      config: { responseMimeType: "application/json" }
-    });
+        ${rawText.substring(0, 15000)}`;
 
-    const latexPromise = callGeminiWithRetry({
-      model: 'gemini-2.5-flash',
-      contents: `${LATEX_INSTRUCTIONS}\n\nYour task is to generate a resume based on the provided extracted resume text.\n\nUSER RESUME TEXT:\n${rawText.substring(0, 10000)}\n\nOnly return the raw, compiling LaTeX code.`
-    });
+    const latexPrompt = `${LATEX_INSTRUCTIONS}\n\nYour task is to generate a resume based on the provided extracted resume text.\n\nUSER RESUME TEXT:\n${rawText.substring(0, 10000)}\n\nOnly return the raw, compiling LaTeX code.`;
+
+    const extractionPromise = req.ai.generateJSONWithRetry(extractionPrompt);
+    const latexPromise = req.ai.generateTextWithRetry(latexPrompt);
 
     // Wait for both to complete (allSettled so one failure doesn't kill the other)
     const [extractionResult, latexResult] = await Promise.allSettled([extractionPromise, latexPromise]);
@@ -143,7 +114,7 @@ exports.uploadResume = async (req, res) => {
     // ── Process extraction result ────────────────────────────────────────
     if (extractionResult.status === 'fulfilled') {
       try {
-        const parsedData = safeParseJSON(extractionResult.value.text);
+        const parsedData = extractionResult.value.data;
         extractedSkills = parsedData.skills ? parsedData.skills.map(s => s.toLowerCase()) : [];
         education = parsedData.educationSummary || education;
         experience = parsedData.experienceSummary || experience;
@@ -262,54 +233,10 @@ exports.improveResume = async (req, res) => {
     }
 
     // ── Build the richest possible context from structured + raw data ──────
-    const profile = await UserProfile.findOne({ user: req.user.id });
-    let resumeContext = '';
-
-    if (profile) {
-      // Structured profile gives the AI clean, parsed data to analyze
-      const structuredData = {
-        contact: {
-          name: profile.basics?.name || '',
-          email: profile.basics?.email || '',
-          phone: profile.basics?.phone || '',
-          location: profile.basics?.location || '',
-          linkedin: profile.basics?.linkedin || '',
-          github: profile.basics?.github || '',
-          portfolio: profile.basics?.portfolio || '',
-        },
-        summary: profile.basics?.summary || '',
-        skills: profile.skills || resume.extractedSkills || [],
-        experience: (profile.experience || []).map(exp => ({
-          company: exp.company,
-          role: exp.role,
-          duration: exp.duration,
-          description: exp.description,
-        })),
-        education: (profile.education || []).map(edu => ({
-          institution: edu.institution,
-          degree: edu.degree,
-          duration: edu.duration,
-        })),
-        projects: (profile.projects || []).map(proj => ({
-          name: proj.name,
-          description: proj.description,
-          techStack: proj.techStack || [],
-        })),
-      };
-
-      resumeContext = `STRUCTURED RESUME DATA (parsed from upload — high accuracy):
-${JSON.stringify(structuredData, null, 2)}
-
-RAW RESUME TEXT (original PDF text — use for additional context the structured data may have missed):
-${(resume.rawText || '').substring(0, 6000)}`;
-    } else {
-      // Fallback: no profile, use what we have
-      resumeContext = `Skills: ${resume.extractedSkills.join(', ')}
-Education: ${resume.education}
-Experience: ${resume.experience}
-Raw Resume Text:
-${(resume.rawText || '').substring(0, 10000)}`;
-    }
+    const resumeContext = await buildResumeContext(req.user.id, { 
+      maxRawTextLength: 6000, 
+      includeBasics: true 
+    });
 
     const prompt = `You are a Senior Technical Recruiter and Resume Coach at a top-tier tech company (Google, Meta, Amazon level). 
 Analyze the following resume and provide detailed, actionable improvement suggestions.
@@ -366,13 +293,9 @@ critical = must fix before applying (3-5 items)
 suggested = would significantly improve the resume (3-5 items)
 good = things already done well (2-3 items)`;
 
-    const response = await callGeminiWithRetry({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: { responseMimeType: "application/json" }
-    });
+    const response = await req.ai.generateJSONWithRetry(prompt);
 
-    const feedback = safeParseJSON(response.text);
+    const feedback = response.data;
 
     // Enrich with multi-dimensional scoring
     try {
@@ -445,42 +368,7 @@ exports.optimizeForCompany = async (req, res) => {
     }
 
     // ── Build the richest possible context from structured + raw data ──────
-    const profile = await UserProfile.findOne({ user: req.user.id });
-    let resumeContext = '';
-
-    if (profile) {
-      const structuredData = {
-        skills: profile.skills || resume.extractedSkills || [],
-        experience: (profile.experience || []).map(exp => ({
-          company: exp.company,
-          role: exp.role,
-          duration: exp.duration,
-          description: exp.description,
-        })),
-        education: (profile.education || []).map(edu => ({
-          institution: edu.institution,
-          degree: edu.degree,
-          duration: edu.duration,
-        })),
-        projects: (profile.projects || []).map(proj => ({
-          name: proj.name,
-          description: proj.description,
-          techStack: proj.techStack || [],
-        })),
-      };
-
-      resumeContext = `STRUCTURED RESUME DATA (parsed from upload — high accuracy):
-${JSON.stringify(structuredData, null, 2)}
-
-RAW RESUME TEXT (use for additional context):
-${(resume.rawText || '').substring(0, 5000)}`;
-    } else {
-      resumeContext = `Skills: ${resume.extractedSkills.join(', ')}
-Education: ${resume.education}
-Experience: ${resume.experience}
-Resume Text:
-${(resume.rawText || '').substring(0, 8000)}`;
-    }
+    const resumeContext = await buildResumeContext(req.user.id, { maxRawTextLength: 6000 });
 
     const prompt = `You are a world-class Technical Resume Optimizer and Career Coach. Your job is to help a candidate tailor their resume to match a specific job description or company requirements.
 
@@ -524,13 +412,9 @@ remove = 2-3 things that are irrelevant or harmful for this specific role
 modify = 3-4 specific bullet points or sections to rewrite for better fit
 keywords = top 5-8 ATS keywords from the job description missing in the resume`;
 
-    const response = await callGeminiWithRetry({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: { responseMimeType: "application/json" }
-    });
+    const response = await req.ai.generateJSONWithRetry(prompt);
 
-    const optimization = safeParseJSON(response.text);
+    const optimization = response.data;
 
     // Enrich with dimension scoring
     try {
@@ -654,10 +538,7 @@ ${resumeContext}
 
 Ensure it compiles directly with pdflatex without any errors. Only return the raw LaTeX code, without any markdown formatting blocks. Start the output immediately with \\documentclass.`;
 
-    const response = await callGeminiWithRetry({
-      model: 'gemini-2.5-flash',
-      contents: prompt
-    });
+    const response = await req.ai.generateTextWithRetry(prompt);
 
     let latexCode = response.text.replace(/^```(latex)?/im, '').replace(/```$/im, '').trim();
 
@@ -685,41 +566,7 @@ exports.tailorLatexToJob = async (req, res) => {
     }
 
     // ── Build the richest possible context from structured + raw data ──────
-    const profile = await UserProfile.findOne({ user: req.user.id });
-    let resumeContext = '';
-
-    if (profile) {
-      const structuredData = {
-        skills: profile.skills || resume.extractedSkills || [],
-        experience: (profile.experience || []).map(exp => ({
-          company: exp.company,
-          role: exp.role,
-          duration: exp.duration,
-          description: exp.description,
-        })),
-        education: (profile.education || []).map(edu => ({
-          institution: edu.institution,
-          degree: edu.degree,
-          duration: edu.duration,
-        })),
-        projects: (profile.projects || []).map(proj => ({
-          name: proj.name,
-          description: proj.description,
-          techStack: proj.techStack || [],
-        })),
-      };
-
-      resumeContext = `STRUCTURED RESUME DATA (parsed — high accuracy):
-${JSON.stringify(structuredData, null, 2)}
-
-RAW RESUME TEXT (for additional context):
-${(resume.rawText || '').substring(0, 6000)}`;
-    } else {
-      resumeContext = `Skills: ${resume.extractedSkills.join(', ')}
-Education: ${resume.education}
-Experience: ${resume.experience}
-Raw Text (first 8000 chars): ${(resume.rawText || '').substring(0, 8000)}`;
-    }
+    const resumeContext = await buildResumeContext(req.user.id, { maxRawTextLength: 6000 });
 
     const templateFile = path.join(__dirname, '..', 'utils', 'templates', `${template || 'modern'}.tex`);
     const templateInstructions = fs.readFileSync(templateFile, 'utf-8');
@@ -743,10 +590,7 @@ ${jobDescription.substring(0, 4000)}
 
 Only return the raw, compiling LaTeX code.`;
 
-    const response = await callGeminiWithRetry({
-      model: 'gemini-2.5-flash',
-      contents: prompt
-    });
+    const response = await req.ai.generateTextWithRetry(prompt);
 
     let latexCode = response.text.replace(/^```(latex)?/im, '').replace(/```$/im, '').trim();
 
@@ -879,23 +723,10 @@ exports.generateCoverLetter = async (req, res) => {
       return res.status(404).json({ message: 'No profile or resume found. Please upload your resume first.' });
     }
 
-    let profileContext = '';
-    if (profile) {
-      profileContext = `
-      Name: ${profile.basics?.name || req.user.name || ''}
-      Email: ${profile.basics?.email || req.user.email || ''}
-      Skills: ${(profile.skills || []).join(', ')}
-      Experience: ${JSON.stringify(profile.experience || [])}
-      Projects: ${JSON.stringify(profile.projects || [])}
-      Education: ${JSON.stringify(profile.education || [])}
-      `.trim();
-    } else {
-      profileContext = `
-      Skills: ${resume.extractedSkills.join(', ')}
-      Education: ${resume.education}
-      Experience: ${resume.experience}
-      `.trim();
-    }
+    let profileContext = await buildResumeContext(req.user.id, { 
+      maxRawTextLength: 6000, 
+      includeBasics: true 
+    });
 
     const prompt = `You are a world-class Executive Career Coach and Resume Writer. 
 Your task is to draft a highly personalized, ATS-friendly cover letter for a candidate applying to a specific job.
@@ -918,10 +749,7 @@ INSTRUCTIONS:
 
 Return ONLY the raw markdown text of the cover letter. Do not wrap in JSON.`;
 
-    const response = await callGeminiWithRetry({
-      model: 'gemini-2.5-flash',
-      contents: prompt
-    });
+    const response = await req.ai.generateTextWithRetry(prompt);
 
     const coverLetterText = response.text.trim();
     res.status(200).json({ coverLetter: coverLetterText });
@@ -941,60 +769,10 @@ exports.optimizeResumeFromFeedback = async (req, res) => {
       return res.status(400).json({ message: 'No feedback provided. Please run the analysis first.' });
     }
 
-    const resume = await Resume.findOne({ user: req.user.id });
-    if (!resume) {
-      return res.status(404).json({ message: 'No resume found. Please upload your resume first.' });
-    }
-
-    const profile = await UserProfile.findOne({ user: req.user.id });
-    let resumeContext = '';
-
-    if (profile) {
-      const structuredData = {
-        basics: {
-          name: profile.basics?.name || '',
-          email: profile.basics?.email || '',
-          phone: profile.basics?.phone || '',
-          location: profile.basics?.location || '',
-          summary: profile.basics?.summary || '',
-          linkedin: profile.basics?.linkedin || '',
-          github: profile.basics?.github || '',
-          portfolio: profile.basics?.portfolio || '',
-        },
-        skills: profile.skills || resume.extractedSkills || [],
-        experience: (profile.experience || []).map((exp, i) => ({
-          _index: i,
-          company: exp.company,
-          role: exp.role,
-          duration: exp.duration,
-          description: exp.description,
-        })),
-        education: (profile.education || []).map((edu, i) => ({
-          _index: i,
-          institution: edu.institution,
-          degree: edu.degree,
-          duration: edu.duration,
-        })),
-        projects: (profile.projects || []).map((proj, i) => ({
-          _index: i,
-          name: proj.name,
-          description: proj.description,
-          techStack: proj.techStack || [],
-        })),
-      };
-
-      resumeContext = `STRUCTURED RESUME DATA (parsed from upload — high accuracy):
-${JSON.stringify(structuredData, null, 2)}
-
-RAW RESUME TEXT (original PDF text — for additional context):
-${(resume.rawText || '').substring(0, 6000)}`;
-    } else {
-      resumeContext = `Skills: ${resume.extractedSkills.join(', ')}
-Education: ${resume.education}
-Experience: ${resume.experience}
-Raw Resume Text:
-${(resume.rawText || '').substring(0, 10000)}`;
-    }
+    const resumeContext = await buildResumeContext(req.user.id, { 
+      maxRawTextLength: 6000, 
+      includeBasics: true 
+    });
 
     // Build the feedback items into a clear list for the AI
     const feedbackItems = [];
@@ -1082,13 +860,9 @@ IMPORTANT:
 - The "optimizedProfile" must preserve all fields from the original, even ones that weren't changed.
 - Generate between 5-12 meaningful changes total.`;
 
-    const response = await callGeminiWithRetry({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: { responseMimeType: "application/json" }
-    });
+    const response = await req.ai.generateJSONWithRetry(prompt);
 
-    const result = safeParseJSON(response.text);
+    const result = response.data;
     res.status(200).json(result);
   } catch (error) {
     console.error('Optimize From Feedback Error:', error);
@@ -1138,13 +912,9 @@ Return EXACTLY this JSON (no markdown):
   ]
 }`;
 
-    const response = await callGeminiWithRetry({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: { responseMimeType: "application/json" }
-    });
+    const response = await req.ai.generateJSONWithRetry(prompt);
 
-    const result = safeParseJSON(response.text);
+    const result = response.data;
     res.status(200).json(result);
   } catch (error) {
     console.error('Rewrite Section Error:', error);
