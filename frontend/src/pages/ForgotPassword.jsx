@@ -1,7 +1,6 @@
 import { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, KeyRound, Lock, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
 const ForgotPassword = () => {
@@ -91,10 +90,7 @@ const ForgotPassword = () => {
 
   return (
     <div className="min-h-[calc(100vh-54px)] flex items-center justify-center p-4 sm:p-10 bg-bg-main">
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
+      <div
         className="w-full max-w-[440px] bg-bg-card rounded-2xl p-8 sm:p-11 shadow-sm border border-border-color"
       >
         {/* Logo */}
@@ -120,41 +116,29 @@ const ForgotPassword = () => {
         </p>
 
         {/* Alerts */}
-        <AnimatePresence mode="wait">
+        <>
           {error && (
-            <motion.div
-              key="error"
+            <div
               role="alert"
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
               className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm mb-5 font-medium"
             >
               {error}
-            </motion.div>
+            </div>
           )}
           {message && !error && (
-            <motion.div
-              key="message"
+            <div
               role="status"
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
               className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 px-4 py-3 rounded-xl text-sm mb-5 font-medium"
             >
               {message}
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        </>
 
         {/* Steps */}
-        <AnimatePresence mode="wait">
+        <>
           {step === 1 && (
-            <motion.form
-              key="step1"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+            <form
               onSubmit={handleSendOtp}
             >
               <div className="mb-4">
@@ -193,15 +177,11 @@ const ForgotPassword = () => {
                   Sign in
                 </Link>
               </p>
-            </motion.form>
+            </form>
           )}
 
           {step === 2 && (
-            <motion.form
-              key="step2"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+            <form
               onSubmit={handleVerifyOtp}
             >
               <div className="mb-4">
@@ -253,15 +233,11 @@ const ForgotPassword = () => {
                   ← Back to email
                 </button>
               </div>
-            </motion.form>
+            </form>
           )}
 
           {step === 3 && (
-            <motion.form
-              key="step3"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+            <form
               onSubmit={handleResetPassword}
             >
               <div className="mb-4">
@@ -324,10 +300,10 @@ const ForgotPassword = () => {
                 )}
                 {isLoading ? 'Resetting…' : 'Reset Password'}
               </button>
-            </motion.form>
+            </form>
           )}
-        </AnimatePresence>
-      </motion.div>
+        </>
+      </div>
     </div>
   );
 };
