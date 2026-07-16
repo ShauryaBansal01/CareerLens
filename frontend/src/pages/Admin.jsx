@@ -2,7 +2,6 @@ import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Users, Briefcase, Map, Plus, Database } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -97,7 +96,7 @@ const Admin = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 pb-20 pt-4 bg-gray-50 dark:bg-[#0f0f13] min-h-screen">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center space-x-4 mb-8">
+      <div className="flex items-center space-x-4 mb-8">
         <div className="w-12 h-12 bg-white dark:bg-dark-card shadow-sm text-blue-600 rounded-xl flex items-center justify-center">
           <Database className="w-6 h-6" />
         </div>
@@ -105,12 +104,10 @@ const Admin = () => {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Admin System Central</h1>
           <p className="text-gray-500 dark:text-gray-400 font-medium">Manage the platform's career data rules.</p>
         </div>
-      </motion.div>
+      </div>
 
       {feedback && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
+        <div
           className={`p-4 rounded-xl text-sm font-medium ${
             feedback.type === 'success'
               ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
@@ -118,7 +115,7 @@ const Admin = () => {
           }`}
         >
           {feedback.message}
-        </motion.div>
+        </div>
       )}
 
       {/* Stats */}
@@ -133,10 +130,7 @@ const Admin = () => {
           ))}
         </div>
       ) : stats && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
+        <div
           className="grid grid-cols-1 md:grid-cols-3 gap-6"
         >
           <div className="bg-white dark:bg-dark-card rounded-2xl shadow-sm border border-gray-100 dark:border-white/5 p-8 flex flex-col justify-between">
@@ -160,16 +154,13 @@ const Admin = () => {
             <p className="text-gray-500 dark:text-gray-400 font-medium text-sm tracking-widest uppercase">Roadmap Nodes</p>
             <p className="text-5xl font-black mt-2 text-gray-900 dark:text-white">{stats.roadmapsCount}</p>
           </div>
-        </motion.div>
+        </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
 
         {/* Add Role Form */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
+        <div
           className="bg-white dark:bg-dark-card rounded-2xl shadow-sm border border-gray-100 dark:border-white/5 p-8"
         >
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center border-b border-gray-100 dark:border-white/5 pb-4">
@@ -207,13 +198,10 @@ const Admin = () => {
               Save Target Role
             </button>
           </form>
-        </motion.div>
+        </div>
 
         {/* Add Project Form */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
+        <div
           className="bg-white dark:bg-dark-card rounded-2xl shadow-sm border border-gray-100 dark:border-white/5 p-8"
         >
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center border-b border-gray-100 dark:border-white/5 pb-4">
@@ -262,7 +250,7 @@ const Admin = () => {
               Deploy Project Template
             </button>
           </form>
-        </motion.div>
+        </div>
 
       </div>
     </div>

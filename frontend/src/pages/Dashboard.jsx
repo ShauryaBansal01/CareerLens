@@ -18,7 +18,6 @@ import {
   X,
   Rocket
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Dashboard() {
   useEffect(() => { document.title = 'Dashboard | CareerLens'; }, []);
@@ -118,12 +117,8 @@ export default function Dashboard() {
       )}
 
       {/* Onboarding welcome banner */}
-      <AnimatePresence>
         {showOnboarding && !stats?.activeResume && (
-          <motion.div
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
+          <div
             className="relative overflow-hidden rounded-2xl border border-accent-200 dark:border-accent-800 bg-gradient-to-br from-accent-50 via-white to-secondary-50 dark:from-accent-950/30 dark:via-slate-900 dark:to-secondary-950/20 p-6"
           >
             <button
@@ -154,9 +149,8 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
