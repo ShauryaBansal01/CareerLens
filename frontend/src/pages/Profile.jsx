@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
-import { Save, AlertCircle, Plus, Trash2 } from 'lucide-react';
+import { Save, AlertCircle, Plus, Trash2, Link2 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -14,7 +14,8 @@ const Profile = () => {
     skills: [],
     experience: [],
     education: [],
-    projects: []
+    projects: [],
+    customLinks: []
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -78,7 +79,8 @@ const Profile = () => {
     let newItem = {};
     if (type === 'experience') newItem = { company: '', role: '', duration: '', description: '' };
     if (type === 'education') newItem = { institution: '', degree: '', duration: '' };
-    if (type === 'projects') newItem = { name: '', description: '', techStack: [] };
+    if (type === 'projects') newItem = { name: '', description: '', techStack: [], link: '' };
+    if (type === 'customLinks') newItem = { label: '', url: '' };
 
     setProfile(prev => ({
       ...prev,
@@ -156,6 +158,7 @@ const Profile = () => {
             <input placeholder="Location" value={profile.basics?.location || ''} onChange={e => handleBasicChange('location', e.target.value)} className={inputClass} />
             <input placeholder="LinkedIn URL" value={profile.basics?.linkedin || ''} onChange={e => handleBasicChange('linkedin', e.target.value)} className={inputClass} />
             <input placeholder="GitHub URL" value={profile.basics?.github || ''} onChange={e => handleBasicChange('github', e.target.value)} className={inputClass} />
+            <input placeholder="Portfolio / Website URL" value={profile.basics?.portfolio || ''} onChange={e => handleBasicChange('portfolio', e.target.value)} className={inputClass} />
           </div>
           <textarea placeholder="Professional Summary" value={profile.basics?.summary || ''} onChange={e => handleBasicChange('summary', e.target.value)} className={`${inputClass} mt-4 min-h-[100px]`} />
         </div>
@@ -200,14 +203,41 @@ const Profile = () => {
           {(profile.projects || []).map((proj, idx) => (
             <div key={idx} className="bg-bg-main rounded-xl border border-border-color p-4 mb-4 relative">
               <button onClick={() => setConfirmDelete({ type: 'projects', index: idx })} className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition" aria-label="Remove project"><Trash2 size={16} /></button>
-              <div className="grid grid-cols-1 gap-3 mb-3 pr-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 pr-8">
                 <input placeholder="Project Name" value={proj.name} onChange={e => updateArrayItem('projects', idx, 'name', e.target.value)} className={inputClass} />
                 <input placeholder="Tech Stack (comma separated)" value={(proj.techStack || []).join(', ')} onChange={e => updateArrayItem('projects', idx, 'techStack', e.target.value)} className={inputClass} />
+                <div className="sm:col-span-2 flex items-center gap-2">
+                  <Link2 size={16} className="text-text-muted shrink-0" />
+                  <input placeholder="Project Link (GitHub repo, live demo, etc.)" value={proj.link || ''} onChange={e => updateArrayItem('projects', idx, 'link', e.target.value)} className={inputClass} />
+                </div>
               </div>
               <textarea placeholder="Description" value={proj.description} onChange={e => updateArrayItem('projects', idx, 'description', e.target.value)} className={`${inputClass} min-h-[80px]`} />
             </div>
           ))}
           {(!profile.projects || profile.projects.length === 0) && <p className="text-text-muted text-sm">No projects added. Click "Add Project" to start.</p>}
+        </div>
+
+        {/* Custom Links Section */}
+        <div className="bg-bg-card rounded-2xl border border-border-color p-6 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h3 className="text-xl font-bold text-text-main flex items-center gap-2"><Link2 size={20} className="text-accent-700 dark:text-accent-400" /> Custom Links</h3>
+              <p className="text-sm text-text-muted mt-1">Add any links you want on your resume header (LeetCode, Kaggle, Dribbble, personal blog, etc.)</p>
+            </div>
+            <button onClick={() => addArrayItem('customLinks')} className="text-accent-700 dark:text-accent-400 hover:text-accent-600 flex items-center gap-1 text-sm font-medium">
+              <Plus size={16} /> Add Link
+            </button>
+          </div>
+          {(profile.customLinks || []).map((link, idx) => (
+            <div key={idx} className="bg-bg-main rounded-xl border border-border-color p-4 mb-3 relative">
+              <button onClick={() => setConfirmDelete({ type: 'customLinks', index: idx })} className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition" aria-label="Remove link"><Trash2 size={16} /></button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pr-8">
+                <input placeholder="Label (e.g. LeetCode, Portfolio, Blog)" value={link.label} onChange={e => updateArrayItem('customLinks', idx, 'label', e.target.value)} className={inputClass} />
+                <input placeholder="URL (e.g. https://leetcode.com/username)" value={link.url} onChange={e => updateArrayItem('customLinks', idx, 'url', e.target.value)} className={inputClass} />
+              </div>
+            </div>
+          ))}
+          {(!profile.customLinks || profile.customLinks.length === 0) && <p className="text-text-muted text-sm">No custom links added. Click "Add Link" to start.</p>}
         </div>
 
         {/* Education Section */}

@@ -176,7 +176,7 @@ const ResumeLatex = () => {
     summary: "",
     education: [{ school: "", degree: "", dates: "" }],
     experience: [{ company: "", role: "", dates: "", bulletPoints: "" }],
-    projects: [{ name: "", techStack: "", description: "" }],
+    projects: [{ name: "", techStack: "", description: "", link: "" }],
     skills: "",
     enhanceWithAI: true
   });
@@ -577,7 +577,7 @@ const ResumeLatex = () => {
   };
   const removeExperience = (index) => setResumeData({...resumeData, experience: resumeData.experience.filter((_, i) => i !== index)});
 
-  const addProject = () => setResumeData({...resumeData, projects: [...resumeData.projects, { name: "", techStack: "", description: "" }]});
+  const addProject = () => setResumeData({...resumeData, projects: [...resumeData.projects, { name: "", techStack: "", description: "", link: "" }]});
   const updateProject = (index, field, value) => {
     const newProj = [...resumeData.projects];
     newProj[index][field] = value;
@@ -678,6 +678,7 @@ const ResumeLatex = () => {
                         <div className="grid grid-cols-2 gap-3 mb-3">
                           <input className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-card px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors" placeholder="Project Name" value={proj.name} onChange={e => updateProject(index, 'name', e.target.value)} />
                           <input className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-card px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors" placeholder="Tech Stack (e.g., React, Firebase)" value={proj.techStack} onChange={e => updateProject(index, 'techStack', e.target.value)} />
+                          <input className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-card px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors col-span-2" placeholder="Project Link (GitHub repo, live demo URL)" value={proj.link || ''} onChange={e => updateProject(index, 'link', e.target.value)} />
                         </div>
                         <textarea className="w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-card px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors min-h-[80px]" placeholder="Rough notes on the project... AI will enhance this!" value={proj.description} onChange={e => updateProject(index, 'description', e.target.value)} />
                       </div>

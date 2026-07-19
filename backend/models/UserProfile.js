@@ -16,7 +16,13 @@ const educationSchema = new mongoose.Schema({
 const projectSchema = new mongoose.Schema({
   name: { type: String, default: '' },
   description: { type: String, default: '' },
-  techStack: [{ type: String }]
+  techStack: [{ type: String }],
+  link: { type: String, default: '' }
+}, { _id: false });
+
+const customLinkSchema = new mongoose.Schema({
+  label: { type: String, default: '' },
+  url: { type: String, default: '' }
 }, { _id: false });
 
 const userProfileSchema = new mongoose.Schema({
@@ -39,7 +45,8 @@ const userProfileSchema = new mongoose.Schema({
   skills: [{ type: String }],
   experience: [experienceSchema],
   education: [educationSchema],
-  projects: [projectSchema]
+  projects: [projectSchema],
+  customLinks: [customLinkSchema]
 }, { timestamps: true });
 
 module.exports = mongoose.model('UserProfile', userProfileSchema);

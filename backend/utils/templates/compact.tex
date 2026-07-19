@@ -33,6 +33,11 @@ CRITICAL LATEX & DESIGN REQUIREMENTS (COMPACT):
     \item \textbf{Tools}{: Git, CI/CD, Linux}
   \end{itemize}
   \end{multicols}
+- LINKS & HYPERLINKS (CRITICAL):
+  - In the header, render ALL provided links (linkedin, github, portfolio, customLinks) as clickable \href{url}{Label} entries separated by $|$.
+  - For each project that has a non-empty "link" field, render the project name as a hyperlink: \textbf{\href{url}{Project Name}} instead of just \textbf{Project Name}.
+  - If a link URL is empty or missing, simply omit it. Never output placeholder URLs.
+  - Use \href{mailto:email}{email} for email, \href{tel:phone}{phone} for phone if provided.
 - Start output immediately with \documentclass. Do NOT output any markdown blocks.
 - IMPORTANT: Despite being compact, ensure the output still compiles cleanly. The multicols environment MUST be properly closed.
 - DO NOT define or use any custom commands or macros.

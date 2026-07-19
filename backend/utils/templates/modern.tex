@@ -30,5 +30,10 @@ CRITICAL LATEX & DESIGN REQUIREMENTS (MODERN - "JAKE'S RESUME" STYLE):
     \item \textbf{Languages}{: Java, Python, C/C++, SQL, JavaScript, HTML/CSS}
     \item \textbf{Technologies}{: React, Node.js, Express, PostgreSQL, MongoDB}
   \end{itemize}
+- LINKS & HYPERLINKS (CRITICAL):
+  - In the header, render ALL provided links (linkedin, github, portfolio, customLinks) as clickable \href{url}{Label} entries separated by $|$.
+  - For each project that has a non-empty "link" field, render the project name as a hyperlink: \textbf{\href{url}{Project Name}} instead of just \textbf{Project Name}.
+  - If a link URL is empty or missing, simply omit it. Never output placeholder URLs.
+  - Use \href{mailto:email}{email} for email, \href{tel:phone}{phone} for phone if provided.
 - Start output immediately with \documentclass. Do NOT output any markdown blocks.
 - DO NOT define or use any custom commands or macros like \safeText. Write pure, standard LaTeX.

@@ -530,6 +530,7 @@ CONDITIONAL LOGIC (EXTREMELY IMPORTANT):
 - IF a field, array, or section (such as 'projects', 'experience', 'education', 'skills', or any contact link) is EMPTY, blank, contains only whitespace, or is missing in the JSON, you MUST completely omit that section or field from the LaTeX document. 
 - Do NOT output empty headers (e.g. no "Projects" section if the projects array is empty).
 - Do NOT output placeholder text (e.g. "School Name" or "Company Name") if the user provided blank strings. Just skip that entry.
+- LINKS: If a project has a non-empty "link" field, render the project name as a hyperlink using \\href{url}{Project Name}. If personalInfo contains linkedin, github, or portfolio URLs, include them as clickable \\href{} links in the header. Omit empty links.
 
 ${enhancePrompt}
 

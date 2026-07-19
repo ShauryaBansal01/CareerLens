@@ -61,7 +61,15 @@ async function buildResumeContext(userId, options = {}) {
       name: proj.name,
       description: proj.description,
       techStack: proj.techStack || [],
+      link: proj.link || '',
     }));
+
+    if (includeBasics && profile.customLinks?.length) {
+      structuredData.customLinks = profile.customLinks.map(l => ({
+        label: l.label,
+        url: l.url,
+      }));
+    }
 
     return `STRUCTURED RESUME DATA (parsed from upload — high accuracy):
 ${JSON.stringify(structuredData, null, 2)}
