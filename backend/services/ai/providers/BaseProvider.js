@@ -6,74 +6,40 @@ class BaseProvider {
       throw new Error("Abstract classes can't be instantiated.");
     }
     this.apiKey = apiKey;
+    this.userId = null;
+    this.feature = null;
   }
 
-  /**
-   * Initialize or validate the provider.
-   */
   async initialize() {
     throw new Error("Method 'initialize()' must be implemented.");
   }
 
-  /**
-   * Generate text from a prompt.
-   * @param {string} prompt
-   * @param {object} options
-   * @returns {Promise<{text: string, usage: object}>}
-   */
   async generateText(prompt, options = {}) {
     throw new Error("Method 'generateText()' must be implemented.");
   }
 
-  /**
-   * Generate structured JSON from a prompt.
-   * @param {string} prompt
-   * @param {object} options
-   * @returns {Promise<{data: object, usage: object}>}
-   */
   async generateJSON(prompt, options = {}) {
     throw new Error("Method 'generateJSON()' must be implemented.");
   }
 
-  /**
-   * Abstract method for checking rate limits or custom logic.
-   */
   async checkHealth() {
     throw new Error("Method 'checkHealth()' must be implemented.");
   }
 
-  // ── Retry wrappers ─────────────────────────────────────────────────
-
-  /**
-   * Calls generateText with automatic retry on 429/503 errors.
-   * @param {string} prompt
-   * @param {object} [options]
-   * @param {number} [maxRetries=4]
-   * @returns {Promise<{text: string, usage: object}>}
-   */
   async generateTextWithRetry(prompt, options = {}, maxRetries = 4) {
     return this._withRetry(() => this.generateText(prompt, options), maxRetries);
   }
 
-  /**
-   * Calls generateJSON with automatic retry on 429/503 errors.
-   * @param {string} prompt
-   * @param {object} [options]
-   * @param {number} [maxRetries=4]
-   * @returns {Promise<{data: object, usage: object}>}
-   */
   async generateJSONWithRetry(prompt, options = {}, maxRetries = 4) {
     return this._withRetry(() => this.generateJSON(prompt, options), maxRetries);
   }
 
-  /**
-   * Generic retry wrapper with exponential backoff.
-   * Retries on 429 (rate-limit) and 503 (overloaded) errors.
-   */
   async _withRetry(fn, maxRetries = 4) {
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
-        return await fn();
+        const result = await fn();
+        this._trackUsage(result.usage).catch(() => {});
+        return result;
       } catch (error) {
         const isRetryable = error.status === 503 || error.status === 429;
         const isLastAttempt = attempt >= maxRetries - 1;
@@ -93,6 +59,24 @@ class BaseProvider {
           throw error;
         }
       }
+    }
+  }
+
+  async _trackUsage(usage) {
+    if (!this.userId || !usage) return;
+    try {
+      const AIUsage = require('../../models/AIUsage');
+      await AIUsage.create({
+        user: this.userId,
+        provider: this.constructor.name.replace('Provider', '').toLowerCase(),
+        feature: this.feature || 'unknown',
+        promptTokens: usage.promptTokens || 0,
+        completionTokens: usage.completionTokens || 0,
+        totalTokens: usage.totalTokens || 0,
+        estimatedCostUSD: usage.estimatedCostUSD || 0,
+      });
+    } catch (err) {
+      console.error('[AIUsage] Failed to track usage:', err.message);
     }
   }
 }

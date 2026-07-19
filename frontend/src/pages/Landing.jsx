@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
   Sparkles, ArrowRight, LayoutDashboard, UploadCloud, Code2, FileText, Map, Target
 } from 'lucide-react';
@@ -29,7 +30,11 @@ export default function Landing() {
   useEffect(() => { document.title = 'CareerLens — AI-Powered Career Optimization'; }, []);
 
   return (
-    <main className="flex-1">
+    <motion.main
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="flex-1">
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden pt-24 pb-20 sm:pt-32 sm:pb-28">
         {/* Background decorations */}
@@ -136,6 +141,6 @@ export default function Landing() {
               </div>
         </div>
       </footer>
-    </main>
+    </motion.main>
   );
 }

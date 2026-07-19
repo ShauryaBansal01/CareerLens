@@ -1,5 +1,6 @@
 const GeminiProvider = require('./providers/GeminiProvider');
 const OpenAIProvider = require('./providers/OpenAIProvider');
+const AnthropicProvider = require('./providers/AnthropicProvider');
 
 class AIServiceFactory {
   /**
@@ -15,8 +16,7 @@ class AIServiceFactory {
       case 'openai':
         return new OpenAIProvider(apiKey);
       case 'anthropic':
-        // return new AnthropicProvider(apiKey);
-        throw new Error(`Provider ${providerName} is not yet supported`);
+        return new AnthropicProvider(apiKey);
       default:
         throw new Error(`Unknown AI Provider: ${providerName}`);
     }

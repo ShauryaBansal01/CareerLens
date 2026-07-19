@@ -5,6 +5,7 @@ import api from '../services/api';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { motion } from 'framer-motion';
 import { 
   FileText, 
   UploadCloud, 
@@ -70,8 +71,8 @@ export default function Dashboard() {
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const res = await fetch(import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000');
-        if (res.ok) setApiStatus('operational');
+        const res = await api.get('/../');
+        if (res.status === 200) setApiStatus('operational');
         else setApiStatus('degraded');
       } catch {
         setApiStatus('down');
@@ -90,7 +91,11 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-8">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+      className="space-y-8">
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -291,6 +296,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </motion.div>
   );
 }

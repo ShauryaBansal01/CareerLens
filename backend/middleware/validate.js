@@ -6,7 +6,8 @@ const validate = (schema) => (req, res, next) => {
     next();
   } catch (err) {
     if (err instanceof z.ZodError) {
-      const messages = err.errors.map(e => e.message);
+      const issues = err.issues || err.errors || [];
+      const messages = issues.map(e => e.message);
       return res.status(400).json({ message: messages.join('; ') });
     }
     next(err);
@@ -81,9 +82,8 @@ const schemas = {
     }),
   }),
   rewriteSection: z.object({
-    section: z.string().min(1, 'Section name is required'),
-    currentText: z.string().min(1, 'Current text is required'),
-    instructions: z.string().min(1, 'Instructions are required'),
+    sectionType: z.string().min(1, 'Section type is required'),
+    sectionContent: z.string().min(10, 'Section content must be at least 10 characters'),
   }),
 };
 

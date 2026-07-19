@@ -28,6 +28,7 @@ const injectAI = async (req, res, next) => {
       try {
         const decryptedKey = userKeyRecord.getDecryptedKey();
         req.ai = AIServiceFactory.getProvider(targetProvider, decryptedKey);
+        req.ai.userId = req.user._id;
         
         // Update last used asynchronously
         userKeyRecord.lastUsedAt = new Date();
@@ -43,6 +44,7 @@ const injectAI = async (req, res, next) => {
     // 3. Fallback to System Default Provider
     try {
       req.ai = AIServiceFactory.getSystemDefaultProvider();
+      req.ai.userId = req.user?._id;
       next();
     } catch (sysErr) {
       return res.status(503).json({
