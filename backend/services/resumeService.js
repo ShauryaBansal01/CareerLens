@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { callGeminiWithRetry, stripCodeFences } = require('../utils/retryWithBackoff');
+const { callGeminiWithRetry, stripCodeFences, sanitizeLatexCode } = require('../utils/retryWithBackoff');
 
 const TEMPLATES_DIR = path.join(__dirname, '..', 'utils', 'templates');
 
@@ -96,7 +96,7 @@ ADDITIONAL INSTRUCTIONS:
     if (useMultiPass) {
       // Pass 1: Generate initial LaTeX
       const response1 = await callGeminiWithRetry(apiKey, { contents: prompt }, { model });
-      latexCode = stripCodeFences(response1.text);
+      latexCode = sanitizeLatexCode(stripCodeFences(response1.text));
 
       // Pass 2: AI self-review
       const reviewPrompt = `${MULTI_PASS_REVIEW_PROMPT}
@@ -131,14 +131,14 @@ ${review.specificInstructions}
 CRITICAL: Fix ALL issues mentioned above. Apply the specific instructions. Use strong action verbs and metrics in every bullet. Return ONLY the valid LaTeX code.`;
 
           const response3 = await callGeminiWithRetry(apiKey, { contents: refinePrompt }, { model });
-          latexCode = stripCodeFences(response3.text);
+          latexCode = sanitizeLatexCode(stripCodeFences(response3.text));
         }
       } catch (reviewError) {
         console.warn('Multi-pass review failed, using single-pass result:', reviewError.message);
       }
     } else {
       const response = await callGeminiWithRetry(apiKey, { contents: prompt }, { model });
-      latexCode = stripCodeFences(response.text);
+      latexCode = sanitizeLatexCode(stripCodeFences(response.text));
     }
 
     return latexCode;
@@ -208,7 +208,7 @@ Apply your analysis to rewrite the resume following these rules:
 8. Return ONLY the complete, valid tailored LaTeX code. Start with \\documentclass and end with \\end{document}. No markdown blocks.`;
 
     const response = await callGeminiWithRetry(apiKey, { contents: prompt }, { model });
-    return stripCodeFences(response.text);
+    return sanitizeLatexCode(stripCodeFences(response.text));
   } catch (error) {
     console.error('Error tailoring LaTeX:', error);
     throw new Error('Failed to tailor LaTeX resume');
@@ -280,7 +280,7 @@ ADDITIONAL INSTRUCTIONS:
 
     const model = useProModel ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
     const response = await callGeminiWithRetry(apiKey, { contents: prompt }, { model });
-    return stripCodeFences(response.text);
+    return sanitizeLatexCode(stripCodeFences(response.text));
   } catch (error) {
     console.error('Error generating base LaTeX with achievements:', error);
     throw new Error('Failed to generate base LaTeX');
