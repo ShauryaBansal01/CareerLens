@@ -9,6 +9,7 @@ const {
   getLatexCode,
   saveLatexCode,
   generateLatexTemplate,
+  previewTemplate,
   tailorLatexToJob,
   getVersions,
   getVersionById,
@@ -54,6 +55,7 @@ router.get('/templates', protect, getTemplates);
 router.get('/latex', protect, getLatexCode);
 router.post('/latex', protect, saveLatexCode);
 router.post('/latex/generate', protect, aiLimiter, injectAI, generateLatexTemplate);
+router.post('/latex/preview', protect, previewTemplate);
 router.post('/latex/tailor', protect, aiLimiter, validate(schemas.tailorLatexToJob), injectAI, tailorLatexToJob);
 
 // Versioning Routes

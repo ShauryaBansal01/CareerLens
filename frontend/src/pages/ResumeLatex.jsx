@@ -10,6 +10,7 @@ import AuthContext from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { useContext } from 'react';
 import { useLocation } from 'react-router-dom';
+import TemplateGallery from '../components/latex/TemplateGallery';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -199,11 +200,7 @@ const ResumeLatex = () => {
 
   // Template State
   const [selectedTemplate, setSelectedTemplate] = useState('modern');
-  const [availableTemplates, setAvailableTemplates] = useState([
-    { name: 'modern', label: 'Modern' },
-    { name: 'classic', label: 'Classic' },
-    { name: 'compact', label: 'Compact' },
-  ]);
+  const [availableTemplates, setAvailableTemplates] = useState([]);
 
   // View toggle (Phase 3)
   const [rightPaneView, setRightPaneView] = useState('preview'); // 'preview' | 'source'
@@ -282,6 +279,44 @@ const ResumeLatex = () => {
       }
     }
   }, [location.state, versions]);
+
+  // Fetch available templates from API
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      if (!user) return;
+      try {
+        const config = { headers: { Authorization: `Bearer ${user.token}` } };
+        const { data } = await axios.get(`${API_URL}/resume/templates`, config);
+        if (data && data.length > 0) setAvailableTemplates(data);
+      } catch {
+        // fallback — component has hardcoded defaults
+      }
+    };
+    fetchTemplates();
+  }, [user]);
+
+  // Auto-preview: when template changes, generate sample LaTeX and compile
+  useEffect(() => {
+    if (!user) return;
+
+    const generatePreview = async () => {
+      try {
+        const config = { headers: { Authorization: `Bearer ${user.token}` } };
+        const { data } = await axios.post(
+          `${API_URL}/resume/latex/preview`,
+          { template: selectedTemplate },
+          config
+        );
+        if (data.rawLatexCode) {
+          setLatexCode(data.rawLatexCode);
+          setTimeout(() => compilePdf(data.rawLatexCode), 500);
+        }
+      } catch {
+        // preview failed silently — user can still use the template
+      }
+    };
+    generatePreview();
+  }, [selectedTemplate, user]);
 
   const handleEditorChange = (value) => {
     setLatexCode(value);
@@ -445,7 +480,14 @@ const ResumeLatex = () => {
     setTailoring(false);
   };
 
-  const compilePdf = async () => {
+  function sanitizeLatexCode(code) {
+    const colors = ['black','white','red','green','blue','cyan','magenta','yellow','gray','grey','darkgray','darkgrey','lightgray','lightgrey','brown','lime','olive','orange','pink','purple','teal','violet'];
+    return code.replace(new RegExp('\\b(' + colors.map(c => c.toUpperCase()).join('|') + ')\\b', 'g'), m => m.toLowerCase());
+  }
+
+  const compilePdf = async (content) => {
+    let code = sanitizeLatexCode(content || latexCode);
+    if (!code) return;
     setCompiling(true);
     try {
       const form = document.createElement('form');
@@ -457,7 +499,7 @@ const ResumeLatex = () => {
       const filecontents = document.createElement('input');
       filecontents.type = 'hidden';
       filecontents.name = 'filecontents[]';
-      filecontents.value = latexCode;
+      filecontents.value = code;
 
       const filename = document.createElement('input');
       filename.type = 'hidden';
@@ -865,17 +907,12 @@ const ResumeLatex = () => {
             AI Wizard
           </button>
 
-          <div className="flex items-center gap-1.5 ml-1">
-            <span className="text-[10px] text-text-muted font-medium">Template:</span>
-            <select
-              value={selectedTemplate}
-              onChange={e => setSelectedTemplate(e.target.value)}
-              className="text-[11px] font-medium bg-slate-100 dark:bg-dark-card border border-border-color rounded-lg px-2 py-1 text-text-main outline-none cursor-pointer"
-            >
-              {availableTemplates.map(t => (
-                <option key={t.name} value={t.name}>{t.label}</option>
-              ))}
-            </select>
+          <div className="ml-1">
+            <TemplateGallery
+              selected={selectedTemplate}
+              onSelect={setSelectedTemplate}
+              templates={availableTemplates}
+            />
           </div>
 
           <button
