@@ -8,6 +8,13 @@ const path = require('path');
 const { invalidateUserCache } = require('../middleware/aiCache');
 const { buildResumeContext } = require('../utils/buildResumeContext');
 
+function sanitizeLatexCode(code) {
+  const colorNames = ['black','white','red','green','blue','cyan','magenta','yellow','gray','grey','darkgray','darkgrey','lightgray','lightgrey','brown','lime','olive','orange','pink','purple','teal','violet'];
+  const upperPattern = new RegExp(`\\b(${colorNames.map(c => c.toUpperCase()).join('|')})\\b`, 'g');
+  const lowerMap = Object.fromEntries(colorNames.map(c => [c.toUpperCase(), c]));
+  return code.replace(upperPattern, m => lowerMap[m]);
+}
+
 // Load LaTeX prompt instructions from external file to avoid JS string escaping issues
 const LATEX_INSTRUCTIONS = fs.readFileSync(
   path.join(__dirname, '..', 'utils', 'latexPromptInstructions.txt'),
@@ -541,12 +548,30 @@ Ensure it compiles directly with pdflatex without any errors. Only return the ra
 
     const response = await req.ai.generateTextWithRetry(prompt);
 
-    let latexCode = response.text.replace(/^```(latex)?/im, '').replace(/```$/im, '').trim();
+    let latexCode = sanitizeLatexCode(response.text.replace(/^```(latex)?/im, '').replace(/```$/im, '').trim());
 
     res.status(200).json({ rawLatexCode: latexCode });
   } catch (error) {
     console.error('LaTeX Generation Error:', error);
     res.status(500).json({ message: 'Failed to generate LaTeX template.' });
+  }
+};
+
+// @desc    Generate a sample LaTeX preview with placeholder data
+// @route   POST /api/resume/latex/preview
+// @access  Private
+exports.previewTemplate = async (req, res) => {
+  try {
+    const { template } = req.body;
+    const templateName = template || 'modern';
+
+    const previewFile = path.join(__dirname, '..', 'utils', 'templates', `preview_${templateName}.tex`);
+    const latexCode = fs.readFileSync(previewFile, 'utf-8');
+
+    res.status(200).json({ rawLatexCode: latexCode, template: templateName });
+  } catch (error) {
+    console.error('Preview Template Error:', error);
+    res.status(500).json({ message: 'Failed to generate template preview.' });
   }
 };
 
@@ -593,7 +618,7 @@ Only return the raw, compiling LaTeX code.`;
 
     const response = await req.ai.generateTextWithRetry(prompt);
 
-    let latexCode = response.text.replace(/^```(latex)?/im, '').replace(/```$/im, '').trim();
+    let latexCode = sanitizeLatexCode(response.text.replace(/^```(latex)?/im, '').replace(/```$/im, '').trim());
 
     res.status(200).json({ rawLatexCode: latexCode });
   } catch (error) {
@@ -963,6 +988,21 @@ exports.getATSScore = async (req, res) => {
   }
 };
 
+const TEMPLATE_META = {
+  modern: {
+    label: 'Modern',
+    description: 'Clean serif layout with moderate spacing. Balances density and readability — a safe choice for most roles.',
+    bestFor: 'Software engineers, tech roles, general use',
+    features: ['11pt TeX Gyre Termes serif', '0.5in margins', 'Moderate item spacing (1pt)', 'Scalloped section headers'],
+  },
+  compact: {
+    label: 'Compact',
+    description: 'Dense, space-efficient layout fitting more content per page. Uses two-column skills section.',
+    bestFor: 'Experienced professionals with extensive history',
+    features: ['10pt TeX Gyre Termes serif', '0.4in margins', 'Tight item spacing (0pt)', 'Two-column skills layout'],
+  },
+};
+
 // @desc    Get template options
 // @route   GET /api/resume/templates
 // @access  Private
@@ -971,12 +1011,19 @@ exports.getTemplates = async (req, res) => {
     const fs = require('fs');
     const path = require('path');
     const templatesDir = path.join(__dirname, '..', 'utils', 'templates');
-    const files = fs.readdirSync(templatesDir).filter(f => f.endsWith('.tex'));
+    const files = fs.readdirSync(templatesDir).filter(f => f.endsWith('.tex') && !f.startsWith('preview_'));
 
-    const templates = files.map(f => ({
-      name: f.replace('.tex', ''),
-      label: f.replace('.tex', '').charAt(0).toUpperCase() + f.replace('.tex', '').slice(1),
-    }));
+    const templates = files.map(f => {
+      const name = f.replace('.tex', '');
+      const meta = TEMPLATE_META[name] || {};
+      return {
+        name,
+        label: meta.label || name.charAt(0).toUpperCase() + name.slice(1),
+        description: meta.description || '',
+        bestFor: meta.bestFor || '',
+        features: meta.features || [],
+      };
+    });
 
     res.status(200).json(templates);
   } catch (error) {

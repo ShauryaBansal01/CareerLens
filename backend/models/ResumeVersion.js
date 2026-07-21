@@ -34,7 +34,7 @@ const resumeVersionSchema = new mongoose.Schema({
   },
   template: {
     type: String,
-    enum: ['modern', 'classic', 'compact'],
+    enum: ['modern', 'compact'],
     default: 'modern'
   }
 }, { timestamps: true });
