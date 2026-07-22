@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { motion } from 'framer-motion';
+import { Tour } from '../components/onboarding/Tour';
 import { 
   FileText, 
   UploadCloud, 
@@ -296,6 +297,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+      <Tour />
     </motion.div>
   );
 }
