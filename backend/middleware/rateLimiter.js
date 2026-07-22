@@ -47,4 +47,25 @@ const authLimiter = rateLimit({
   },
 });
 
-module.exports = { generalLimiter, aiLimiter, authLimiter };
+/**
+ * Per-user (or per-IP as fallback) rate limiter for authenticated endpoints.
+ * Keys on req.user.id when available, falls back to IP.
+ */
+const userLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { keyGeneratorIpFallback: false },
+  keyGenerator: (req) => {
+    if (req.user?.id) return req.user.id.toString();
+    const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+    return ip.replace(/^::ffff:/, '');
+  },
+  message: {
+    success: false,
+    message: 'Too many requests, please try again after 15 minutes.',
+  },
+});
+
+module.exports = { generalLimiter, aiLimiter, authLimiter, userLimiter };
