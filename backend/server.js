@@ -1,5 +1,15 @@
 const dotenv = require('dotenv');
 dotenv.config();
+
+const Sentry = require('@sentry/node');
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  environment: process.env.NODE_ENV || 'development',
+  tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE) || 0.1,
+  enabled: !!process.env.SENTRY_DSN,
+});
+
 const os = require('os');
 const express = require('express');
 const cors = require('cors');
@@ -26,12 +36,29 @@ const app = express();
 
 // ── Performance & Security Middleware ──────────────────────────────────
   app.use(compression());   // Gzip all responses — reduces bandwidth by 60-80%
-  app.use(helmet());        // Set secure HTTP headers
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "https://texlive.net"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:", "blob:"],
+        connectSrc: ["'self'", process.env.FRONTEND_URL || 'http://localhost:5173'],
+        workerSrc: ["'self'", "blob:"],
+        frameSrc: ["'self'", "https://texlive.net"],
+      },
+    },
+  }));        // Set secure HTTP headers
 
   app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Adjust based on your deployed frontend URL
     credentials: true
   }));
+  if (process.env.SENTRY_DSN && Sentry.Handlers) {
+    app.use(Sentry.Handlers.requestHandler());
+    app.use(Sentry.Handlers.tracingHandler());
+  }
   app.use(express.json());
 
   // Health check — no rate limiting (used by Render & UptimeRobot)
@@ -52,6 +79,11 @@ const app = express();
   app.use('/api/profile', profileRoutes);
   app.use('/api/keys', require('./routes/apiKeyRoutes'));
 
+  // Sentry error handler (must be BEFORE the generic error handler)
+  if (process.env.SENTRY_DSN && Sentry.Handlers) {
+    app.use(Sentry.Handlers.errorHandler());
+  }
+
   // ── Global Error Handler (must be AFTER all routes) ───────────────────
   app.use((err, req, res, _next) => {
     console.error('Unhandled error:', err.stack || err.message || err);
@@ -71,10 +103,12 @@ const app = express();
 
   // ── Graceful Shutdown ─────────────────────────────────────────────────
   const { cleanup: cleanupAiCache } = require('./middleware/aiCache');
+  const { cacheClose } = require('./config/redis');
 
   const shutdown = (signal) => {
     console.log(`\n${signal} received. Shutting down gracefully...`);
     cleanupAiCache();
+    cacheClose().catch(() => {});
     server.close(() => {
       console.log('HTTP server closed.');
       process.exit(0);
