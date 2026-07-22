@@ -28,7 +28,7 @@ const buttonVariants = cva(
   }
 )
 
-const Button = React.forwardRef(({ className, variant, size, icon: Icon, isLoading, children, ...props }, ref) => {
+const Button = React.memo(React.forwardRef(({ className, variant, size, icon: Icon, isLoading, children, ...props }, ref) => {
   return (
     <button
       className={cn(buttonVariants({ variant, size, className }))}
@@ -44,7 +44,7 @@ const Button = React.forwardRef(({ className, variant, size, icon: Icon, isLoadi
       {children}
     </button>
   )
-})
+}))
 Button.displayName = "Button"
 
 export { Button, buttonVariants }
