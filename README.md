@@ -88,6 +88,9 @@ A full-featured LaTeX editor powered by **Monaco Editor** (the engine behind VS 
 - **AI Section Rewrite** — Click any `\section{}` to rewrite it with AI, with a diff view to accept/reject
 - **Tailor to Job** — Paste a JD and the AI rewrites your entire LaTeX resume to match
 - **In-browser PDF compilation** — Uses the `texlive.net` online compiler to render your LaTeX to PDF without installing anything
+- **Keyboard shortcuts** — `Ctrl+S` to save, `Shift+Enter` to compile
+- **PDF Preview modal** — Full-screen PDF viewer for compiled documents
+- **Monaco Editor lazy-loaded** — Code-split for faster initial page load
 - **Download .tex** — Export the raw LaTeX file at any time
 
 > **Why?** LaTeX produces the best-looking, most ATS-compatible resumes, but it's intimidating. This makes it accessible to everyone.
@@ -125,17 +128,37 @@ Users can configure their own API keys in the **Settings** dashboard. Keys are *
 - Built with **React 19** and **Tailwind CSS**
 - Fluid animations powered by **Framer Motion**
 - System-preference-aware **Dark Mode** toggle
-- **Responsive sidebar** layout with mobile hamburger menu
+- **Responsive sidebar** layout with mobile hamburger menu and breakpoint detection
 - Persistent page state — generated results survive tab navigation
+- **Onboarding Tour** — Step-by-step highlight guide for new users on the Dashboard
 
 ### 10. 📧 Email Verification & OTP
-- OTP-based email verification during registration
+- OTP-based email verification during registration with **cryptographically strong 10-char hex codes**
 - SMTP integration via **Nodemailer** for welcome emails and notifications
 
 ### 11. 🛡️ Admin Dashboard
 - View platform statistics (total users, resumes, AI usage)
 - Manage roles and projects
+- **Feature Flags** — Toggle features on/off per user or percentage without deploying
+- **Audit Logging** — All admin and auth actions are logged for security review
 - Protected by `admin` middleware — only admin users can access
+
+### 12. 🔒 Enterprise-Grade Security
+- **JWT Refresh Token Rotation** — Short-lived access tokens (15 min) with refresh token family tracking. Stale or compromised refresh tokens are detected and revoked.
+- **Content Security Policy** — Strict CSP headers via Helmet whitelisting only trusted origins (texlive.net, fonts.googleapis.com, etc.)
+- **Per-User Rate Limiting** — In addition to IP-based limits, heavy AI operations are throttled per user ID
+- **Audit Trail** — Every admin operation, API key change, registration, and password reset is logged with IP and user agent
+
+### 13. 🧪 Testing Infrastructure
+- **Vitest unit tests** — 9 tests across Button, Card, and Badge components with React Testing Library
+- **Playwright E2E tests** — Auth flow and navigation smoke tests
+- **Test scripts** — `npm test`, `npm run test:watch`, `npm run test:e2e`
+
+### 14. 📊 Performance Optimizations
+- **Redis caching** — In-memory fallback with Redis for cross-worker cache sharing; 5-min TTL on AI responses
+- **React.memo** — Memoized Button, Card, Badge components to prevent unnecessary re-renders
+- **Code splitting** — Monaco Editor and other heavy components lazy-loaded via `React.lazy`
+- **Bundle analysis** — `rollup-plugin-visualizer` produces interactive bundle size reports
 
 ---
 
@@ -162,23 +185,28 @@ graph TB
 
     subgraph Server ["Backend (Render)"]
         M["Express 5 + Cluster Mode"] --> N["Middleware Stack"]
-        N --> N1["helmet — Security Headers"]
+        N --> N1["helmet — CSP + Security Headers"]
         N --> N2["compression — Gzip"]
-        N --> N3["rateLimiter — 3-Tier"]
-        N --> N4["authMiddleware — JWT"]
+        N --> N3["rateLimiter — 3-Tier + Per-User"]
+        N --> N4["authMiddleware — JWT + Refresh Tokens"]
         N --> N5["injectAI — Provider Selection"]
-        N --> N6["aiCache — Response Cache"]
+        N --> N6["aiCache — Redis + In-Memory Cache"]
+        N --> N7["auditLogger — Admin & Auth Actions"]
+        N --> N8["featureFlag — Per-User Feature Gating"]
+        N --> N9["Sentry — Error Tracking"]
         M --> O["Route Handlers"]
-        O --> O1["Auth Routes"]
+        O --> O1["Auth Routes (+ /refresh-token, /logout)"]
         O --> O2["Resume Routes"]
         O --> O3["Analysis Routes"]
         O --> O4["Profile Routes"]
         O --> O5["API Key Routes"]
-        O --> O6["Admin Routes"]
+        O --> O6["Admin Routes (+ feature flags)"]
         M --> P["Services"]
         P --> P1["AIServiceFactory"]
         P --> P2["resumeService"]
         P --> P3["analysisService"]
+        M --> C["Redis Cache (optional)"]
+        C --> N6
     end
 
     subgraph AI ["AI Providers"]
@@ -193,6 +221,9 @@ graph TB
         V["UserProfiles"]
         W["APIKeys (AES-256-GCM)"]
         X["AIUsage Logs"]
+        Y["RefreshTokens (family-tracked)"]
+        Z["AuditLogs"]
+        AA["FeatureFlags"]
     end
 
     A -- "Axios HTTP" --> M
@@ -254,7 +285,17 @@ if (cluster.isPrimary) {
 
 > **Why?** Node.js is single-threaded. Without clustering, a single process can only use one CPU core. Clustering spreads the load across all available cores, multiplying throughput linearly.
 
-### 2. AI Response Caching (In-Memory TTL Cache)
+### 2. AI Response Caching (Redis + In-Memory Fallback)
+
+```javascript
+// config/redis.js — Redis connection with graceful degradation
+let redis = null;
+try {
+  redis = new Redis(process.env.REDIS_URL);
+} catch {
+  // Falls back to in-memory Map (no cross-worker sharing, but still works)
+}
+```
 
 ```javascript
 // middleware/aiCache.js — SHA-256 keyed cache with 5-min TTL
@@ -270,18 +311,20 @@ function getCacheKey(req) {
 
 - **Cache hit**: 0ms response (vs. 3-8s for a Gemini API call)
 - **TTL**: 5 minutes — long enough to survive tab switches, short enough to reflect new data
-- **Automatic cleanup**: Expired entries are garbage-collected every 10 minutes
+- **Redis backend**: Shares cache across all cluster workers (prevents duplicate AI calls)
+- **In-memory fallback**: When Redis is unavailable, falls back to a local Map
 - **User-scoped invalidation**: When a user uploads a new resume, all their cached results are cleared
 
-> **Why?** AI API calls are the bottleneck — each one takes 3-8 seconds and costs money. If a user clicks "Analyze" twice in a row, the second call should be instant.
+> **Why?** AI API calls are the bottleneck — each one takes 3-8 seconds and costs money. If a user clicks "Analyze" twice in a row, the second call should be instant. Redis ensures cache hits even across load-balanced workers.
 
-### 3. 3-Tier Rate Limiting
+### 3. 4-Tier Rate Limiting
 
 | Tier | Scope | Limit | Purpose |
 |------|-------|-------|---------|
 | **General** | All `/api/*` routes | 100 req / 15 min / IP | Prevent abuse & DDoS |
 | **Auth** | Login & Register | 20 req / 15 min / IP | Block brute-force attacks |
 | **AI** | All AI-powered routes | 10 req / 15 min / IP | Protect expensive Gemini API quota |
+| **Per-User** | AI & upload routes | 10 req / 15 min / user | Prevent single user from exhausting quota |
 
 > **Why?** Without rate limiting, a single bad actor could exhaust the entire Gemini API quota in minutes, taking down the service for all users.
 
@@ -354,6 +397,11 @@ for (let attempt = 0; attempt < maxRetries; attempt++) {
 | **Axios** | 1.14 | HTTP client with interceptors |
 | **Lucide React** | 1.7 | Icon library (400+ icons) |
 | **class-variance-authority** | 0.7 | Component variant styling |
+| **@sentry/react** | 10.67 | Error tracking and performance monitoring |
+| **react-pdf** | 10.4 | PDF preview inside the LaTeX builder |
+| **vitest** | 4.1 | Unit testing framework |
+| **@playwright/test** | 1.61 | End-to-end testing |
+| **rollup-plugin-visualizer** | 7.0 | Bundle size analysis |
 
 ### Backend
 
@@ -365,10 +413,12 @@ for (let attempt = 0; attempt < maxRetries; attempt++) {
 | **Mongoose** | 9.3 | ODM with schema validation |
 | **@google/genai** | 1.47 | Google Gemini AI SDK |
 | **bcrypt** | 6.0 | Password hashing (10 salt rounds) |
-| **jsonwebtoken** | 9.0 | JWT authentication (30-day expiry) |
-| **helmet** | 8.2 | Security headers (XSS, HSTS, etc.) |
+| **jsonwebtoken** | 9.0 | JWT authentication (15-min access, 7-day refresh) |
+| **helmet** | 8.2 | Security headers with CSP configuration |
 | **compression** | 1.8 | Gzip response compression |
-| **express-rate-limit** | 8.5 | 3-tier rate limiting |
+| **express-rate-limit** | 8.5 | 4-tier rate limiting (general, auth, AI, per-user) |
+| **ioredis** | 5.11 | Redis client for cross-worker cache sharing |
+| **@sentry/node** | 10.67 | Error tracking and APM |
 | **multer** | 2.1 | PDF file upload handling |
 | **nodemailer** | 8.0 | SMTP email delivery |
 | **pdf-parse** | 1.1 | PDF text extraction |
@@ -395,30 +445,35 @@ CareerLens/
 │   ├── 📄 server.js                     # Entry point — cluster mode + Express setup
 │   ├── 📄 package.json                  # Backend dependencies
 │   │
-│   ├── 📁 config/
-│   │   └── 📄 db.js                     # MongoDB connection with pool tuning
+    │   ├── 📁 config/
+    │   │   ├── 📄 db.js                     # MongoDB connection with pool tuning
+    │   │   └── 📄 redis.js                  # Redis connection with in-memory fallback
+    │   │
+    │   ├── 📁 middleware/
+    │   │   ├── 📄 authMiddleware.js         # JWT verification + admin guard
+    │   │   ├── 📄 rateLimiter.js            # 4-tier rate limiting (general, auth, AI, user)
+    │   │   ├── 📄 aiCache.js               # Redis-backed AI response cache with TTL
+    │   │   ├── 📄 auditLogger.js           # Audit trail for admin & auth operations
+    │   │   ├── 📄 featureFlag.js           # Feature gating per user / percentage
+    │   │   └── 📄 injectAI.js              # AI provider selection (BYOK → system fallback)
 │   │
-│   ├── 📁 middleware/
-│   │   ├── 📄 authMiddleware.js         # JWT verification + admin guard
-│   │   ├── 📄 rateLimiter.js            # 3-tier rate limiting (general, auth, AI)
-│   │   ├── 📄 aiCache.js               # In-memory AI response cache with TTL
-│   │   └── 📄 injectAI.js              # AI provider selection (BYOK → system fallback)
+    │   ├── 📁 models/
+    │   │   ├── 📄 User.js                   # User account (bcrypt password, role, AI provider)
+    │   │   ├── 📄 Resume.js                 # Parsed resume data (skills, education, experience)
+    │   │   ├── 📄 ResumeVersion.js          # Versioned LaTeX documents with source tracking
+    │   │   ├── 📄 UserProfile.js            # Structured profile (basics, skills, experience, projects)
+    │   │   ├── 📄 APIKey.js                 # Encrypted BYOK keys (AES-256-GCM)
+    │   │   ├── 📄 UserAnalysis.js           # Stored analysis results
+    │   │   ├── 📄 AIUsage.js               # AI API call tracking / usage logs
+    │   │   ├── 📄 Role.js                   # Predefined career roles for analysis
+    │   │   ├── 📄 Project.js                # Project templates
+    │   │   ├── 📄 OTP.js                    # Email OTP verification records
+    │   │   ├── 📄 RefreshToken.js           # Refresh token with family tracking & rotation
+    │   │   ├── 📄 AuditLog.js               # Audit trail for administrative actions
+    │   │   └── 📄 FeatureFlag.js            # Feature flags (enabled, percentage, userIds)
 │   │
-│   ├── 📁 models/
-│   │   ├── 📄 User.js                   # User account (bcrypt password, role, AI provider)
-│   │   ├── 📄 Resume.js                 # Parsed resume data (skills, education, experience)
-│   │   ├── 📄 ResumeVersion.js          # Versioned LaTeX documents with source tracking
-│   │   ├── 📄 UserProfile.js            # Structured profile (basics, skills, experience, projects)
-│   │   ├── 📄 APIKey.js                 # Encrypted BYOK keys (AES-256-GCM)
-│   │   ├── 📄 UserAnalysis.js           # Stored analysis results
-│   │   ├── 📄 AIUsage.js               # AI API call tracking / usage logs
-│   │   ├── 📄 Role.js                   # Predefined career roles for analysis
-│   │   ├── 📄 Project.js                # Project templates
-│   │   └── 📄 OTP.js                    # Email OTP verification records
-│   │
-│   ├── 📁 controllers/
-│   │   ├── 📄 authController.js         # Register, Login, OTP, GetMe
-│   │   ├── 📄 resumeController.js       # Upload, Improve, Optimize, LaTeX, Versions, Cover Letter
+    │   ├── 📁 controllers/
+    │   │   ├── 📄 authController.js         # Register, Login, OTP, Logout, RefreshToken, GetMe
 │   │   ├── 📄 analysisController.js     # Skill analysis, role matching
 │   │   ├── 📄 profileController.js      # Get/Update structured profile
 │   │   ├── 📄 apiKeyController.js       # CRUD for encrypted BYOK keys
@@ -473,13 +528,17 @@ CareerLens/
         │
         ├── 📁 components/
         │   ├── 📁 ui/
-        │   │   ├── 📄 Button.jsx        # Variant-based button (CVA)
+        │   │   ├── 📄 Button.jsx        # Variant-based button (CVA, React.memo)
         │   │   ├── 📄 Card.jsx          # Card, CardHeader, CardTitle, CardDescription, CardContent
         │   │   ├── 📄 Badge.jsx         # Status badges (default, secondary, destructive, outline)
         │   │   └── 📄 Input.jsx         # Styled input component
+        │   ├── 📁 onboarding/
+        │   │   └── 📄 Tour.jsx          # Step-by-step highlight tour for new users
+        │   ├── 📁 resume/
+        │   │   └── 📄 ResumePreview.jsx  # Full-screen PDF preview modal (react-pdf)
         │   └── 📁 layout/
-        │       ├── 📄 AppLayout.jsx     # Sidebar + main content wrapper
-        │       └── 📄 Sidebar.jsx       # Collapsible sidebar with nav links + task activity feed
+        │       ├── 📄 AppLayout.jsx     # Sidebar + main content wrapper (responsive)
+        │       └── 📄 Sidebar.jsx       # Collapsible sidebar with nav links + task activity feed (mobile-aware)
         │
         ├── 📁 pages/
         │   ├── 📄 Landing.jsx           # Public landing page (guest users)
@@ -494,8 +553,23 @@ CareerLens/
         │   ├── 📄 APIKeySettings.jsx    # BYOK key management
         │   └── 📄 Admin.jsx             # Admin dashboard (stats, roles, projects)
         │
+        ├── 📁 hooks/
+        │   ├── 📄 useKeyboardShortcuts.js  # Declarative hotkey binding
+        │   └── 📄 useFeatureFlag.js        # Feature flag state reader
+        │
         ├── 📁 services/
-        │   └── 📄 api.js               # Axios instance with auth header interceptor
+        │   └── 📄 api.js               # Axios instance with auth interceptor + refresh token logic
+        │
+        ├── 📁 tests/
+        │   ├── 📄 Button.test.jsx       # React Testing Library unit tests
+        │   ├── 📄 Card.test.jsx
+        │   ├── 📄 Badge.test.jsx
+        │   └── 📄 setup.js
+        │
+        ├── 📁 e2e/
+        │   ├── 📄 auth.spec.js          # Playwright E2E tests
+        │   ├── 📄 navigation.spec.js
+        │   └── 📄 playwright.config.js
         │
         ├── 📁 lib/
         │   └── 📄 utils.js             # cn() — Tailwind class merge utility
@@ -567,14 +641,43 @@ erDiagram
     OTP {
         ObjectId _id PK
         String email
-        String code
+        String code "10-char hex (crypto-random)"
         Date expiresAt "TTL auto-delete"
+    }
+
+    REFRESH_TOKEN {
+        ObjectId _id PK
+        ObjectId user FK
+        String tokenHash "SHA-256 of token"
+        String family "family group for rotation"
+        Boolean revoked
+        Date expiresAt "TTL auto-delete"
+    }
+
+    AUDIT_LOG {
+        ObjectId _id PK
+        ObjectId user FK
+        String action "admin | api-key | register | reset-password"
+        String resource
+        String ip
+        String userAgent
+        Date createdAt
+    }
+
+    FEATURE_FLAG {
+        ObjectId _id PK
+        String name UK "unique flag key"
+        Boolean enabled
+        Number percentage 0-100
+        Array userIds explicit whitelist
+        String description
     }
 
     USER ||--o{ RESUME : "uploads"
     USER ||--o{ RESUME_VERSION : "creates"
     USER ||--|| USER_PROFILE : "has"
     USER ||--o{ API_KEY : "configures"
+    USER ||--o{ REFRESH_TOKEN : "rotates"
 ```
 
 ---
@@ -587,7 +690,9 @@ erDiagram
 |--------|----------|------|------------|-------------|
 | `POST` | `/send-otp` | ❌ | Auth (20/15m) | Send OTP to email for verification |
 | `POST` | `/register` | ❌ | Auth (20/15m) | Register new user (requires valid OTP) |
-| `POST` | `/login` | ❌ | Auth (20/15m) | Authenticate & receive JWT token |
+| `POST` | `/login` | ❌ | Auth (20/15m) | Authenticate & receive access + refresh tokens |
+| `POST` | `/refresh-token` | ❌ | General | Rotate refresh token, get new access token |
+| `POST` | `/logout` | ✅ | General | Revoke all active refresh tokens |
 | `GET` | `/me` | ✅ | General | Get current user details |
 
 ### Resume — `/api/resume`
@@ -607,8 +712,9 @@ erDiagram
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | `GET` | `/latex` | ✅ | Get stored LaTeX code (legacy) |
-| `POST` | `/latex` | ✅ | Save LaTeX code (legacy) |
+| `POST` | `/latex` | ✅ | Save LaTeX code |
 | `POST` | `/latex/generate` | ✅ | AI Wizard — generate LaTeX from structured data |
+| `POST` | `/latex/preview` | ✅ | Get preview LaTeX template (modern) |
 | `POST` | `/latex/tailor` | ✅ | Tailor existing LaTeX to a JD |
 
 ### Versions — `/api/resume/versions`
@@ -652,6 +758,9 @@ erDiagram
 | `DELETE` | `/role/:id` | Admin | Delete a career role |
 | `POST` | `/project` | Admin | Add a project template |
 | `DELETE` | `/project/:id` | Admin | Delete a project template |
+| `GET` | `/feature-flags` | Admin | List all feature flags |
+| `GET` | `/feature-flags/:name` | Admin | Get a specific feature flag |
+| `PUT` | `/feature-flags/:name` | Admin | Create or update a feature flag |
 
 ---
 
@@ -701,13 +810,20 @@ MONGO_URI=mongodb://localhost:27017/careerlens
 
 # Authentication
 JWT_SECRET=your_super_secret_jwt_key_here
-JWT_EXPIRE=30d
+JWT_REFRESH_EXPIRY=7
 
 # AI Provider (system default)
 GEMINI_API_KEY=your_gemini_api_key_here
 
 # Encryption (for BYOK API keys — 64-char hex string)
 ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+# Redis (optional — falls back to in-memory cache)
+REDIS_URL=redis://localhost:6379
+
+# Sentry (optional — error tracking)
+SENTRY_DSN=https://your-dsn@sentry.io/your-project
+SENTRY_TRACES_SAMPLE_RATE=0.1
 
 # SMTP (optional — for OTP emails)
 SMTP_HOST=smtp.gmail.com
@@ -721,6 +837,7 @@ EMAIL_FROM=noreply@careerlens.com
 
 ```env
 VITE_API_URL=http://localhost:5000/api
+VITE_SENTRY_DSN=https://your-dsn@sentry.io/your-project
 ```
 
 ---
@@ -731,10 +848,9 @@ VITE_API_URL=http://localhost:5000/api
 - [ ] **Interview Prep Module** — AI-generated mock interview questions based on your resume + target JD
 - [ ] **LinkedIn OAuth Integration** — Import profile data directly from LinkedIn
 - [ ] **Anthropic Claude Support** — Complete the BYOK provider trio
-- [ ] **Redis Caching** — Replace in-memory cache with Redis for cross-worker cache sharing in cluster mode
 - [ ] **WebSocket Progress** — Real-time progress updates for long-running AI operations
-- [ ] **Resume Templates** — Multiple LaTeX template choices (modern, academic, minimal, two-column)
 - [ ] **Analytics Dashboard** — Track application success rates per resume version
+- [ ] **Mobile App** — React Native companion app for on-the-go resume editing
 
 ---
 
