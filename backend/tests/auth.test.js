@@ -48,6 +48,27 @@ jest.mock('../models/OTP', () => {
   };
 });
 
+jest.mock('../models/RefreshToken', () => {
+  const mockRefreshToken = {
+    _id: 'refresh-id-123',
+    user: '507f191e810c19729de860ea',
+    tokenHash: 'mocked-hash',
+    family: 'mocked-family',
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    revoked: false,
+    save: jest.fn().mockResolvedValue(true),
+  };
+
+  return {
+    findOne: jest.fn().mockResolvedValue(mockRefreshToken),
+    create: jest.fn().mockResolvedValue(mockRefreshToken),
+    updateMany: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
+    hashToken: jest.fn().mockReturnValue('mocked-hash'),
+    generateFamily: jest.fn().mockReturnValue('mocked-family'),
+    generateToken: jest.fn().mockReturnValue('mocked-refresh-token'),
+  };
+});
+
 jest.mock('bcrypt', () => ({
   compare: jest.fn().mockResolvedValue(true),
   hash: jest.fn().mockResolvedValue('hashedpassword'),

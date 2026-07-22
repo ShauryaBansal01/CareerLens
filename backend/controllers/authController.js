@@ -1,17 +1,77 @@
+const crypto = require('crypto');
 const User = require('../models/User');
 const OTP = require('../models/OTP');
+const RefreshToken = require('../models/RefreshToken');
 const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/sendEmail');
 
-// Generate JWT
-const generateToken = (id) => {
+const ACCESS_TOKEN_EXPIRY = '15m';
+const REFRESH_TOKEN_EXPIRY_DAYS = 7;
+
+// Generate short-lived access token
+const generateAccessToken = (id) => {
   if (!process.env.JWT_SECRET) {
     throw new Error('JWT_SECRET environment variable is not set');
   }
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
+    expiresIn: ACCESS_TOKEN_EXPIRY,
   });
 };
+
+// Generate refresh token pair (token + family)
+async function generateRefreshToken(userId) {
+  const family = RefreshToken.generateFamily();
+  const token = RefreshToken.generateToken();
+  const tokenHash = RefreshToken.hashToken(token);
+
+  await RefreshToken.create({
+    user: userId,
+    tokenHash,
+    family,
+    expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000),
+  });
+
+  return { refreshToken: token, refreshFamily: family };
+}
+
+// Rotate refresh token (invalidate old, issue new in same family)
+async function rotateRefreshToken(oldToken, oldFamily) {
+  const tokenHash = RefreshToken.hashToken(oldToken);
+  const existing = await RefreshToken.findOne({ tokenHash, family: oldFamily, revoked: false });
+
+  if (!existing) {
+    return null;
+  }
+
+  // Revoke old token
+  existing.revoked = true;
+  await existing.save();
+
+  // Issue new one in same family
+  const newToken = RefreshToken.generateToken();
+  const newTokenHash = RefreshToken.hashToken(newToken);
+
+  await RefreshToken.create({
+    user: existing.user,
+    tokenHash: newTokenHash,
+    family: oldFamily,
+    expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000),
+    replacedBy: newTokenHash,
+  });
+
+  return { refreshToken: newToken, refreshFamily: oldFamily, userId: existing.user };
+}
+
+// Build auth response with access + refresh tokens
+function buildAuthResponse(user) {
+  return {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    token: generateAccessToken(user._id),
+  };
+}
 
 // @desc    Send OTP to email for verification
 // @route   POST /api/auth/send-otp
@@ -30,8 +90,8 @@ exports.sendOtp = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Generate a 6 digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate a 10-character alphanumeric OTP (crypto-random, more entropy than 6-digit numeric)
+    const otp = crypto.randomBytes(5).toString('hex').toUpperCase();
 
     // Store OTP in database (will automatically expire in 5 mins due to TTL index)
     await OTP.create({ email, otp });
@@ -43,7 +103,7 @@ exports.sendOtp = async (req, res) => {
         <p style="font-size: 16px; color: #333;">Hello,</p>
         <p style="font-size: 16px; color: #333;">Thank you for registering. Please use the following One-Time Password (OTP) to verify your email address. This code is valid for <strong>5 minutes</strong>.</p>
         <div style="background-color: #f4f4f5; padding: 15px; text-align: center; border-radius: 8px; margin: 20px 0;">
-          <h1 style="margin: 0; letter-spacing: 5px; color: #111;">${otp}</h1>
+          <h1 style="margin: 0; letter-spacing: 5px; color: #111; font-family: 'Courier New', monospace;">${otp}</h1>
         </div>
         <p style="font-size: 14px; color: #666; text-align: center;">If you did not request this, please ignore this email.</p>
       </div>
@@ -100,13 +160,9 @@ exports.registerUser = async (req, res) => {
     await OTP.deleteOne({ _id: otpRecord._id });
 
     if (user) {
-      res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        token: generateToken(user._id)
-      });
+      const authData = buildAuthResponse(user);
+      const { refreshToken, refreshFamily } = await generateRefreshToken(user._id);
+      res.status(201).json({ ...authData, refreshToken, refreshFamily });
     } else {
       res.status(400).json({ message: 'Invalid user data' });
     }
@@ -124,13 +180,9 @@ exports.loginUser = async (req, res) => {
 
     const user = await User.findOne({ email }).select('+password');
     if (user && (await user.matchPassword(password))) {
-      res.json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        token: generateToken(user._id)
-      });
+      const authData = buildAuthResponse(user);
+      const { refreshToken, refreshFamily } = await generateRefreshToken(user._id);
+      res.json({ ...authData, refreshToken, refreshFamily });
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
     }
@@ -157,8 +209,8 @@ exports.forgotPassword = async (req, res) => {
       return res.status(200).json({ message: 'If an account with that email exists, an OTP has been sent.' });
     }
 
-    // Generate a 6 digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate a 10-character alphanumeric OTP
+    const otp = crypto.randomBytes(5).toString('hex').toUpperCase();
 
     // Store OTP in database (will automatically expire in 5 mins due to TTL index)
     await OTP.create({ email, otp });
@@ -170,7 +222,7 @@ exports.forgotPassword = async (req, res) => {
         <p style="font-size: 16px; color: #333;">Hello,</p>
         <p style="font-size: 16px; color: #333;">We received a request to reset your CareerLens account password. Use the following One-Time Password (OTP) to proceed. This code is valid for <strong>5 minutes</strong>.</p>
         <div style="background-color: #f4f4f5; padding: 15px; text-align: center; border-radius: 8px; margin: 20px 0;">
-          <h1 style="margin: 0; letter-spacing: 5px; color: #111;">${otp}</h1>
+          <h1 style="margin: 0; letter-spacing: 5px; color: #111; font-family: 'Courier New', monospace;">${otp}</h1>
         </div>
         <p style="font-size: 14px; color: #666; text-align: center;">If you did not request this, please ignore this email and your password will remain unchanged.</p>
       </div>
@@ -230,6 +282,52 @@ exports.resetPassword = async (req, res) => {
     res.status(200).json({ message: 'Password reset successfully. You can now log in with your new password.' });
   } catch (error) {
     console.error('Error resetting password:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Refresh access token using refresh token
+// @route   POST /api/auth/refresh-token
+// @access  Public (with valid refresh token)
+exports.refreshToken = async (req, res) => {
+  try {
+    const { refreshToken, refreshFamily } = req.body;
+
+    if (!refreshToken || !refreshFamily) {
+      return res.status(400).json({ message: 'Refresh token and family are required' });
+    }
+
+    const result = await rotateRefreshToken(refreshToken, refreshFamily);
+
+    if (!result) {
+      return res.status(401).json({ message: 'Invalid or revoked refresh token' });
+    }
+
+    const user = await User.findById(result.userId);
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    const authData = buildAuthResponse(user);
+    res.json({ ...authData, refreshToken: result.refreshToken, refreshFamily: result.refreshFamily });
+  } catch (error) {
+    console.error('Error refreshing token:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Logout — revoke all refresh tokens for user
+// @route   POST /api/auth/logout
+// @access  Private
+exports.logout = async (req, res) => {
+  try {
+    await RefreshToken.updateMany(
+      { user: req.user.id, revoked: false },
+      { revoked: true }
+    );
+    res.status(200).json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Error during logout:', error);
     res.status(500).json({ message: error.message });
   }
 };
