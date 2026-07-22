@@ -65,7 +65,7 @@ class BaseProvider {
   async _trackUsage(usage) {
     if (!this.userId || !usage) return;
     try {
-      const AIUsage = require('../../models/AIUsage');
+      const AIUsage = require('../../../models/AIUsage');
       await AIUsage.create({
         user: this.userId,
         provider: this.constructor.name.replace('Provider', '').toLowerCase(),

@@ -1,7 +1,17 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 function stripCodeFences(text) {
-  return text.replace(/^```(latex)?\n?/im, '').replace(/\n?```$/im, '').trim();
+  if (!text) return '';
+  let cleaned = text.replace(/^```(latex)?\n?/im, '').replace(/\n?```$/im, '').trim();
+  const docStart = cleaned.indexOf('\\documentclass');
+  if (docStart !== -1) {
+    cleaned = cleaned.substring(docStart);
+  }
+  const docEnd = cleaned.lastIndexOf('\\end{document}');
+  if (docEnd !== -1) {
+    cleaned = cleaned.substring(0, docEnd + '\\end{document}'.length);
+  }
+  return cleaned.trim();
 }
 
 function sanitizeLatexCode(code) {

@@ -13,7 +13,21 @@ const aiUsageSchema = new mongoose.Schema({
   },
   feature: {
     type: String,
-    enum: ['resume_parsing', 'latex_generation', 'roadmap_generation', 'project_generation', 'skill_analysis', 'cover_letter'],
+    enum: [
+      'resume_parsing',
+      'latex_generation',
+      'roadmap_generation',
+      'project_generation',
+      'skill_analysis',
+      'cover_letter',
+      'resume_improve',
+      'resume_tailor',
+      'section_rewrite',
+      'ats_analysis',
+      'score',
+      'unknown'
+    ],
+    default: 'unknown',
     required: true
   },
   promptTokens: {
