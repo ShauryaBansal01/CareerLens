@@ -20,7 +20,6 @@ const {
   optimizeResumeFromFeedback,
   rewriteSection,
   getATSScore,
-  getTemplates
 } = require('../controllers/resumeController');
 const { protect } = require('../middleware/authMiddleware');
 const injectAI = require('../middleware/injectAI');
@@ -49,7 +48,6 @@ router.post('/optimize-from-feedback', protect, aiLimiter, validate(schemas.opti
 router.post('/rewrite-section', protect, aiLimiter, validate(schemas.rewriteSection), injectAI, rewriteSection);
 router.post('/cover-letter', protect, aiLimiter, validate(schemas.coverLetter), injectAI, generateCoverLetter);
 router.post('/ats-score', protect, aiLimiter, injectAI, getATSScore);
-router.get('/templates', protect, getTemplates);
 
 // LaTeX Routes
 router.get('/latex', protect, getLatexCode);

@@ -70,7 +70,6 @@ const schemas = {
   }),
   tailorLatexToJob: z.object({
     jobDescription: z.string().min(20, 'Job description must be at least 20 characters'),
-    template: z.string().optional(),
   }),
   optimizeResumeFromFeedback: z.object({
     feedback: z.object({

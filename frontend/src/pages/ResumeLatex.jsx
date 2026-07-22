@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import axios from 'axios';
-import Editor from '@monaco-editor/react';
+
+const Editor = React.lazy(() => import('@monaco-editor/react'));
+
 import {
   Play, Download, Save, Sparkles, FileText, CheckCircle2, AlertCircle,
   X, Plus, Trash2, Target, Code2, Eye, Wand2, RotateCcw, RefreshCw,
@@ -10,7 +12,8 @@ import AuthContext from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { useContext } from 'react';
 import { useLocation } from 'react-router-dom';
-import TemplateGallery from '../components/latex/TemplateGallery';
+import { ResumePreview } from '../components/resume/ResumePreview';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -198,12 +201,16 @@ const ResumeLatex = () => {
   const [tailorVersionTitle, setTailorVersionTitle] = useState('');
   const [targetCompany, setTargetCompany] = useState('');
 
-  // Template State
-  const [selectedTemplate, setSelectedTemplate] = useState('modern');
-  const [availableTemplates, setAvailableTemplates] = useState([]);
+  // PDF Preview State
+  const [showPdfPreview, setShowPdfPreview] = useState(false);
 
   // View toggle (Phase 3)
   const [rightPaneView, setRightPaneView] = useState('preview'); // 'preview' | 'source'
+
+  useKeyboardShortcuts([
+    { key: 's', mod: true, action: (e) => { e.preventDefault(); saveLatex(); } },
+    { key: 'Enter', mod: true, action: (e) => { e.preventDefault(); compilePdf(latexCode); } },
+  ]);
 
   // AI Section Rewrite (Phase 3)
   const [selectedSection, setSelectedSection] = useState(null);
@@ -234,19 +241,36 @@ const ResumeLatex = () => {
         }
       } else {
         // Fallback to legacy GET /latex
-        const legacy = await axios.get(`${API_URL}/resume/latex`, config);
-        if (legacy.data.rawLatexCode) {
-          const res = await axios.post(`${API_URL}/resume/versions`, {
-            title: 'Base Resume',
-            rawLatexCode: legacy.data.rawLatexCode,
-            isBaseResume: true,
-            source: 'upload'
-          }, config);
-          setVersions([res.data]);
-          setLatexCode(res.data.rawLatexCode);
-          setActiveVersionId(res.data._id);
-        } else {
-          setLatexCode('% Start writing your LaTeX resume here!\n\\documentclass{article}\n\\begin{document}\nHello World\n\\end{document}');
+        try {
+          const legacy = await axios.get(`${API_URL}/resume/latex`, config);
+          if (legacy.data?.rawLatexCode) {
+            const res = await axios.post(`${API_URL}/resume/versions`, {
+              title: 'Base Resume',
+              rawLatexCode: legacy.data.rawLatexCode,
+              isBaseResume: true,
+              source: 'upload'
+            }, config);
+            setVersions([res.data]);
+            setLatexCode(res.data.rawLatexCode);
+            setActiveVersionId(res.data._id);
+            compilePdf(res.data.rawLatexCode);
+            return;
+          }
+        } catch {
+          // ignore legacy failure
+        }
+
+        // No versions & no legacy: load default preview template
+        try {
+          const previewRes = await axios.post(`${API_URL}/resume/latex/preview`, {}, config);
+          if (previewRes.data?.rawLatexCode) {
+            setLatexCode(previewRes.data.rawLatexCode);
+            compilePdf(previewRes.data.rawLatexCode);
+          }
+        } catch {
+          const defaultCode = '% Start writing your LaTeX resume here!\n\\documentclass{article}\n\\begin{document}\nHello World\n\\end{document}';
+          setLatexCode(defaultCode);
+          compilePdf(defaultCode);
         }
       }
     } catch (error) {
@@ -260,7 +284,9 @@ const ResumeLatex = () => {
       const { data } = await axios.get(`${API_URL}/resume/versions/${id}`, config);
       setLatexCode(data.rawLatexCode);
       setActiveVersionId(id);
-      setPdfUrl('');
+      if (data.rawLatexCode) {
+        compilePdf(data.rawLatexCode);
+      }
     } catch (error) {
       showToast('Failed to load version', 'error');
     }
@@ -279,44 +305,6 @@ const ResumeLatex = () => {
       }
     }
   }, [location.state, versions]);
-
-  // Fetch available templates from API
-  useEffect(() => {
-    const fetchTemplates = async () => {
-      if (!user) return;
-      try {
-        const config = { headers: { Authorization: `Bearer ${user.token}` } };
-        const { data } = await axios.get(`${API_URL}/resume/templates`, config);
-        if (data && data.length > 0) setAvailableTemplates(data);
-      } catch {
-        // fallback — component has hardcoded defaults
-      }
-    };
-    fetchTemplates();
-  }, [user]);
-
-  // Auto-preview: when template changes, generate sample LaTeX and compile
-  useEffect(() => {
-    if (!user) return;
-
-    const generatePreview = async () => {
-      try {
-        const config = { headers: { Authorization: `Bearer ${user.token}` } };
-        const { data } = await axios.post(
-          `${API_URL}/resume/latex/preview`,
-          { template: selectedTemplate },
-          config
-        );
-        if (data.rawLatexCode) {
-          setLatexCode(data.rawLatexCode);
-          setTimeout(() => compilePdf(data.rawLatexCode), 500);
-        }
-      } catch {
-        // preview failed silently — user can still use the template
-      }
-    };
-    generatePreview();
-  }, [selectedTemplate, user]);
 
   const handleEditorChange = (value) => {
     setLatexCode(value);
@@ -403,6 +391,7 @@ const ResumeLatex = () => {
       setVersions([newVersion, ...versions]);
       setLatexCode(newVersion.rawLatexCode);
       setActiveVersionId(newVersion._id);
+      if (newVersion.rawLatexCode) compilePdf(newVersion.rawLatexCode);
       showToast('Version restored as a new copy');
     } catch (error) {
       showToast('Failed to restore version', 'error');
@@ -434,8 +423,9 @@ const ResumeLatex = () => {
     setShowWizard(false);
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.post(`${API_URL}/resume/latex/generate`, { resumeData, template: selectedTemplate }, config);
+      const { data } = await axios.post(`${API_URL}/resume/latex/generate`, { resumeData }, config);
       setLatexCode(data.rawLatexCode);
+      if (data.rawLatexCode) compilePdf(data.rawLatexCode);
       showToast('Generated successfully with AI Magic!');
     } catch (error) {
       showToast('Failed to generate resume.', 'error');
@@ -457,7 +447,7 @@ const ResumeLatex = () => {
     setShowTailorWizard(false);
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.post(`${API_URL}/resume/latex/tailor`, { jobDescription: jobDescriptionText, template: selectedTemplate }, config);
+      const { data } = await axios.post(`${API_URL}/resume/latex/tailor`, { jobDescription: jobDescriptionText }, config);
       setLatexCode(data.rawLatexCode);
 
       const res = await axios.post(`${API_URL}/resume/versions`, {
@@ -470,6 +460,7 @@ const ResumeLatex = () => {
 
       setVersions([res.data, ...versions]);
       setActiveVersionId(res.data._id);
+      if (data.rawLatexCode) compilePdf(data.rawLatexCode);
       showToast('Tailored and saved as new version!');
       setJobDescriptionText('');
       setTailorVersionTitle('');
@@ -481,50 +472,66 @@ const ResumeLatex = () => {
   };
 
   function sanitizeLatexCode(code) {
+    if (!code) return '';
+    let cleaned = code.replace(/^```(latex)?\n?/im, '').replace(/\n?```$/im, '').trim();
+    const docStart = cleaned.indexOf('\\documentclass');
+    if (docStart !== -1) {
+      cleaned = cleaned.substring(docStart);
+    }
+    const docEnd = cleaned.lastIndexOf('\\end{document}');
+    if (docEnd !== -1) {
+      cleaned = cleaned.substring(0, docEnd + '\\end{document}'.length);
+    }
     const colors = ['black','white','red','green','blue','cyan','magenta','yellow','gray','grey','darkgray','darkgrey','lightgray','lightgrey','brown','lime','olive','orange','pink','purple','teal','violet'];
-    return code.replace(new RegExp('\\b(' + colors.map(c => c.toUpperCase()).join('|') + ')\\b', 'g'), m => m.toLowerCase());
+    return cleaned.replace(new RegExp('\\b(' + colors.map(c => c.toUpperCase()).join('|') + ')\\b', 'g'), m => m.toLowerCase());
   }
 
   const compilePdf = async (content) => {
     let code = sanitizeLatexCode(content || latexCode);
     if (!code) return;
     setCompiling(true);
+
     try {
       const form = document.createElement('form');
+      form.style.display = 'none';
       form.method = 'POST';
       form.action = 'https://texlive.net/cgi-bin/latexcgi';
       form.target = 'pdf-preview-iframe';
       form.enctype = 'multipart/form-data';
 
-      const filecontents = document.createElement('input');
-      filecontents.type = 'hidden';
-      filecontents.name = 'filecontents[]';
-      filecontents.value = code;
+      const addInput = (name, value) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+      };
 
-      const filename = document.createElement('input');
-      filename.type = 'hidden';
-      filename.name = 'filename[]';
-      filename.value = 'document.tex';
+      const encoded = code.replace(/\r\n?/g, '\n');
+      addInput('filename[]', 'document.tex');
+      addInput('filecontents[]', encoded);
+      addInput('engine', 'pdflatex');
+      addInput('return', 'pdf');
 
-      const engine = document.createElement('input');
-      engine.type = 'hidden';
-      engine.name = 'engine';
-      engine.value = 'pdflatex';
-
-      const returnType = document.createElement('input');
-      returnType.type = 'hidden';
-      returnType.name = 'return';
-      returnType.value = 'pdf';
-
-      form.appendChild(filecontents);
-      form.appendChild(filename);
-      form.appendChild(engine);
-      form.appendChild(returnType);
       document.body.appendChild(form);
       form.submit();
-      document.body.removeChild(form);
-      setPdfUrl('compiled');
-      setTimeout(() => setCompiling(false), 3000);
+
+      // Keep form in DOM until iframe loads to ensure navigation isn't cancelled
+      const iframe = document.querySelector('iframe[name="pdf-preview-iframe"]');
+      const onLoad = () => {
+        iframe?.removeEventListener('load', onLoad);
+        document.body.removeChild(form);
+        setPdfUrl('compiled');
+        setCompiling(false);
+      };
+      iframe?.addEventListener('load', onLoad);
+
+      // Safety timeout in case iframe load never fires
+      setTimeout(() => {
+        iframe?.removeEventListener('load', onLoad);
+        if (document.body.contains(form)) document.body.removeChild(form);
+        setCompiling(false);
+      }, 30000);
     } catch (error) {
       console.error(error);
       setCompiling(false);
@@ -594,6 +601,7 @@ const ResumeLatex = () => {
     const after = lines.slice(selectedSection.endLine);
     const newCode = [...before, ...newContent.split('\n'), ...after].join('\n');
     setLatexCode(newCode);
+    if (newCode) compilePdf(newCode);
     setShowRewritePanel(false);
     setSectionRewrite(null);
     setSelectedSection(null);
@@ -908,11 +916,7 @@ const ResumeLatex = () => {
           </button>
 
           <div className="ml-1">
-            <TemplateGallery
-              selected={selectedTemplate}
-              onSelect={setSelectedTemplate}
-              templates={availableTemplates}
-            />
+
           </div>
 
           <button
@@ -942,7 +946,7 @@ const ResumeLatex = () => {
             <Download size={13} /> .tex
           </button>
 
-          <button onClick={compilePdf} disabled={compiling} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-80">
+          <button onClick={() => compilePdf()} disabled={compiling} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-80">
             {compiling ? (
               <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
@@ -950,6 +954,12 @@ const ResumeLatex = () => {
             )}
             Compile
           </button>
+
+          {pdfUrl && (
+            <button onClick={() => setShowPdfPreview(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm">
+              <Eye size={13} /> Preview PDF
+            </button>
+          )}
 
           {/* Version sidebar toggle */}
           <button
@@ -989,25 +999,27 @@ const ResumeLatex = () => {
             <span>LaTeX</span>
           </div>
           <div className="flex-1 pt-2">
-            <Editor
-              height="100%"
-              defaultLanguage="latex"
-              theme={monacoTheme}
-              value={latexCode}
-              onChange={handleEditorChange}
-              onMount={handleEditorDidMount}
-              options={{
-                wordWrap: 'on',
-                minimap: { enabled: false },
-                fontSize: 13,
-                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                lineHeight: 24,
-                padding: { top: 8 },
-                scrollBeyondLastLine: false,
-                smoothScrolling: true,
-                cursorBlinking: "smooth",
-              }}
-            />
+            <Suspense fallback={<div className="h-full flex items-center justify-center text-text-muted text-sm">Loading editor...</div>}>
+              <Editor
+                height="100%"
+                defaultLanguage="latex"
+                theme={monacoTheme}
+                value={latexCode}
+                onChange={handleEditorChange}
+                onMount={handleEditorDidMount}
+                options={{
+                  wordWrap: 'on',
+                  minimap: { enabled: false },
+                  fontSize: 13,
+                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                  lineHeight: 24,
+                  padding: { top: 8 },
+                  scrollBeyondLastLine: false,
+                  smoothScrolling: true,
+                  cursorBlinking: "smooth",
+                }}
+              />
+            </Suspense>
           </div>
         </div>
 
@@ -1050,7 +1062,7 @@ const ResumeLatex = () => {
                 {(!latexCode || (!pdfUrl && !compiling)) && (
                   <div className="text-gray-500 dark:text-gray-400 flex flex-col items-center max-w-xs text-center absolute">
                     <button
-                      onClick={compilePdf}
+                      onClick={() => compilePdf()}
                       disabled={!latexCode || compiling}
                       className="w-16 h-16 mb-4 rounded-2xl bg-white dark:bg-dark-card flex items-center justify-center border border-white/10 dark:border-gray-600 shadow-sm cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-dark-card"
                     >
@@ -1074,21 +1086,23 @@ const ResumeLatex = () => {
               </>
             ) : (
               <div className="w-full h-full">
-                <Editor
-                  height="100%"
-                  defaultLanguage="latex"
-                  theme={monacoTheme}
-                  value={latexCode}
-                  options={{
-                    readOnly: true,
-                    wordWrap: 'on',
-                    minimap: { enabled: false },
-                    fontSize: 12,
-                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                    lineHeight: 22,
-                    scrollBeyondLastLine: false,
+                <Suspense fallback={<div className="h-full flex items-center justify-center text-text-muted text-sm">Loading editor...</div>}>
+                  <Editor
+                    height="100%"
+                    defaultLanguage="latex"
+                    theme={monacoTheme}
+                    value={latexCode}
+                    options={{
+                      readOnly: true,
+                      wordWrap: 'on',
+                      minimap: { enabled: false },
+                      fontSize: 12,
+                      fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                      lineHeight: 22,
+                      scrollBeyondLastLine: false,
                   }}
                 />
+              </Suspense>
               </div>
             )}
           </div>
@@ -1224,6 +1238,10 @@ const ResumeLatex = () => {
           </div>
         )}
       </>
+
+      {showPdfPreview && pdfUrl && (
+        <ResumePreview pdfUrl={pdfUrl} onClose={() => setShowPdfPreview(false)} />
+      )}
     </div>
   );
 };

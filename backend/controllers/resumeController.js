@@ -9,10 +9,20 @@ const { invalidateUserCache } = require('../middleware/aiCache');
 const { buildResumeContext } = require('../utils/buildResumeContext');
 
 function sanitizeLatexCode(code) {
+  if (!code) return '';
+  let cleaned = code.replace(/^```(latex)?\n?/im, '').replace(/\n?```$/im, '').trim();
+  const docStart = cleaned.indexOf('\\documentclass');
+  if (docStart !== -1) {
+    cleaned = cleaned.substring(docStart);
+  }
+  const docEnd = cleaned.lastIndexOf('\\end{document}');
+  if (docEnd !== -1) {
+    cleaned = cleaned.substring(0, docEnd + '\\end{document}'.length);
+  }
   const colorNames = ['black','white','red','green','blue','cyan','magenta','yellow','gray','grey','darkgray','darkgrey','lightgray','lightgrey','brown','lime','olive','orange','pink','purple','teal','violet'];
   const upperPattern = new RegExp(`\\b(${colorNames.map(c => c.toUpperCase()).join('|')})\\b`, 'g');
   const lowerMap = Object.fromEntries(colorNames.map(c => [c.toUpperCase(), c]));
-  return code.replace(upperPattern, m => lowerMap[m]);
+  return cleaned.replace(upperPattern, m => lowerMap[m]);
 }
 
 // Load LaTeX prompt instructions from external file to avoid JS string escaping issues
@@ -112,7 +122,9 @@ exports.uploadResume = async (req, res) => {
 
     const latexPrompt = `${LATEX_INSTRUCTIONS}\n\nYour task is to generate a resume based on the provided extracted resume text.\n\nUSER RESUME TEXT:\n${rawText.substring(0, 10000)}\n\nOnly return the raw, compiling LaTeX code.`;
 
+    req.ai.feature = 'resume_parsing';
     const extractionPromise = req.ai.generateJSONWithRetry(extractionPrompt);
+    req.ai.feature = 'latex_generation';
     const latexPromise = req.ai.generateTextWithRetry(latexPrompt);
 
     // Wait for both to complete (allSettled so one failure doesn't kill the other)
@@ -300,8 +312,8 @@ critical = must fix before applying (3-5 items)
 suggested = would significantly improve the resume (3-5 items)
 good = things already done well (2-3 items)`;
 
+    req.ai.feature = 'resume_improve';
     const response = await req.ai.generateJSONWithRetry(prompt);
-
     const feedback = response.data;
 
     // Enrich with multi-dimensional scoring
@@ -419,11 +431,11 @@ remove = 2-3 things that are irrelevant or harmful for this specific role
 modify = 3-4 specific bullet points or sections to rewrite for better fit
 keywords = top 5-8 ATS keywords from the job description missing in the resume`;
 
+    req.ai.feature = 'resume_tailor';
     const response = await req.ai.generateJSONWithRetry(prompt);
 
     const optimization = response.data;
 
-    // Enrich with dimension scoring
     try {
       const scoreService = require('../services/scoreService');
       const scoreResult = await scoreService.scoreWithAI(req.ai, resume.rawLatexCode || '', {
@@ -491,7 +503,7 @@ exports.saveLatexCode = async (req, res) => {
 // @access  Private
 exports.generateLatexTemplate = async (req, res) => {
   try {
-    const { resumeData, template } = req.body;
+    const { resumeData } = req.body;
     let resumeContext = "";
     let enhancePrompt = "";
 
@@ -523,8 +535,7 @@ Experience: ${resume.experience}
       enhancePrompt = "Format this extracted data into a clean ATS-friendly LaTeX resume.";
     }
 
-    const templateFile = path.join(__dirname, '..', 'utils', 'templates', `${template || 'modern'}.tex`);
-    const templateInstructions = fs.readFileSync(templateFile, 'utf-8');
+    const templateInstructions = LATEX_INSTRUCTIONS;
 
     const prompt = `${templateInstructions}
 
@@ -562,13 +573,10 @@ Ensure it compiles directly with pdflatex without any errors. Only return the ra
 // @access  Private
 exports.previewTemplate = async (req, res) => {
   try {
-    const { template } = req.body;
-    const templateName = template || 'modern';
+    const templateFile = path.join(__dirname, '..', 'utils', 'templates', 'modern.tex');
+    const latexCode = fs.readFileSync(templateFile, 'utf-8');
 
-    const previewFile = path.join(__dirname, '..', 'utils', 'templates', `preview_${templateName}.tex`);
-    const latexCode = fs.readFileSync(previewFile, 'utf-8');
-
-    res.status(200).json({ rawLatexCode: latexCode, template: templateName });
+    res.status(200).json({ rawLatexCode: latexCode });
   } catch (error) {
     console.error('Preview Template Error:', error);
     res.status(500).json({ message: 'Failed to generate template preview.' });
@@ -580,7 +588,7 @@ exports.previewTemplate = async (req, res) => {
 // @access  Private
 exports.tailorLatexToJob = async (req, res) => {
   try {
-    const { jobDescription, template } = req.body;
+    const { jobDescription } = req.body;
     
     if (!jobDescription || jobDescription.trim().length < 20) {
       return res.status(400).json({ message: 'Please provide a valid job description (minimum 20 characters).' });
@@ -594,8 +602,7 @@ exports.tailorLatexToJob = async (req, res) => {
     // ── Build the richest possible context from structured + raw data ──────
     const resumeContext = await buildResumeContext(req.user.id, { maxRawTextLength: 6000 });
 
-    const templateFile = path.join(__dirname, '..', 'utils', 'templates', `${template || 'modern'}.tex`);
-    const templateInstructions = fs.readFileSync(templateFile, 'utf-8');
+    const templateInstructions = LATEX_INSTRUCTIONS;
 
     const prompt = `${templateInstructions}
 
@@ -775,10 +782,9 @@ INSTRUCTIONS:
 
 Return ONLY the raw markdown text of the cover letter. Do not wrap in JSON.`;
 
+    req.ai.feature = 'cover_letter';
     const response = await req.ai.generateTextWithRetry(prompt);
-
-    const coverLetterText = response.text.trim();
-    res.status(200).json({ coverLetter: coverLetterText });
+    res.status(200).json({ coverLetter: response.text });
   } catch (error) {
     console.error('Cover Letter Generation Error:', error);
     res.status(500).json({ message: 'Failed to generate cover letter.' });
@@ -886,10 +892,9 @@ IMPORTANT:
 - The "optimizedProfile" must preserve all fields from the original, even ones that weren't changed.
 - Generate between 5-12 meaningful changes total.`;
 
+    req.ai.feature = 'resume_improve';
     const response = await req.ai.generateJSONWithRetry(prompt);
-
-    const result = response.data;
-    res.status(200).json(result);
+    res.status(200).json(response.data);
   } catch (error) {
     console.error('Optimize From Feedback Error:', error);
     res.status(500).json({ message: 'Failed to optimize resume from feedback.' });
@@ -938,10 +943,9 @@ Return EXACTLY this JSON (no markdown):
   ]
 }`;
 
+    req.ai.feature = 'section_rewrite';
     const response = await req.ai.generateJSONWithRetry(prompt);
-
-    const result = response.data;
-    res.status(200).json(result);
+    res.status(200).json(response.data);
   } catch (error) {
     console.error('Rewrite Section Error:', error);
     res.status(500).json({ message: 'Failed to rewrite section.' });
@@ -953,7 +957,7 @@ Return EXACTLY this JSON (no markdown):
 // @access  Private
 exports.getATSScore = async (req, res) => {
   try {
-    const { jobDescription, template } = req.body;
+    const { jobDescription } = req.body;
 
     const resume = await Resume.findOne({ user: req.user.id });
     if (!resume) {
@@ -988,46 +992,4 @@ exports.getATSScore = async (req, res) => {
   }
 };
 
-const TEMPLATE_META = {
-  modern: {
-    label: 'Modern',
-    description: 'Clean serif layout with moderate spacing. Balances density and readability — a safe choice for most roles.',
-    bestFor: 'Software engineers, tech roles, general use',
-    features: ['11pt TeX Gyre Termes serif', '0.5in margins', 'Moderate item spacing (1pt)', 'Scalloped section headers'],
-  },
-  compact: {
-    label: 'Compact',
-    description: 'Dense, space-efficient layout fitting more content per page. Uses two-column skills section.',
-    bestFor: 'Experienced professionals with extensive history',
-    features: ['10pt TeX Gyre Termes serif', '0.4in margins', 'Tight item spacing (0pt)', 'Two-column skills layout'],
-  },
-};
 
-// @desc    Get template options
-// @route   GET /api/resume/templates
-// @access  Private
-exports.getTemplates = async (req, res) => {
-  try {
-    const fs = require('fs');
-    const path = require('path');
-    const templatesDir = path.join(__dirname, '..', 'utils', 'templates');
-    const files = fs.readdirSync(templatesDir).filter(f => f.endsWith('.tex') && !f.startsWith('preview_'));
-
-    const templates = files.map(f => {
-      const name = f.replace('.tex', '');
-      const meta = TEMPLATE_META[name] || {};
-      return {
-        name,
-        label: meta.label || name.charAt(0).toUpperCase() + name.slice(1),
-        description: meta.description || '',
-        bestFor: meta.bestFor || '',
-        features: meta.features || [],
-      };
-    });
-
-    res.status(200).json(templates);
-  } catch (error) {
-    console.error('Get Templates Error:', error);
-    res.status(500).json({ message: 'Failed to get templates.' });
-  }
-};

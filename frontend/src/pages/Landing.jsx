@@ -22,7 +22,7 @@ const features = [
   { title: 'Smart Upload & Parse', desc: 'Upload your PDF resume and let AI extract your skills, experience, and education into a structured profile.', icon: UploadCloud },
   { title: 'LaTeX Builder', desc: 'Create beautifully formatted, ATS-friendly PDFs with our built-in LaTeX editor and AI-powered wizard.', icon: Code2 },
   { title: 'Cover Letter Generator', desc: 'Generate tailored cover letters matching your tone and the job description in seconds.', icon: FileText },
-  { title: 'Career Roadmaps', desc: 'Discover personalized career paths with curated project templates to bridge your skill gaps.', icon: Map },
+  { title: 'Career Roadmaps', desc: 'Discover personalized career paths with curated projects to bridge your skill gaps.', icon: Map },
   { title: 'ATS Optimization', desc: 'Tailor your resume to specific job descriptions with keyword matching and section rewriting.', icon: Target },
 ];
 

@@ -32,22 +32,17 @@ Return EXACTLY this JSON (no markdown):
 }
 `;
 
-function getTemplateInstructions(templateName) {
-  const templateFile = path.join(TEMPLATES_DIR, `${templateName || 'modern'}.tex`);
-  try {
-    return fs.readFileSync(templateFile, 'utf-8');
-  } catch {
-    return fs.readFileSync(path.join(TEMPLATES_DIR, 'modern.tex'), 'utf-8');
-  }
+function getTemplateInstructions() {
+  return fs.readFileSync(path.join(__dirname, '..', 'utils', 'latexPromptInstructions.txt'), 'utf-8');
 }
 
 exports.generateBaseLatex = async (resumeText, structuredProfile = null, options = {}) => {
-  const { template = 'modern', useMultiPass = true, useProModel = false } = options;
+  const { useMultiPass = true, useProModel = false } = options;
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) throw new Error('GEMINI_API_KEY is not configured');
 
-    const LATEX_INSTRUCTIONS = getTemplateInstructions(template);
+    const LATEX_INSTRUCTIONS = getTemplateInstructions();
 
     let dataSection = '';
 
@@ -149,12 +144,12 @@ CRITICAL: Fix ALL issues mentioned above. Apply the specific instructions. Use s
 };
 
 exports.tailorLatex = async (baseLatex, jobDescription, userSkills = [], options = {}) => {
-  const { template = 'modern', useProModel = false } = options;
+  const { useProModel = false } = options;
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) throw new Error('GEMINI_API_KEY is not configured');
 
-    const LATEX_INSTRUCTIONS = getTemplateInstructions(template);
+    const LATEX_INSTRUCTIONS = getTemplateInstructions();
     const model = useProModel ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
 
     const skillsContext = userSkills.length > 0
@@ -216,7 +211,7 @@ Apply your analysis to rewrite the resume following these rules:
 };
 
 exports.generateBaseLatexWithAchievements = async (resumeText, structuredProfile = null, options = {}) => {
-  const { template = 'modern', useMultiPass = true, useProModel = false } = options;
+  const { useMultiPass = true, useProModel = false } = options;
   const extractionService = require('./extractionService');
 
   try {
@@ -238,7 +233,7 @@ ${JSON.stringify(extracted.achievements, null, 2)}
       }
     }
 
-    const LATEX_INSTRUCTIONS = getTemplateInstructions(template);
+    const LATEX_INSTRUCTIONS = getTemplateInstructions();
 
     let dataSection = '';
     if (structuredProfile) {

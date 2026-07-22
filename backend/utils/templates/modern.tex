@@ -1,40 +1,68 @@
-% ====================================================
-% MODERN TEMPLATE — Clean serif, standard layout
-% ====================================================
-You are an expert LaTeX developer and a Senior Technical Recruiter. Your task is to generate a beautiful, modern, ATS-friendly software engineering resume in strict LaTeX code.
+\documentclass[11pt]{article}
+\usepackage[letterpaper, margin=0.5in]{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{tgtermes}
+\usepackage[T1]{fontenc}
 
-CRITICAL LATEX & DESIGN REQUIREMENTS (MODERN - "JAKE'S RESUME" STYLE):
-- Use the standard "article" class with 11pt font.
-- You MUST INCLUDE these required packages: \usepackage[letterpaper, margin=0.5in]{geometry}, \usepackage{hyperref}, \usepackage{enumitem}, \usepackage{titlesec}, \usepackage{xcolor}, \usepackage{tgtermes}, \usepackage[T1]{fontenc}.
-- The font must be a highly professional serif font (TeX Gyre Termes).
-- Disable page numbers by including \pagestyle{empty}.
-- Configure the list formatting globally for a clean, tight look: \setlist[itemize]{leftmargin=0.15in, label={$\bullet$}, itemsep=1pt, parsep=0pt, topsep=1pt, partopsep=0pt}
-- Format section headers to be classic and distinct: \titleformat{\section}{\vspace{-4pt}\scshape\raggedright\large\bfseries}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
-- CRITICAL: Do NOT put any formatting commands (like \rule, \vspace, or \textbf) inside \section{}. Just use pure text like \section{Experience}.
-- Ensure proper escaping of LaTeX special characters like &, %, $, #, _, {, }, ~, ^, \ manually in the text. Do NOT define or use any custom macros.
-- For the Header:
-  \begin{center}
-  \textbf{\Huge \scshape Candidate Name} \\ \vspace{2pt}
-  \small City, State $|$ \href{mailto:email}{Email} $|$ \href{https://linkedin.com/...}{LinkedIn} $|$ \href{https://github.com/...}{GitHub}
-  \end{center}
-- For Sections (Experience, Projects, Education): Use a strict 4-corner layout for headers. Do NOT use \item for headers. Just use regular text and line breaks (\\).
-  Example format for a job or project:
-  \noindent\textbf{Company Name} \hfill \textit{Location}\\
-  \textit{Job Title} \hfill \textit{Jan 2020 -- Present}\vspace{-2pt}
-  \begin{itemize}
-    \item First bullet point...
-  \end{itemize}
-- Use bullet points (\begin{itemize} \item ... \end{itemize}) ONLY for the descriptions/accomplishments under each job or project.
-- For Skills Section, use a compact format:
-  \begin{itemize}[leftmargin=0.15in, label={}]
-    \item \textbf{Languages}{: Java, Python, C/C++, SQL, JavaScript, HTML/CSS}
-    \item \textbf{Technologies}{: React, Node.js, Express, PostgreSQL, MongoDB}
-  \end{itemize}
-- LINKS & HYPERLINKS (CRITICAL):
-  - In the header, render ALL provided links (linkedin, github, portfolio, customLinks) as clickable \href{url}{Label} entries separated by $|$.
-  - For each project that has a non-empty "link" field, render the project name as a hyperlink: \textbf{\href{url}{Project Name}} instead of just \textbf{Project Name}.
-  - If a link URL is empty or missing, simply omit it. Never output placeholder URLs.
-  - Use \href{mailto:email}{email} for email, \href{tel:phone}{phone} for phone if provided.
-- Start output immediately with \documentclass. Do NOT output any markdown blocks.
-- DO NOT define or use any custom commands or macros like \safeText. Write pure, standard LaTeX.
-- ONLY use lowercase xcolor color names (e.g. \color{black}, \color{white}). NEVER use uppercase like BLACK or WHITE.
+% Disable page numbers
+\pagestyle{empty}
+
+% Configure list formatting globally
+\setlist[itemize]{leftmargin=0.15in, label={$\bullet$}, itemsep=1pt, parsep=0pt, topsep=1pt, partopsep=0pt}
+
+% Format section headers
+\titleformat{\section}{\vspace{-4pt}\scshape\raggedright\large\bfseries}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+% Set URL style to match text font
+\urlstyle{same}
+
+\begin{document}
+
+% Header
+\begin{center}
+  \textbf{\Huge \scshape Alex Morgan} \\ \vspace{2pt}
+  \small San Francisco, CA $|$ \href{mailto:alex.morgan@email.com}{alex.morgan@email.com} $|$ (555) 019-2834 $|$ \href{https://linkedin.com/in/alexmorgan}{linkedin.com/in/alexmorgan} $|$ \href{https://github.com/alexmorgan}{github.com/alexmorgan}
+\end{center}
+
+% Education
+\section{Education}
+\noindent\textbf{University of California, Berkeley} \hfill \textit{Berkeley, CA}\\
+\textit{B.S. in Computer Science} \hfill \textit{Aug 2018 -- May 2022}\vspace{-2pt}
+
+% Experience
+\section{Experience}
+\noindent\textbf{TechCorp Solutions} \hfill \textit{San Francisco, CA}\\
+\textit{Senior Software Engineer} \hfill \textit{Jun 2022 -- Present}\vspace{-2pt}
+\begin{itemize}
+  \item Engineered a high-throughput microservices architecture processing over 2M daily API requests with 99.99\% uptime.
+  \item Reduced database query latency by 45\% by implementing a Redis caching layer and optimizing PostgreSQL indexes.
+  \item Mentored 4 junior developers and led weekly code reviews to uphold clean code standards across the team.
+\end{itemize}
+
+\noindent\textbf{Innovate Data Systems} \hfill \textit{San Jose, CA}\\
+\textit{Software Engineering Intern} \hfill \textit{May 2021 -- Aug 2021}\vspace{-2pt}
+\begin{itemize}
+  \item Developed an automated CI/CD pipeline using GitHub Actions and Docker, accelerating deployment speed by 35\%.
+  \item Built RESTful APIs using Node.js and Express to deliver real-time data metrics to the frontend dashboard.
+\end{itemize}
+
+% Projects
+\section{Projects}
+\noindent\textbf{\href{https://github.com/alexmorgan/cloud-sync}{CloudSync -- Distributed File Storage}} \hfill \textit{React, Node.js, AWS S3}\\
+\textit{Lead Developer} \hfill \textit{Jan 2022 -- Apr 2022}\vspace{-2pt}
+\begin{itemize}
+  \item Created a secure, end-to-end encrypted cloud storage platform supporting multi-part file uploads and real-time syncing.
+  \item Designed a responsive user interface with React and Tailwind CSS, achieving 98\% lighthouse performance score.
+\end{itemize}
+
+% Skills
+\section{Skills}
+\begin{itemize}[leftmargin=0.15in, label={}]
+  \item \textbf{Languages}{: JavaScript, TypeScript, Python, C++, SQL, HTML/CSS}
+  \item \textbf{Frameworks \& Tools}{: React, Node.js, Express, PostgreSQL, MongoDB, Redis, Docker, Git, AWS}
+\end{itemize}
+
+\end{document}
