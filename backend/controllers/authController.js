@@ -37,15 +37,17 @@ async function generateRefreshToken(userId) {
 // Rotate refresh token (invalidate old, issue new in same family)
 async function rotateRefreshToken(oldToken, oldFamily) {
   const tokenHash = RefreshToken.hashToken(oldToken);
-  const existing = await RefreshToken.findOne({ tokenHash, family: oldFamily, revoked: false });
+
+  // Atomically find and revoke to prevent race condition reuse
+  const existing = await RefreshToken.findOneAndUpdate(
+    { tokenHash, family: oldFamily, revoked: false },
+    { revoked: true },
+    { new: true }
+  );
 
   if (!existing) {
     return null;
   }
-
-  // Revoke old token
-  existing.revoked = true;
-  await existing.save();
 
   // Issue new one in same family
   const newToken = RefreshToken.generateToken();
@@ -133,15 +135,11 @@ exports.registerUser = async (req, res) => {
       return res.status(400).json({ message: 'OTP is required' });
     }
 
-    // Find the most recent OTP for this email
-    const otpRecord = await OTP.findOne({ email }).sort({ createdAt: -1 });
+    // Atomically find and delete OTP to prevent race condition reuse
+    const otpRecord = await OTP.findOneAndDelete({ email, otp }, { sort: { createdAt: -1 } });
 
     if (!otpRecord) {
       return res.status(400).json({ message: 'OTP has expired or is invalid. Please request a new one.' });
-    }
-
-    if (otpRecord.otp !== otp) {
-      return res.status(400).json({ message: 'Invalid OTP' });
     }
 
     const userExists = await User.findOne({ email });
@@ -153,11 +151,7 @@ exports.registerUser = async (req, res) => {
       name,
       email,
       password,
-      // role is always 'user' — admin accounts are created via admin endpoints only
     });
-
-    // Clean up OTP after successful registration
-    await OTP.deleteOne({ _id: otpRecord._id });
 
     if (user) {
       const authData = buildAuthResponse(user);
@@ -252,19 +246,11 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: 'Please provide email, OTP, and new password' });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters' });
-    }
-
-    // Find the most recent OTP for this email
-    const otpRecord = await OTP.findOne({ email }).sort({ createdAt: -1 });
+    // Atomically find and delete OTP to prevent race condition reuse
+    const otpRecord = await OTP.findOneAndDelete({ email, otp }, { sort: { createdAt: -1 } });
 
     if (!otpRecord) {
       return res.status(400).json({ message: 'OTP has expired or is invalid. Please request a new one.' });
-    }
-
-    if (otpRecord.otp !== otp) {
-      return res.status(400).json({ message: 'Invalid OTP' });
     }
 
     // Find user and update password
@@ -275,9 +261,6 @@ exports.resetPassword = async (req, res) => {
 
     user.password = password;
     await user.save();
-
-    // Clean up OTP after successful reset
-    await OTP.deleteOne({ _id: otpRecord._id });
 
     res.status(200).json({ message: 'Password reset successfully. You can now log in with your new password.' });
   } catch (error) {

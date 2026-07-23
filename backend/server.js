@@ -59,7 +59,8 @@ const app = express();
     app.use(Sentry.Handlers.requestHandler());
     app.use(Sentry.Handlers.tracingHandler());
   }
-  app.use(express.json());
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
   // Health check — no rate limiting (used by Render & UptimeRobot)
   app.get('/', (req, res) => {
@@ -89,12 +90,13 @@ const app = express();
     console.error('Unhandled error:', err.stack || err.message || err);
 
     const statusCode = err.statusCode || 500;
-    const message =
-      process.env.NODE_ENV === 'production'
-        ? 'Internal server error'
-        : err.message || 'Internal server error';
 
-    res.status(statusCode).json({ message });
+    // Don't leak internal error details in production
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(statusCode).json({ message: 'Internal server error' });
+    }
+
+    res.status(statusCode).json({ message: err.message || 'Internal server error' });
   });
 
   const server = app.listen(PORT, () => {
