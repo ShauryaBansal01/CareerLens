@@ -2,6 +2,19 @@ const FeatureFlag = require('../models/FeatureFlag');
 
 const cache = new Map();
 const CACHE_TTL = 60 * 1000;
+const CACHE_MAX_SIZE = 100;
+
+function evictStaleEntries() {
+  if (cache.size <= CACHE_MAX_SIZE) return;
+  const now = Date.now();
+  for (const [key, entry] of cache) {
+    if (now >= entry.expiresAt) cache.delete(key);
+  }
+  if (cache.size > CACHE_MAX_SIZE) {
+    const iterator = cache.keys();
+    while (cache.size > CACHE_MAX_SIZE) cache.delete(iterator.next().value);
+  }
+}
 
 async function isFeatureEnabled(name, userId) {
   const cached = cache.get(name);
@@ -11,6 +24,7 @@ async function isFeatureEnabled(name, userId) {
 
   const flag = await FeatureFlag.findOne({ name });
   cache.set(name, { flag, expiresAt: Date.now() + CACHE_TTL });
+  evictStaleEntries();
   return checkFlag(flag, userId);
 }
 

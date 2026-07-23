@@ -29,12 +29,22 @@ exports.getAPIKeys = async (req, res) => {
 // @desc    Add or update an API key
 // @route   POST /api/keys
 // @access  Private
+const VALID_PROVIDERS = ['gemini', 'openai', 'anthropic'];
+
 exports.saveAPIKey = async (req, res) => {
   try {
     const { provider, key } = req.body;
     
     if (!provider || !key) {
       return res.status(400).json({ success: false, message: 'Provider and key are required' });
+    }
+
+    if (!VALID_PROVIDERS.includes(provider)) {
+      return res.status(400).json({ success: false, message: `Invalid provider. Must be one of: ${VALID_PROVIDERS.join(', ')}` });
+    }
+
+    if (typeof key !== 'string' || key.length < 8) {
+      return res.status(400).json({ success: false, message: 'Invalid API key format' });
     }
 
     // Validate key structure before saving (basic validation via the factory health check)

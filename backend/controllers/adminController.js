@@ -1,8 +1,13 @@
+const mongoose = require('mongoose');
 const Role = require('../models/Role');
 const Project = require('../models/Project');
 const Roadmap = require('../models/Roadmap');
 const FeatureFlag = require('../models/FeatureFlag');
 const { invalidateFlagCache } = require('../middleware/featureFlag');
+
+function isValidObjectId(id) {
+  return mongoose.Types.ObjectId.isValid(id);
+}
 
 // @desc    Get all stats (Users, Roles, Projects)
 // @route   GET /api/admin/stats
@@ -46,7 +51,13 @@ exports.addRole = async (req, res) => {
 exports.deleteRole = async (req, res) => {
   try {
     const roleId = req.params.id;
-    await Role.findByIdAndDelete(roleId);
+    if (!isValidObjectId(roleId)) {
+      return res.status(400).json({ message: 'Invalid role ID' });
+    }
+    const deleted = await Role.findByIdAndDelete(roleId);
+    if (!deleted) {
+      return res.status(404).json({ message: 'Role not found' });
+    }
     res.status(200).json({ message: 'Role deleted' });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -76,7 +87,13 @@ exports.addProject = async (req, res) => {
 exports.deleteProject = async (req, res) => {
   try {
     const projectId = req.params.id;
-    await Project.findByIdAndDelete(projectId);
+    if (!isValidObjectId(projectId)) {
+      return res.status(400).json({ message: 'Invalid project ID' });
+    }
+    const deleted = await Project.findByIdAndDelete(projectId);
+    if (!deleted) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
     res.status(200).json({ message: 'Project deleted' });
   } catch (error) {
     res.status(500).json({ message: error.message });
