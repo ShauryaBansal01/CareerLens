@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { generateRoadmap, seedRoadmaps } = require('../controllers/roadmapController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, admin } = require('../middleware/authMiddleware');
 const injectAI = require('../middleware/injectAI');
 const { aiLimiter } = require('../middleware/rateLimiter');
 
 router.post('/generate', protect, aiLimiter, injectAI, generateRoadmap);
-router.post('/seed', seedRoadmaps);
+router.post('/seed', protect, admin, seedRoadmaps);
 
 module.exports = router;

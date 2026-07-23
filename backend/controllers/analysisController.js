@@ -69,9 +69,12 @@ exports.getRoles = async (req, res) => {
 
 // @desc    Seed dummy roles (for testing)
 // @route   POST /api/analysis/seed
-// @access  Public
+// @access  Admin only
 exports.seedRoles = async (req, res) => {
   try {
+    if (process.env.NODE_ENV === 'production' && (!req.user || req.user.role !== 'admin')) {
+      return res.status(403).json({ message: 'Not authorized in production' });
+    }
     await Role.deleteMany();
     const roles = await Role.insertMany([
       // ── Web / App Development ──────────────────────────────────────────────

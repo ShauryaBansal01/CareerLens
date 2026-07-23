@@ -51,9 +51,12 @@ exports.recommendProjects = async (req, res) => {
 
 // @desc    Seed Projects
 // @route   POST /api/projects/seed
-// @access  Public
+// @access  Admin only
 exports.seedProjects = async (req, res) => {
   try {
+    if (process.env.NODE_ENV === 'production' && (!req.user || req.user.role !== 'admin')) {
+      return res.status(403).json({ message: 'Not authorized in production' });
+    }
     await Project.deleteMany();
     const projects = await Project.insertMany([
       {

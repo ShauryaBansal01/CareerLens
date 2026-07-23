@@ -60,9 +60,12 @@ exports.generateRoadmap = async (req, res) => {
 
 // @desc    Seed Roadmap data
 // @route   POST /api/roadmap/seed
-// @access  Public
+// @access  Admin only
 exports.seedRoadmaps = async (req, res) => {
   try {
+    if (process.env.NODE_ENV === 'production' && (!req.user || req.user.role !== 'admin')) {
+      return res.status(403).json({ message: 'Not authorized in production' });
+    }
     await Roadmap.deleteMany();
     const roadmaps = await Roadmap.insertMany([
       {
