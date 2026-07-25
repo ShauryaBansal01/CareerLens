@@ -35,13 +35,17 @@ const userSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// Encrypt password using bcrypt
+// Encrypt password using bcrypt.
+// NOTE: the `return` is load-bearing. Without it an unmodified document falls
+// through and either re-hashes an already-hashed password (locking the user
+// out) or calls bcrypt with `undefined` when `password` was not selected.
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
-    next();
+    return next();
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
+  return next();
 });
 
 // Match user entered password to hashed password in database

@@ -11,6 +11,7 @@ const refreshTokenSchema = new mongoose.Schema({
   tokenHash: {
     type: String,
     required: true,
+    index: true, // every rotation looks up by this — without it, collection scan
   },
   family: {
     type: String,

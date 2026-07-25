@@ -1,4 +1,3 @@
-const crypto = require('crypto');
 const User = require('../models/User');
 const OTP = require('../models/OTP');
 const RefreshToken = require('../models/RefreshToken');
@@ -7,6 +6,19 @@ const sendEmail = require('../utils/sendEmail');
 
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
+
+// Identical response for both branches of an email lookup, so the endpoint
+// can't be used to discover which addresses have accounts.
+const GENERIC_OTP_RESPONSE = 'If that email can be used, a verification code has been sent.';
+
+/**
+ * Logs the real error server-side and returns an opaque message to the client.
+ * Never hand `error.message` to callers — it leaks driver and schema details.
+ */
+function fail(res, context, error, status = 500, message = 'Something went wrong. Please try again.') {
+  console.error(`[auth] ${context}:`, error);
+  return res.status(status).json({ message });
+}
 
 // Generate short-lived access token
 const generateAccessToken = (id) => {
@@ -34,7 +46,14 @@ async function generateRefreshToken(userId) {
   return { refreshToken: token, refreshFamily: family };
 }
 
-// Rotate refresh token (invalidate old, issue new in same family)
+/**
+ * Rotate a refresh token: revoke the presented one, issue a replacement in the
+ * same family.
+ *
+ * If a token that was *already* revoked is presented, that means someone is
+ * replaying a stolen token — the whole family is burned so neither the
+ * attacker nor the legitimate holder can continue, forcing a fresh login.
+ */
 async function rotateRefreshToken(oldToken, oldFamily) {
   const tokenHash = RefreshToken.hashToken(oldToken);
 
@@ -46,6 +65,19 @@ async function rotateRefreshToken(oldToken, oldFamily) {
   );
 
   if (!existing) {
+    // Reuse detection: the token exists but was already spent.
+    const replayed = await RefreshToken.findOne({ tokenHash, family: oldFamily });
+    if (replayed) {
+      console.warn(`[auth] refresh token reuse detected for family ${oldFamily} — revoking family`);
+      await RefreshToken.updateMany(
+        { family: oldFamily, revoked: false },
+        { revoked: true }
+      );
+    }
+    return null;
+  }
+
+  if (existing.expiresAt && existing.expiresAt.getTime() < Date.now()) {
     return null;
   }
 
@@ -58,8 +90,10 @@ async function rotateRefreshToken(oldToken, oldFamily) {
     tokenHash: newTokenHash,
     family: oldFamily,
     expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000),
-    replacedBy: newTokenHash,
   });
+
+  // Point the *spent* token at its replacement (audit trail).
+  await RefreshToken.updateOne({ _id: existing._id }, { replacedBy: newTokenHash });
 
   return { refreshToken: newToken, refreshFamily: oldFamily, userId: existing.user };
 }
@@ -75,6 +109,20 @@ function buildAuthResponse(user) {
   };
 }
 
+function otpEmailTemplate({ heading, intro, code, footer }) {
+  return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+        <h2 style="color: #6366f1; text-align: center;">${heading}</h2>
+        <p style="font-size: 16px; color: #333;">Hello,</p>
+        <p style="font-size: 16px; color: #333;">${intro}</p>
+        <div style="background-color: #f4f4f5; padding: 15px; text-align: center; border-radius: 8px; margin: 20px 0;">
+          <h1 style="margin: 0; letter-spacing: 5px; color: #111; font-family: 'Courier New', monospace;">${code}</h1>
+        </div>
+        <p style="font-size: 14px; color: #666; text-align: center;">${footer}</p>
+      </div>
+    `;
+}
+
 // @desc    Send OTP to email for verification
 // @route   POST /api/auth/send-otp
 // @access  Public
@@ -86,41 +134,44 @@ exports.sendOtp = async (req, res) => {
       return res.status(400).json({ message: 'Please provide an email address' });
     }
 
-    // Check if user already exists
     const userExists = await User.findOne({ email });
+
     if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+      // Deliberately no OTP is issued — but the response is identical to the
+      // success path, so this endpoint reveals nothing about who has an
+      // account. The owner of the inbox still gets told what happened.
+      await sendEmail({
+        email,
+        subject: 'CareerLens - Account Already Registered',
+        html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+        <h2 style="color: #6366f1; text-align: center;">You already have a CareerLens account</h2>
+        <p style="font-size: 16px; color: #333;">Someone tried to register using this email address. An account already exists, so no verification code was issued.</p>
+        <p style="font-size: 16px; color: #333;">If this was you, please log in instead — or use "Forgot password" if you can't remember your password.</p>
+        <p style="font-size: 14px; color: #666; text-align: center;">If this wasn't you, you can safely ignore this email.</p>
+      </div>
+    `,
+      }).catch((err) => console.error('[auth] duplicate-registration notice failed:', err.message));
+
+      return res.status(200).json({ message: GENERIC_OTP_RESPONSE });
     }
 
-    // Generate a 10-character alphanumeric OTP (crypto-random, more entropy than 6-digit numeric)
-    const otp = crypto.randomBytes(5).toString('hex').toUpperCase();
-
-    // Store OTP in database (will automatically expire in 5 mins due to TTL index)
-    await OTP.create({ email, otp });
-
-    // Send the email
-    const message = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-        <h2 style="color: #6366f1; text-align: center;">Welcome to CareerLens!</h2>
-        <p style="font-size: 16px; color: #333;">Hello,</p>
-        <p style="font-size: 16px; color: #333;">Thank you for registering. Please use the following One-Time Password (OTP) to verify your email address. This code is valid for <strong>5 minutes</strong>.</p>
-        <div style="background-color: #f4f4f5; padding: 15px; text-align: center; border-radius: 8px; margin: 20px 0;">
-          <h1 style="margin: 0; letter-spacing: 5px; color: #111; font-family: 'Courier New', monospace;">${otp}</h1>
-        </div>
-        <p style="font-size: 14px; color: #666; text-align: center;">If you did not request this, please ignore this email.</p>
-      </div>
-    `;
+    const otp = await OTP.issue(email);
 
     await sendEmail({
-      email: email,
+      email,
       subject: 'CareerLens - Email Verification OTP',
-      html: message,
+      html: otpEmailTemplate({
+        heading: 'Welcome to CareerLens!',
+        intro: 'Thank you for registering. Please use the following One-Time Password (OTP) to verify your email address. This code is valid for <strong>5 minutes</strong>.',
+        code: otp,
+        footer: 'If you did not request this, please ignore this email.',
+      }),
     });
 
-    res.status(200).json({ message: 'OTP sent to email successfully' });
+    res.status(200).json({ message: GENERIC_OTP_RESPONSE });
   } catch (error) {
-    console.error('Error sending OTP:', error);
-    res.status(500).json({ message: 'Failed to send OTP. Please try again.' });
+    return fail(res, 'sendOtp', error, 500, 'Failed to send OTP. Please try again.');
   }
 };
 
@@ -135,10 +186,10 @@ exports.registerUser = async (req, res) => {
       return res.status(400).json({ message: 'OTP is required' });
     }
 
-    // Atomically find and delete OTP to prevent race condition reuse
-    const otpRecord = await OTP.findOneAndDelete({ email, otp }, { sort: { createdAt: -1 } });
-
-    if (!otpRecord) {
+    // Verify inbox ownership *before* touching the users collection, so this
+    // endpoint can't be used to probe which emails are registered.
+    const otpValid = await OTP.verifyAndConsume(email, otp);
+    if (!otpValid) {
       return res.status(400).json({ message: 'OTP has expired or is invalid. Please request a new one.' });
     }
 
@@ -147,21 +198,17 @@ exports.registerUser = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const user = await User.create({
-      name,
-      email,
-      password,
-    });
+    const user = await User.create({ name, email, password });
 
-    if (user) {
-      const authData = buildAuthResponse(user);
-      const { refreshToken, refreshFamily } = await generateRefreshToken(user._id);
-      res.status(201).json({ ...authData, refreshToken, refreshFamily });
-    } else {
-      res.status(400).json({ message: 'Invalid user data' });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid user data' });
     }
+
+    const authData = buildAuthResponse(user);
+    const { refreshToken, refreshFamily } = await generateRefreshToken(user._id);
+    res.status(201).json({ ...authData, refreshToken, refreshFamily });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return fail(res, 'registerUser', error, 500, 'Registration failed. Please try again.');
   }
 };
 
@@ -176,12 +223,12 @@ exports.loginUser = async (req, res) => {
     if (user && (await user.matchPassword(password))) {
       const authData = buildAuthResponse(user);
       const { refreshToken, refreshFamily } = await generateRefreshToken(user._id);
-      res.json({ ...authData, refreshToken, refreshFamily });
-    } else {
-      res.status(401).json({ message: 'Invalid email or password' });
+      return res.json({ ...authData, refreshToken, refreshFamily });
     }
+
+    res.status(401).json({ message: 'Invalid email or password' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return fail(res, 'loginUser', error, 500, 'Login failed. Please try again.');
   }
 };
 
@@ -196,42 +243,28 @@ exports.forgotPassword = async (req, res) => {
       return res.status(400).json({ message: 'Please provide an email address' });
     }
 
-    // Check if user exists (unlike sendOtp, we want user to exist)
     const user = await User.findOne({ email });
     if (!user) {
       // Return generic message to prevent user enumeration
       return res.status(200).json({ message: 'If an account with that email exists, an OTP has been sent.' });
     }
 
-    // Generate a 10-character alphanumeric OTP
-    const otp = crypto.randomBytes(5).toString('hex').toUpperCase();
-
-    // Store OTP in database (will automatically expire in 5 mins due to TTL index)
-    await OTP.create({ email, otp });
-
-    // Send the email
-    const message = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-        <h2 style="color: #6366f1; text-align: center;">Password Reset - CareerLens</h2>
-        <p style="font-size: 16px; color: #333;">Hello,</p>
-        <p style="font-size: 16px; color: #333;">We received a request to reset your CareerLens account password. Use the following One-Time Password (OTP) to proceed. This code is valid for <strong>5 minutes</strong>.</p>
-        <div style="background-color: #f4f4f5; padding: 15px; text-align: center; border-radius: 8px; margin: 20px 0;">
-          <h1 style="margin: 0; letter-spacing: 5px; color: #111; font-family: 'Courier New', monospace;">${otp}</h1>
-        </div>
-        <p style="font-size: 14px; color: #666; text-align: center;">If you did not request this, please ignore this email and your password will remain unchanged.</p>
-      </div>
-    `;
+    const otp = await OTP.issue(email);
 
     await sendEmail({
-      email: email,
+      email,
       subject: 'CareerLens - Password Reset OTP',
-      html: message,
+      html: otpEmailTemplate({
+        heading: 'Password Reset - CareerLens',
+        intro: 'We received a request to reset your CareerLens account password. Use the following One-Time Password (OTP) to proceed. This code is valid for <strong>5 minutes</strong>.',
+        code: otp,
+        footer: 'If you did not request this, please ignore this email and your password will remain unchanged.',
+      }),
     });
 
     res.status(200).json({ message: 'If an account with that email exists, an OTP has been sent.' });
   } catch (error) {
-    console.error('Error sending password reset OTP:', error);
-    res.status(500).json({ message: 'Failed to send OTP. Please try again.' });
+    return fail(res, 'forgotPassword', error, 500, 'Failed to send OTP. Please try again.');
   }
 };
 
@@ -246,14 +279,11 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: 'Please provide email, OTP, and new password' });
     }
 
-    // Atomically find and delete OTP to prevent race condition reuse
-    const otpRecord = await OTP.findOneAndDelete({ email, otp }, { sort: { createdAt: -1 } });
-
-    if (!otpRecord) {
+    const otpValid = await OTP.verifyAndConsume(email, otp);
+    if (!otpValid) {
       return res.status(400).json({ message: 'OTP has expired or is invalid. Please request a new one.' });
     }
 
-    // Find user and update password
     const user = await User.findOne({ email }).select('+password');
     if (!user) {
       return res.status(400).json({ message: 'User not found' });
@@ -262,10 +292,16 @@ exports.resetPassword = async (req, res) => {
     user.password = password;
     await user.save();
 
+    // A password reset must end every existing session — otherwise a stolen
+    // refresh token survives the very event meant to lock the attacker out.
+    await RefreshToken.updateMany(
+      { user: user._id, revoked: false },
+      { revoked: true }
+    );
+
     res.status(200).json({ message: 'Password reset successfully. You can now log in with your new password.' });
   } catch (error) {
-    console.error('Error resetting password:', error);
-    res.status(500).json({ message: error.message });
+    return fail(res, 'resetPassword', error, 500, 'Failed to reset password. Please try again.');
   }
 };
 
@@ -294,8 +330,7 @@ exports.refreshToken = async (req, res) => {
     const authData = buildAuthResponse(user);
     res.json({ ...authData, refreshToken: result.refreshToken, refreshFamily: result.refreshFamily });
   } catch (error) {
-    console.error('Error refreshing token:', error);
-    res.status(500).json({ message: error.message });
+    return fail(res, 'refreshToken', error, 500, 'Could not refresh session. Please log in again.');
   }
 };
 
@@ -310,8 +345,7 @@ exports.logout = async (req, res) => {
     );
     res.status(200).json({ message: 'Logged out successfully' });
   } catch (error) {
-    console.error('Error during logout:', error);
-    res.status(500).json({ message: error.message });
+    return fail(res, 'logout', error, 500, 'Logout failed. Please try again.');
   }
 };
 
@@ -321,8 +355,11 @@ exports.logout = async (req, res) => {
 exports.getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
     res.status(200).json(user);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return fail(res, 'getMe', error, 500, 'Could not load your profile.');
   }
 };
