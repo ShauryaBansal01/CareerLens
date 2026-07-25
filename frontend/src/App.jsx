@@ -2,7 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-ro
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { TaskProvider } from './context/TaskContext';
-import { useContext, useState, lazy, Suspense, useEffect } from 'react';
+import { useContext, useState, lazy, Suspense } from 'react';
+import { Toaster } from 'react-hot-toast';
 import AuthContext from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -62,12 +63,7 @@ const GuestNav = () => {
       </div>
       <>
         {open && (
-          <div
-            
-            
-            
-            className="border-t border-border-color bg-bg-main md:hidden overflow-hidden"
-          >
+          <div className="border-t border-border-color bg-bg-main md:hidden overflow-hidden">
             <div className="flex flex-col gap-2 p-4">
               {guestLinks.map((item) => (
                 <a key={item.label} href={item.href} className="rounded-lg px-3 py-2 text-sm font-semibold text-text-main focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">
@@ -90,9 +86,9 @@ const LoadingSpinner = () => (
   </div>
 );
 
-const AppRoute = ({ children, requireAuth = true }) => {
+const AppRoute = ({ children, requireAuth = true, requireAdmin = false }) => {
   const { user, loading } = useContext(AuthContext);
-  
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -102,6 +98,12 @@ const AppRoute = ({ children, requireAuth = true }) => {
   }
 
   if (!requireAuth && user) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Defence in depth: the API is the real gate, but rendering an admin screen
+  // to a non-admin just to have every request 403 is a poor experience.
+  if (requireAdmin && user?.role !== 'admin') {
     return <Navigate to="/" replace />;
   }
 
@@ -132,20 +134,7 @@ const RootRoute = () => {
   return <div className="animate-fade-in"><GuestNav /><Landing /></div>;
 };
 
-import { Toaster } from 'react-hot-toast';
-
 function App() {
-  const [reducedMotion, setReducedMotion] = useState(
-    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  );
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const handler = (e) => setReducedMotion(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-
   return (
     <ThemeProvider>
       <Toaster 
@@ -179,7 +168,7 @@ function App() {
               <Route path="/cover-letter" element={<AppRoute><CoverLetter /></AppRoute>} />
               <Route path="/resume-latex" element={<AppRoute><ResumeLatex /></AppRoute>} />
               <Route path="/settings/keys" element={<AppRoute><APIKeySettings /></AppRoute>} />
-              <Route path="/admin" element={<AppRoute><Admin /></AppRoute>} />
+              <Route path="/admin" element={<AppRoute requireAdmin><Admin /></AppRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>

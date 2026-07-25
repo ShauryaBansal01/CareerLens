@@ -152,7 +152,7 @@ export const TaskProvider = ({ children }) => {
 
   return (
     <TaskContext.Provider value={{
-      tasks, startTask, clearTask, getTask,
+      tasks, startTask, updateTask, clearTask, getTask,
       setPageState, getPageState, clearPageState,
     }}>
       {children}

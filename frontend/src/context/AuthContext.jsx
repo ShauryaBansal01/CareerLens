@@ -1,184 +1,89 @@
-import { createContext, useState, useEffect, useCallback, useRef } from 'react';
-import axios from 'axios';
+import { createContext, useState, useEffect, useCallback } from 'react';
+import api from '../services/api';
+import { getStoredUser, storeUser, LOGOUT_EVENT } from '../services/tokenStore';
 
 const AuthContext = createContext();
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-function getStoredUser() {
-  try {
-    const raw = localStorage.getItem('user');
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    localStorage.removeItem('user');
-    return null;
-  }
-}
-
-function storeUser(user) {
-  if (user) {
-    localStorage.setItem('user', JSON.stringify(user));
-  } else {
-    localStorage.removeItem('user');
-  }
-}
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(getStoredUser);
-  const [loading, setLoading] = useState(true);
-  const refreshing = useRef(false);
-  const failedQueue = useRef([]);
 
-  const processQueue = useCallback((error, token = null) => {
-    failedQueue.current.forEach(({ resolve, reject }) => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve(token);
-      }
-    });
-    failedQueue.current = [];
-  }, []);
-
-  const refreshToken = useCallback(async () => {
-    const current = getStoredUser();
-    if (!current?.refreshToken || !current?.refreshFamily) {
-      return null;
-    }
-
-    try {
-      const res = await axios.post(`${API_URL}/auth/refresh-token`, {
-        refreshToken: current.refreshToken,
-        refreshFamily: current.refreshFamily,
-      });
-
-      if (res.data) {
-        const updated = { ...current, ...res.data };
-        storeUser(updated);
-        setUser(updated);
-        return res.data.token;
-      }
-      return null;
-    } catch {
-      storeUser(null);
-      setUser(null);
-      return null;
-    }
-  }, []);
-
-  // Setup axios interceptor for token refresh
+  // Token refresh and forced logout live in the api interceptor (so they apply
+  // to every request, not just ones made from this context). React state just
+  // mirrors the store — this listener keeps them in sync.
   useEffect(() => {
-    const interceptor = axios.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        const originalRequest = error.config;
-
-        if (error.response?.status === 401 && !originalRequest._retry) {
-          const url = originalRequest.url || '';
-          const isAuthEndpoint = url.includes('/auth/login') ||
-            url.includes('/auth/register') ||
-            url.includes('/auth/refresh-token');
-
-          if (isAuthEndpoint) {
-            return Promise.reject(error);
-          }
-
-          if (refreshing.current) {
-            return new Promise((resolve, reject) => {
-              failedQueue.current.push({ resolve, reject });
-            }).then((token) => {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-              return axios(originalRequest);
-            });
-          }
-
-          originalRequest._retry = true;
-          refreshing.current = true;
-
-          try {
-            const newToken = await refreshToken();
-            if (newToken) {
-              processQueue(null, newToken);
-              originalRequest.headers.Authorization = `Bearer ${newToken}`;
-              return axios(originalRequest);
-            }
-            processQueue(new Error('Refresh failed'));
-            storeUser(null);
-            setUser(null);
-            window.dispatchEvent(new CustomEvent('cl:logout'));
-            return Promise.reject(error);
-          } catch (refreshError) {
-            processQueue(refreshError);
-            storeUser(null);
-            setUser(null);
-            window.dispatchEvent(new CustomEvent('cl:logout'));
-            return Promise.reject(refreshError);
-          } finally {
-            refreshing.current = false;
-          }
-        }
-
-        return Promise.reject(error);
-      }
-    );
-
-    return () => {
-      axios.interceptors.response.eject(interceptor);
+    const onLogout = () => setUser(null);
+    const onStorage = (event) => {
+      if (event.key === 'user') setUser(getStoredUser());
     };
-  }, [refreshToken, processQueue]);
 
-  useEffect(() => {
-    setLoading(false);
+    window.addEventListener(LOGOUT_EVENT, onLogout);
+    // Keeps multiple tabs consistent: log out in one, log out in all.
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener(LOGOUT_EVENT, onLogout);
+      window.removeEventListener('storage', onStorage);
+    };
   }, []);
 
-  const login = async (email, password) => {
-    const res = await axios.post(`${API_URL}/auth/login`, { email, password });
-    if (res.data) {
-      storeUser(res.data);
-      setUser(res.data);
-    }
-    return res.data;
-  };
+  const persist = useCallback((data) => {
+    storeUser(data);
+    setUser(data);
+    return data;
+  }, []);
 
-  const sendOtp = async (email) => {
-    const res = await axios.post(`${API_URL}/auth/send-otp`, { email });
-    return res.data;
-  };
+  const login = useCallback(async (email, password) => {
+    const res = await api.post('/auth/login', { email, password });
+    return persist(res.data);
+  }, [persist]);
 
-  const register = async (name, email, password, role, otp) => {
-    const res = await axios.post(`${API_URL}/auth/register`, { name, email, password, role, otp });
-    if (res.data) {
-      storeUser(res.data);
-      setUser(res.data);
-    }
+  const sendOtp = useCallback(async (email) => {
+    const res = await api.post('/auth/send-otp', { email });
     return res.data;
-  };
+  }, []);
 
-  const logout = async () => {
+  const register = useCallback(async (name, email, password, role, otp) => {
+    // `role` is intentionally not sent — the server assigns it and rejects
+    // client-supplied values.
+    const res = await api.post('/auth/register', { name, email, password, otp });
+    return persist(res.data);
+  }, [persist]);
+
+  const logout = useCallback(async () => {
     try {
-      await axios.post(`${API_URL}/auth/logout`, {}, {
-        headers: { Authorization: `Bearer ${user?.token}` },
-      });
+      await api.post('/auth/logout', {});
     } catch {
-      // Logout locally even if server call fails
+      // Log out locally even if the server call fails
     }
-    storeUser(null);
-    window.dispatchEvent(new CustomEvent('cl:logout'));
-    setUser(null);
-  };
+    persist(null);
+  }, [persist]);
 
-  const forgotPassword = async (email) => {
-    const res = await axios.post(`${API_URL}/auth/forgot-password`, { email });
+  const forgotPassword = useCallback(async (email) => {
+    const res = await api.post('/auth/forgot-password', { email });
     return res.data;
-  };
+  }, []);
 
-  const resetPassword = async (email, otp, password) => {
-    const res = await axios.post(`${API_URL}/auth/reset-password`, { email, otp, password });
+  const resetPassword = useCallback(async (email, otp, password) => {
+    const res = await api.post('/auth/reset-password', { email, otp, password });
     return res.data;
-  };
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, sendOtp, register, logout, forgotPassword, resetPassword, refreshToken }}>
-      {!loading && children}
+    <AuthContext.Provider
+      value={{
+        user,
+        // Session state is read synchronously from localStorage on first
+        // render, so there is no async bootstrap to wait on.
+        loading: false,
+        isAdmin: user?.role === 'admin',
+        login,
+        sendOtp,
+        register,
+        logout,
+        forgotPassword,
+        resetPassword,
+      }}
+    >
+      {children}
     </AuthContext.Provider>
   );
 };
