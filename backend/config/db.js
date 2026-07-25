@@ -1,5 +1,11 @@
 const mongoose = require('mongoose');
 
+// Pool sizing is env-tunable. The previous code gave production a *smaller*
+// pool (10) than development (50), which is backwards; a single tunable with
+// one sane default avoids re-introducing that asymmetry.
+const MAX_POOL_SIZE = parseInt(process.env.MONGO_MAX_POOL_SIZE, 10) || 10;
+const MIN_POOL_SIZE = parseInt(process.env.MONGO_MIN_POOL_SIZE, 10) || 2;
+
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(
@@ -8,13 +14,26 @@ const connectDB = async () => {
         serverSelectionTimeoutMS: 8000,   // fail fast, don't hang
         socketTimeoutMS: 45000,
         retryWrites: true,
-        // ── Connection pool tuning for high concurrency ──────────────────
-        maxPoolSize: process.env.NODE_ENV === 'production' ? 10 : 50,
-        minPoolSize: 5,        // Keep warm connections ready to avoid cold-start latency
-        maxIdleTimeMS: 30000,  // Close idle connections after 30s to free resources
+        // ── Connection pool tuning ───────────────────────────────────────
+        maxPoolSize: MAX_POOL_SIZE,
+        minPoolSize: MIN_POOL_SIZE,  // Keep warm connections ready to avoid cold-start latency
+        maxIdleTimeMS: 30000,        // Close idle connections after 30s to free resources
       }
     );
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+
+    // The initial connect succeeding says nothing about staying connected.
+    // Without these, a dropped connection is silent and every query just hangs
+    // until serverSelectionTimeoutMS.
+    mongoose.connection.on('error', (err) => {
+      console.error('❌ MongoDB connection error:', err.message);
+    });
+    mongoose.connection.on('disconnected', () => {
+      console.warn('⚠️  MongoDB disconnected — driver will attempt to reconnect');
+    });
+    mongoose.connection.on('reconnected', () => {
+      console.log('✅ MongoDB reconnected');
+    });
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error.message);
     console.error('');

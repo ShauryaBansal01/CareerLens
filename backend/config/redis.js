@@ -5,6 +5,36 @@ let fallback = null;
 let isConfiguredChecked = false;
 let redisFailed = false;
 
+// The in-memory fallback is a plain Map with no eviction of its own. Without a
+// cap it grows unbounded for the whole process lifetime whenever REDIS_URL is
+// unset — which is the documented default. Entries are insertion-ordered, so
+// dropping from the front evicts oldest-first.
+const FALLBACK_MAX_ENTRIES = 500;
+
+function fallbackSet(key, value) {
+  if (!fallback) fallback = new Map();
+
+  // Re-inserting must refresh position, otherwise a hot key stays at the front
+  // and gets evicted despite constant use.
+  fallback.delete(key);
+  fallback.set(key, value);
+
+  if (fallback.size <= FALLBACK_MAX_ENTRIES) return;
+
+  // Cheap pass: drop anything already expired before evicting live entries.
+  const now = Date.now();
+  for (const [k, entry] of fallback) {
+    if (now >= entry.expiresAt) fallback.delete(k);
+  }
+
+  const iterator = fallback.keys();
+  while (fallback.size > FALLBACK_MAX_ENTRIES) {
+    const oldest = iterator.next();
+    if (oldest.done) break;
+    fallback.delete(oldest.value);
+  }
+}
+
 function getRedis() {
   if (redis) return redis;
   if (redisFailed) return null;
@@ -96,8 +126,7 @@ async function cacheSet(key, data, ttlMs = 5 * 60 * 1000) {
       // Fall through to in-memory cache if Redis command fails
     }
   }
-  if (!fallback) fallback = new Map();
-  fallback.set(key, { data, expiresAt: Date.now() + ttlMs });
+  fallbackSet(key, { data, expiresAt: Date.now() + ttlMs });
 }
 
 async function cacheDel(pattern) {

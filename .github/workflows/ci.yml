@@ -8,7 +8,7 @@ on:
 
 jobs:
   frontend:
-    name: Frontend — Lint & Build
+    name: Frontend — Lint, Test & Build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -22,6 +22,9 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run lint
+      # The unit suite existed but was never run in CI, so a broken component
+      # test could not fail the build.
+      - run: npm test
       - run: npm run build
 
   backend:
@@ -38,7 +41,9 @@ jobs:
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
-      - run: npx eslint . --ext .js 2>/dev/null || echo "No ESLint config found, skipping"
+      # A real lint run. This step used to be `|| echo "No ESLint config
+      # found, skipping"`, which passed unconditionally.
+      - run: npm run lint
       - run: npm test
         env:
           JWT_SECRET: ci-test-secret

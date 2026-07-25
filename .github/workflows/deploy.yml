@@ -1,15 +1,25 @@
 name: Deploy
 
+# Deploys only after CI has passed on the same commit. Previously this ran
+# directly on `push`, in parallel with CI — so a commit with failing tests
+# still shipped to production.
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
 
 jobs:
   frontend:
     name: Deploy Frontend → Vercel
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # workflow_run checks out the default branch by default; pin to the
+          # exact commit CI validated.
+          ref: ${{ github.event.workflow_run.head_sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -30,7 +40,8 @@ jobs:
   backend:
     name: Deploy Backend → Render
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Trigger Render Deploy
         run: |
-          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+          curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
