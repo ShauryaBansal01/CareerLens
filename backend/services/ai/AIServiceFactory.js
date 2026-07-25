@@ -9,6 +9,14 @@ class AIServiceFactory {
    * @param {string} apiKey - The decrypted API key
    * @returns {BaseProvider}
    */
+  static get SUPPORTED_PROVIDERS() {
+    return ['gemini', 'openai', 'anthropic'];
+  }
+
+  static isSupported(providerName) {
+    return AIServiceFactory.SUPPORTED_PROVIDERS.includes(providerName);
+  }
+
   static getProvider(providerName, apiKey) {
     switch (providerName) {
       case 'gemini':

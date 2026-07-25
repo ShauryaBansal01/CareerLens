@@ -1,11 +1,14 @@
 const BaseProvider = require('./BaseProvider');
+const { safeParseJSON } = require('../../../utils/safeParseJSON');
+const { estimateCostUSD } = require('../pricing');
 
 const OPENAI_API_BASE = 'https://api.openai.com/v1';
+const DEFAULT_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
 class OpenAIProvider extends BaseProvider {
   constructor(apiKey) {
     super(apiKey);
-    this.defaultModel = 'gpt-4o-mini';
+    this.defaultModel = DEFAULT_MODEL;
   }
 
   async initialize() {
@@ -13,7 +16,7 @@ class OpenAIProvider extends BaseProvider {
   }
 
   async _request(body) {
-    const response = await fetch(`${OPENAI_API_BASE}/chat/completions`, {
+    const response = await this._fetchWithTimeout(`${OPENAI_API_BASE}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -23,12 +26,22 @@ class OpenAIProvider extends BaseProvider {
     });
 
     if (!response.ok) {
-      const err = new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
-      err.status = response.status;
-      throw err;
+      throw await this._errorFromResponse(response, 'OpenAI');
     }
 
     return response.json();
+  }
+
+  _usage(data, model) {
+    const promptTokens = data.usage?.prompt_tokens || 0;
+    const completionTokens = data.usage?.completion_tokens || 0;
+    return {
+      model,
+      promptTokens,
+      completionTokens,
+      totalTokens: data.usage?.total_tokens || promptTokens + completionTokens,
+      estimatedCostUSD: estimateCostUSD(model, promptTokens, completionTokens),
+    };
   }
 
   async generateText(prompt, options = {}) {
@@ -41,13 +54,8 @@ class OpenAIProvider extends BaseProvider {
     });
 
     return {
-      text: data.choices[0].message.content,
-      usage: {
-        promptTokens: data.usage?.prompt_tokens || 0,
-        completionTokens: data.usage?.completion_tokens || 0,
-        totalTokens: data.usage?.total_tokens || 0,
-        estimatedCostUSD: 0,
-      },
+      text: data.choices?.[0]?.message?.content ?? '',
+      usage: this._usage(data, model),
     };
   }
 
@@ -61,23 +69,16 @@ class OpenAIProvider extends BaseProvider {
       ...(options.maxOutputTokens ? { max_tokens: options.maxOutputTokens } : {}),
     });
 
-    const parsedData = JSON.parse(data.choices[0].message.content);
-
     return {
-      data: parsedData,
-      usage: {
-        promptTokens: data.usage?.prompt_tokens || 0,
-        completionTokens: data.usage?.completion_tokens || 0,
-        totalTokens: data.usage?.total_tokens || 0,
-        estimatedCostUSD: 0,
-      },
+      data: safeParseJSON(data.choices?.[0]?.message?.content),
+      usage: this._usage(data, model),
     };
   }
 
   async checkHealth() {
     const data = await this._request({
       model: this.defaultModel,
-      messages: [{ role: 'user', content: 'Hello' }],
+      messages: [{ role: 'user', content: 'Hi' }],
       max_tokens: 1,
     });
     return !!data;
