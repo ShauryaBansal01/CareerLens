@@ -1,4 +1,4 @@
-const { callGeminiWithRetry, stripCodeFences } = require('../utils/retryWithBackoff');
+const { callGeminiWithRetry } = require('../utils/retryWithBackoff');
 
 const ACHIEVEMENT_EXTRACTION_EXAMPLES = `
 EXAMPLE OUTPUT (for reference):

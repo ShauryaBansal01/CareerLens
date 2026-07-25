@@ -240,7 +240,6 @@ exports.analyzeATS = async (resumeLatex, resumeData = {}, jobDescription = '') =
       totalKeywords: keywordAnalysis.totalKeywords,
       keywordDensity: keywordAnalysis.keywordDensity,
     },
-    overallScore,
     checks,
     warnings,
     criticalIssues,

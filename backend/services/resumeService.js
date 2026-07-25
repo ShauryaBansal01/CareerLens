@@ -2,7 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const { callGeminiWithRetry, stripCodeFences, sanitizeLatexCode } = require('../utils/retryWithBackoff');
 
-const TEMPLATES_DIR = path.join(__dirname, '..', 'utils', 'templates');
 
 const FEW_SHOT_EXAMPLES = `
 EXAMPLE STRONG BULLET POINTS (use this style):
@@ -67,7 +66,7 @@ USER RESUME TEXT:
 ${resumeText.substring(0, 12000)}`;
     }
 
-    let prompt = `${LATEX_INSTRUCTIONS}
+    const prompt = `${LATEX_INSTRUCTIONS}
 
 ${FEW_SHOT_EXAMPLES}
 
@@ -139,7 +138,7 @@ CRITICAL: Fix ALL issues mentioned above. Apply the specific instructions. Use s
     return latexCode;
   } catch (error) {
     console.error('Error generating base LaTeX:', error);
-    throw new Error('Failed to generate base LaTeX');
+    throw new Error('Failed to generate base LaTeX', { cause: error });
   }
 };
 
@@ -206,12 +205,12 @@ Apply your analysis to rewrite the resume following these rules:
     return sanitizeLatexCode(stripCodeFences(response.text));
   } catch (error) {
     console.error('Error tailoring LaTeX:', error);
-    throw new Error('Failed to tailor LaTeX resume');
+    throw new Error('Failed to tailor LaTeX resume', { cause: error });
   }
 };
 
 exports.generateBaseLatexWithAchievements = async (resumeText, structuredProfile = null, options = {}) => {
-  const { useMultiPass = true, useProModel = false } = options;
+  const { useProModel = false } = options;
   const extractionService = require('./extractionService');
 
   try {
@@ -278,6 +277,6 @@ ADDITIONAL INSTRUCTIONS:
     return sanitizeLatexCode(stripCodeFences(response.text));
   } catch (error) {
     console.error('Error generating base LaTeX with achievements:', error);
-    throw new Error('Failed to generate base LaTeX');
+    throw new Error('Failed to generate base LaTeX', { cause: error });
   }
 };

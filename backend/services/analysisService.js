@@ -29,7 +29,7 @@ exports.calculateSkillGapAI = async (aiProvider, userSkills, requiredSkills) => 
   let matchedSkills = [];
   let missingSkills = [];
   let categories = { languages: [], frameworks: [], tools: [], concepts: [] };
-  let overallReadinessVerdict = '';
+  let overallReadinessVerdict;
 
   try {
     const prompt = `You are a strict, expert technical recruiter AI performing a skill-gap analysis.

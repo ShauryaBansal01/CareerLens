@@ -40,48 +40,6 @@ EXAMPLE STRONG BULLET POINTS (use this style):
 - Built an automated CI/CD pipeline using GitHub Actions and Terraform, decreasing deployment time from 45min to 8min
 `;
 
-/**
- * Safely parse JSON from LLM responses. Handles:
- * - Markdown code fences the model may wrap around JSON
- * - Unescaped control characters in string values
- * - Trailing commas before closing brackets
- */
-const safeParseJSON = (text) => {
-  if (!text) throw new Error('Empty response from AI');
-
-  // Strip markdown code fences
-  let cleaned = text
-    .replace(/^\s*```(?:json)?\s*[\r\n]+/i, '')
-    .replace(/[\r\n]+\s*```\s*$/i, '')
-    .trim();
-
-  // First attempt: direct parse
-  try {
-    return JSON.parse(cleaned);
-  } catch (firstError) {
-    // Second attempt: fix common LLM JSON issues
-    try {
-      cleaned = cleaned
-        // Remove trailing commas before } or ]
-        .replace(/,\s*([}\]])/g, '$1')
-        // Escape unescaped newlines/tabs inside string values
-        .replace(/(["'])(?:(?!\1)[\s\S])*?\1/g, (match) => {
-          return match
-            .replace(/(?<!\\)\n/g, '\\n')
-            .replace(/(?<!\\)\r/g, '\\r')
-            .replace(/(?<!\\)\t/g, '\\t');
-        });
-
-      return JSON.parse(cleaned);
-    } catch (secondError) {
-      console.error('safeParseJSON: both parse attempts failed.');
-      console.error('Original error:', firstError.message);
-      console.error('First 500 chars of response:', text.substring(0, 500));
-      throw firstError;
-    }
-  }
-};
-
 // @desc    Upload & Parse Resume
 // @route   POST /api/resume/upload
 // @access  Private
@@ -122,10 +80,15 @@ exports.uploadResume = async (req, res) => {
 
     const latexPrompt = `${LATEX_INSTRUCTIONS}\n\nYour task is to generate a resume based on the provided extracted resume text.\n\nUSER RESUME TEXT:\n${rawText.substring(0, 10000)}\n\nOnly return the raw, compiling LaTeX code.`;
 
-    req.ai.feature = 'resume_parsing';
-    const extractionPromise = req.ai.generateJSONWithRetry(extractionPrompt);
-    req.ai.feature = 'latex_generation';
-    const latexPromise = req.ai.generateTextWithRetry(latexPrompt);
+    // `feature` must be passed per call: these two run concurrently on the
+    // same provider instance, so setting req.ai.feature between them would
+    // label both usage records with whichever value was assigned last.
+    const extractionPromise = req.ai.generateJSONWithRetry(
+      extractionPrompt, { feature: 'resume_parsing' }
+    );
+    const latexPromise = req.ai.generateTextWithRetry(
+      latexPrompt, { feature: 'latex_generation' }
+    );
 
     // Wait for both to complete (allSettled so one failure doesn't kill the other)
     const [extractionResult, latexResult] = await Promise.allSettled([extractionPromise, latexPromise]);
@@ -559,7 +522,7 @@ Ensure it compiles directly with pdflatex without any errors. Only return the ra
 
     const response = await req.ai.generateTextWithRetry(prompt);
 
-    let latexCode = sanitizeLatexCode(response.text.replace(/^```(latex)?/im, '').replace(/```$/im, '').trim());
+    const latexCode = sanitizeLatexCode(response.text.replace(/^```(latex)?/im, '').replace(/```$/im, '').trim());
 
     res.status(200).json({ rawLatexCode: latexCode });
   } catch (error) {
@@ -625,7 +588,7 @@ Only return the raw, compiling LaTeX code.`;
 
     const response = await req.ai.generateTextWithRetry(prompt);
 
-    let latexCode = sanitizeLatexCode(response.text.replace(/^```(latex)?/im, '').replace(/```$/im, '').trim());
+    const latexCode = sanitizeLatexCode(response.text.replace(/^```(latex)?/im, '').replace(/```$/im, '').trim());
 
     res.status(200).json({ rawLatexCode: latexCode });
   } catch (error) {
@@ -697,7 +660,7 @@ exports.updateVersion = async (req, res) => {
   try {
     const { title, targetCompany, targetJobDescription, rawLatexCode, isBaseResume } = req.body;
     
-    let version = await ResumeVersion.findOne({ _id: req.params.id, user: req.user.id });
+    const version = await ResumeVersion.findOne({ _id: req.params.id, user: req.user.id });
     if (!version) {
       return res.status(404).json({ message: 'Version not found' });
     }
@@ -756,7 +719,7 @@ exports.generateCoverLetter = async (req, res) => {
       return res.status(404).json({ message: 'No profile or resume found. Please upload your resume first.' });
     }
 
-    let profileContext = await buildResumeContext(req.user.id, { 
+    const profileContext = await buildResumeContext(req.user.id, { 
       maxRawTextLength: 6000, 
       includeBasics: true 
     });
@@ -964,7 +927,6 @@ exports.getATSScore = async (req, res) => {
       return res.status(404).json({ message: 'No resume found. Please upload your resume first.' });
     }
 
-    const profile = await UserProfile.findOne({ user: req.user.id });
     const resumeData = {
       rawLatexCode: resume.rawLatexCode || '',
       rawText: resume.rawText || '',

@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Resume = require('../models/Resume');
 const Role = require('../models/Role');
 const UserAnalysis = require('../models/UserAnalysis');
@@ -9,6 +10,11 @@ const analysisService = require('../services/analysisService');
 exports.analyzeSkills = async (req, res) => {
   try {
     const { roleId } = req.body;
+
+    // Without this, a malformed id throws a CastError and surfaces as a 500.
+    if (!mongoose.Types.ObjectId.isValid(roleId)) {
+      return res.status(400).json({ message: 'A valid roleId is required.' });
+    }
 
     const resume = await Resume.findOne({ user: req.user.id });
     if (!resume) {
