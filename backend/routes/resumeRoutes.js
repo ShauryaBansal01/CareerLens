@@ -23,7 +23,7 @@ const {
 } = require('../controllers/resumeController');
 const { protect } = require('../middleware/authMiddleware');
 const injectAI = require('../middleware/injectAI');
-const { aiLimiter } = require('../middleware/rateLimiter');
+const { aiLimiter, userLimiter } = require('../middleware/rateLimiter');
 const { aiCache } = require('../middleware/aiCache');
 const { validate, schemas } = require('../middleware/validate');
 
@@ -41,31 +41,35 @@ const upload = multer({
   }
 });
 
-router.post('/upload', protect, aiLimiter, injectAI, upload.single('resume'), uploadResume);
-router.get('/', protect, getResume);
-router.post('/improve', protect, aiLimiter, aiCache, injectAI, improveResume);
-router.post('/optimize', protect, aiLimiter, validate(schemas.optimizeForCompany), aiCache, injectAI, optimizeForCompany);
-router.post('/optimize-from-feedback', protect, aiLimiter, validate(schemas.optimizeResumeFromFeedback), aiCache, injectAI, optimizeResumeFromFeedback);
-router.post('/rewrite-section', protect, aiLimiter, validate(schemas.rewriteSection), injectAI, rewriteSection);
-router.post('/cover-letter', protect, aiLimiter, validate(schemas.coverLetter), injectAI, generateCoverLetter);
-router.post('/ats-score', protect, aiLimiter, injectAI, getATSScore);
+// Every route below is authenticated. Mounting the per-user limiter after
+// protect means it keys on req.user.id instead of the shared proxy IP.
+router.use(protect, userLimiter);
+
+router.post('/upload', aiLimiter, injectAI, upload.single('resume'), uploadResume);
+router.get('/', getResume);
+router.post('/improve', aiLimiter, aiCache, injectAI, improveResume);
+router.post('/optimize', aiLimiter, validate(schemas.optimizeForCompany), aiCache, injectAI, optimizeForCompany);
+router.post('/optimize-from-feedback', aiLimiter, validate(schemas.optimizeResumeFromFeedback), aiCache, injectAI, optimizeResumeFromFeedback);
+router.post('/rewrite-section', aiLimiter, validate(schemas.rewriteSection), injectAI, rewriteSection);
+router.post('/cover-letter', aiLimiter, validate(schemas.coverLetter), injectAI, generateCoverLetter);
+router.post('/ats-score', aiLimiter, injectAI, getATSScore);
 
 // LaTeX Routes
-router.get('/latex', protect, getLatexCode);
-router.post('/latex', protect, saveLatexCode);
-router.post('/latex/generate', protect, aiLimiter, injectAI, generateLatexTemplate);
-router.post('/latex/preview', protect, previewTemplate);
-router.post('/latex/tailor', protect, aiLimiter, validate(schemas.tailorLatexToJob), injectAI, tailorLatexToJob);
+router.get('/latex', getLatexCode);
+router.post('/latex', saveLatexCode);
+router.post('/latex/generate', aiLimiter, injectAI, generateLatexTemplate);
+router.post('/latex/preview', previewTemplate);
+router.post('/latex/tailor', aiLimiter, validate(schemas.tailorLatexToJob), injectAI, tailorLatexToJob);
 
 // Versioning Routes
 router.route('/versions')
-  .get(protect, getVersions)
-  .post(protect, createVersion);
+  .get(getVersions)
+  .post(createVersion);
 
 router.route('/versions/:id')
-  .get(protect, getVersionById)
-  .put(protect, updateVersion)
-  .delete(protect, deleteVersion);
+  .get(getVersionById)
+  .put(updateVersion)
+  .delete(deleteVersion);
 
 module.exports = router;
 

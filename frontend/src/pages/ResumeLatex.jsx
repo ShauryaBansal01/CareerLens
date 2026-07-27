@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 
 const Editor = React.lazy(() => import('@monaco-editor/react'));
 
@@ -15,7 +15,6 @@ import { useLocation } from 'react-router-dom';
 import { ResumePreview } from '../components/resume/ResumePreview';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // ── Source badge config ────────────────────────────────────────────────────────
 const SOURCE_CONFIG = {
@@ -43,9 +42,13 @@ const SectionRewritePanel = ({ section, rewrite, loading, onAccept, onReject, on
   const [editMode, setEditMode] = useState(false);
   const [editedContent, setEditedContent] = useState(rewrite?.rewritten || '');
 
-  useEffect(() => {
-    if (rewrite?.rewritten) setEditedContent(rewrite.rewritten);
-  }, [rewrite]);
+  // Re-seed when a new rewrite arrives. Adjusting during render instead of in
+  // an effect avoids a second render pass showing the previous rewrite.
+  const [syncedFrom, setSyncedFrom] = useState(rewrite?.rewritten || null);
+  if (rewrite?.rewritten && rewrite.rewritten !== syncedFrom) {
+    setSyncedFrom(rewrite.rewritten);
+    setEditedContent(rewrite.rewritten);
+  }
 
   return (
     <div
@@ -228,7 +231,7 @@ const ResumeLatex = () => {
     if (!user) return;
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.get(`${API_URL}/resume/versions`, config);
+      const { data } = await api.get(`/resume/versions`, config);
 
       if (data && data.length > 0) {
         setVersions(data);
@@ -242,9 +245,9 @@ const ResumeLatex = () => {
       } else {
         // Fallback to legacy GET /latex
         try {
-          const legacy = await axios.get(`${API_URL}/resume/latex`, config);
+          const legacy = await api.get(`/resume/latex`, config);
           if (legacy.data?.rawLatexCode) {
-            const res = await axios.post(`${API_URL}/resume/versions`, {
+            const res = await api.post(`/resume/versions`, {
               title: 'Base Resume',
               rawLatexCode: legacy.data.rawLatexCode,
               isBaseResume: true,
@@ -262,7 +265,7 @@ const ResumeLatex = () => {
 
         // No versions & no legacy: load default preview template
         try {
-          const previewRes = await axios.post(`${API_URL}/resume/latex/preview`, {}, config);
+          const previewRes = await api.post(`/resume/latex/preview`, {}, config);
           if (previewRes.data?.rawLatexCode) {
             setLatexCode(previewRes.data.rawLatexCode);
             compilePdf(previewRes.data.rawLatexCode);
@@ -281,13 +284,13 @@ const ResumeLatex = () => {
   const loadVersion = async (id, configObj = null) => {
     try {
       const config = configObj || { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.get(`${API_URL}/resume/versions/${id}`, config);
+      const { data } = await api.get(`/resume/versions/${id}`, config);
       setLatexCode(data.rawLatexCode);
       setActiveVersionId(id);
       if (data.rawLatexCode) {
         compilePdf(data.rawLatexCode);
       }
-    } catch (error) {
+    } catch {
       showToast('Failed to load version', 'error');
     }
   };
@@ -322,17 +325,17 @@ const ResumeLatex = () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
       if (activeVersionId) {
-        await axios.put(`${API_URL}/resume/versions/${activeVersionId}`, { rawLatexCode: latexCode }, config);
+        await api.put(`/resume/versions/${activeVersionId}`, { rawLatexCode: latexCode }, config);
         const updatedVersions = versions.map(v => v._id === activeVersionId ? { ...v, rawLatexCode: latexCode } : v);
         setVersions(updatedVersions);
         showToast('Version saved successfully');
       } else {
-        const { data } = await axios.post(`${API_URL}/resume/versions`, { title: 'Untitled Version', rawLatexCode: latexCode }, config);
+        const { data } = await api.post(`/resume/versions`, { title: 'Untitled Version', rawLatexCode: latexCode }, config);
         setVersions([data, ...versions]);
         setActiveVersionId(data._id);
         showToast('Created and saved successfully');
       }
-    } catch (error) {
+    } catch {
       showToast('Failed to save code', 'error');
     }
     setSaving(false);
@@ -342,7 +345,7 @@ const ResumeLatex = () => {
     if (!user || !saveAsTitle.trim()) return;
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.post(`${API_URL}/resume/versions`, {
+      const { data } = await api.post(`/resume/versions`, {
         title: saveAsTitle,
         rawLatexCode: latexCode,
         source: 'manual-edit'
@@ -352,7 +355,7 @@ const ResumeLatex = () => {
       setShowSaveAsModal(false);
       setSaveAsTitle('');
       showToast(`Saved as "${data.title}"`);
-    } catch (error) {
+    } catch {
       showToast('Failed to save as new version', 'error');
     }
   };
@@ -363,7 +366,7 @@ const ResumeLatex = () => {
     if (e) e.stopPropagation();
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      await axios.delete(`${API_URL}/resume/versions/${id}`, config);
+      await api.delete(`/resume/versions/${id}`, config);
       const newVersions = versions.filter(v => v._id !== id);
       setVersions(newVersions);
       if (activeVersionId === id) {
@@ -374,7 +377,7 @@ const ResumeLatex = () => {
         }
       }
       showToast('Version deleted');
-    } catch (error) {
+    } catch {
       showToast('Failed to delete', 'error');
     }
   };
@@ -382,8 +385,8 @@ const ResumeLatex = () => {
   const restoreVersion = async (id) => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data: original } = await axios.get(`${API_URL}/resume/versions/${id}`, config);
-      const { data: newVersion } = await axios.post(`${API_URL}/resume/versions`, {
+      const { data: original } = await api.get(`/resume/versions/${id}`, config);
+      const { data: newVersion } = await api.post(`/resume/versions`, {
         title: `Restored: ${original.title}`,
         rawLatexCode: original.rawLatexCode,
         source: original.source || 'manual-edit'
@@ -393,7 +396,7 @@ const ResumeLatex = () => {
       setActiveVersionId(newVersion._id);
       if (newVersion.rawLatexCode) compilePdf(newVersion.rawLatexCode);
       showToast('Version restored as a new copy');
-    } catch (error) {
+    } catch {
       showToast('Failed to restore version', 'error');
     }
   };
@@ -403,7 +406,7 @@ const ResumeLatex = () => {
     setShowWizard(true);
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.get(`${API_URL}/resume/`, config);
+      const { data } = await api.get(`/resume/`, config);
       if (data) {
         setResumeData(prev => ({
           ...prev,
@@ -412,7 +415,7 @@ const ResumeLatex = () => {
           experience: [{ company: "From Profile", role: "", dates: "", bulletPoints: data.experience || "" }]
         }));
       }
-    } catch (error) {
+    } catch {
       console.log("No existing profile data found to prefill.");
     }
   };
@@ -423,11 +426,11 @@ const ResumeLatex = () => {
     setShowWizard(false);
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.post(`${API_URL}/resume/latex/generate`, { resumeData }, config);
+      const { data } = await api.post(`/resume/latex/generate`, { resumeData }, config);
       setLatexCode(data.rawLatexCode);
       if (data.rawLatexCode) compilePdf(data.rawLatexCode);
       showToast('Generated successfully with AI Magic!');
-    } catch (error) {
+    } catch {
       showToast('Failed to generate resume.', 'error');
     }
     setLoading(false);
@@ -447,10 +450,10 @@ const ResumeLatex = () => {
     setShowTailorWizard(false);
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.post(`${API_URL}/resume/latex/tailor`, { jobDescription: jobDescriptionText }, config);
+      const { data } = await api.post(`/resume/latex/tailor`, { jobDescription: jobDescriptionText }, config);
       setLatexCode(data.rawLatexCode);
 
-      const res = await axios.post(`${API_URL}/resume/versions`, {
+      const res = await api.post(`/resume/versions`, {
         title: tailorVersionTitle,
         targetCompany: targetCompany,
         targetJobDescription: jobDescriptionText,
@@ -581,12 +584,12 @@ const ResumeLatex = () => {
     setSectionRewrite(null);
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const { data } = await axios.post(`${API_URL}/resume/rewrite-section`, {
+      const { data } = await api.post(`/resume/rewrite-section`, {
         sectionType: section.name.toLowerCase(),
         sectionContent: section.content,
       }, config);
       setSectionRewrite(data);
-    } catch (error) {
+    } catch {
       showToast('Failed to rewrite section', 'error');
       setShowRewritePanel(false);
     } finally {

@@ -1,5 +1,5 @@
 import { useState, useContext, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { FileText, Copy, Check, Sparkles, AlertCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import AuthContext from '../context/AuthContext';
@@ -25,12 +25,14 @@ const CoverLetter = () => {
   const coverLetter = clTask?.status === 'completed' ? clTask.result : '';
   const error = clTask?.status === 'failed' ? clTask.error : null;
 
-  // Sync generated result into editable state
-  useEffect(() => {
-    if (coverLetter) {
-      setEditedLetter(coverLetter);
-    }
-  }, [coverLetter]);
+  // Seed the editable copy from a newly generated letter. Adjusting state
+  // during render (rather than in an effect) avoids the extra render pass and
+  // the flash of stale content that an effect-based sync produces.
+  const [syncedFrom, setSyncedFrom] = useState(null);
+  if (coverLetter && coverLetter !== syncedFrom) {
+    setSyncedFrom(coverLetter);
+    setEditedLetter(coverLetter);
+  }
 
   const handleKeyDown = (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -64,8 +66,8 @@ const CoverLetter = () => {
       'cover-letter',
       'Generating Cover Letter',
       async () => {
-        const res = await axios.post(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/resume/cover-letter`,
+        const res = await api.post(
+          `/resume/cover-letter`,
           { jobDescription, tone },
           config
         );

@@ -1,5 +1,5 @@
 import { useState, useContext, useEffect, useRef } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import AuthContext from '../context/AuthContext';
 import TaskContext from '../context/TaskContext';
 import { Link, useNavigate } from 'react-router-dom';
@@ -13,17 +13,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 
-// ── Animation variants ─────────────────────────────────────────────────────────
-const stagger = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.06 } },
-};
-const fadeUp = {
-  hidden: { opacity: 0, y: 14 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: 'easeOut' } },
-};
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // ── Score ring component ───────────────────────────────────────────────────────
 const ScoreRing = ({ score, size = 80 }) => {
@@ -615,8 +605,8 @@ const ResumeAI = () => {
         enhanceWithAI: false,
       };
 
-      const { data } = await axios.post(`${API_URL}/resume/latex/generate`, { resumeData }, cfg);
-      const versionRes = await axios.post(`${API_URL}/resume/versions`, {
+      const { data } = await api.post(`/resume/latex/generate`, { resumeData }, cfg);
+      const versionRes = await api.post(`/resume/versions`, {
         title: 'AI Optimized Resume',
         rawLatexCode: data.rawLatexCode,
         source: 'ai-optimized',
@@ -640,7 +630,7 @@ const ResumeAI = () => {
       'resume-improve',
       'Analyzing Resume',
       async () => {
-        const res = await axios.post(`${API_URL}/resume/improve`, {}, cfg);
+        const res = await api.post(`/resume/improve`, {}, cfg);
         return res.data;
       },
       '/resume-ai',
@@ -664,7 +654,7 @@ const ResumeAI = () => {
     setOptimizeError('');
     setOptimizeResult(null);
     try {
-      const res = await axios.post(`${API_URL}/resume/optimize`, { jobDescription: jobDesc }, cfg);
+      const res = await api.post(`/resume/optimize`, { jobDescription: jobDesc }, cfg);
       setOptimizeResult(res.data);
     } catch (err) {
       setOptimizeError(err.response?.data?.message || 'Could not generate optimization. Please try again.');
@@ -678,14 +668,14 @@ const ResumeAI = () => {
     setSaveSuccess('');
     setViewMode('changes');
     // Fetch original profile for the toggle view
-    axios.get(`${API_URL}/profile`, cfg).then(res => {
+    api.get(`/profile`, cfg).then(res => {
       setOriginalProfile(res.data);
     }).catch(() => {});
     startTask(
       'resume-optimize-feedback',
       'Optimizing Resume',
       async () => {
-        const res = await axios.post(`${API_URL}/resume/optimize-from-feedback`,
+        const res = await api.post(`/resume/optimize-from-feedback`,
           { feedback: improveFeedback }, cfg);
         return res.data;
       },
@@ -714,7 +704,7 @@ const ResumeAI = () => {
     setAcceptAllStatus('saving');
     try {
       const profile = optimizeData.optimizedProfile;
-      await axios.put(`${API_URL}/profile`, {
+      await api.put(`/profile`, {
         basics: profile.basics,
         skills: profile.skills,
         experience: profile.experience,
@@ -747,7 +737,7 @@ const ResumeAI = () => {
     setSaveSuccess('');
     try {
       const profile = optimizeData.optimizedProfile;
-      await axios.put(`${API_URL}/profile`, {
+      await api.put(`/profile`, {
         basics: profile.basics,
         skills: profile.skills,
         experience: profile.experience,

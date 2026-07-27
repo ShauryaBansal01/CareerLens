@@ -1,5 +1,5 @@
 import { useState, useContext, useRef, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import AuthContext from '../context/AuthContext';
 import TaskContext from '../context/TaskContext';
 import { Link } from 'react-router-dom';
@@ -9,7 +9,6 @@ import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const UPLOAD_STEPS = [
   "Parsing PDF document...",
@@ -87,7 +86,7 @@ const UploadResume = () => {
       'resume-upload',
       'Uploading Resume',
       async () => {
-        const res = await axios.post(`${API_URL}/resume/upload`, formData, {
+        const res = await api.post(`/resume/upload`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${user.token}`,
@@ -113,7 +112,9 @@ const UploadResume = () => {
 
       <Card className="overflow-hidden">
         <CardContent className="p-0">
-          <form onSubmit={handleUpload} className="p-6 md:p-8">
+          {/* handleKeyDown was defined but never wired up — Ctrl/Cmd+Enter
+              now actually submits, matching the hint shown to the user. */}
+          <form onSubmit={handleUpload} onKeyDown={handleKeyDown} className="p-6 md:p-8">
             {/* Drop zone */}
             <div
               className={`relative group ${
