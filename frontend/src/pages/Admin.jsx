@@ -1,10 +1,9 @@
 import { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import AuthContext from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Users, Briefcase, Map, Plus, Database } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const Admin = () => {
   useEffect(() => { document.title = 'Admin | CareerLens'; }, []);
@@ -46,7 +45,7 @@ const Admin = () => {
     setStatsLoading(true);
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const res = await axios.get(`${API_URL}/admin/stats`, config);
+      const res = await api.get(`/admin/stats`, config);
       setStats(res.data);
     } catch (error) {
       console.error(error);
@@ -60,7 +59,7 @@ const Admin = () => {
     e.preventDefault();
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      await axios.post(`${API_URL}/admin/role`, {
+      await api.post(`/admin/role`, {
         roleName,
         requiredSkills: roleSkills.split(',').map(s => s.trim())
       }, config);
@@ -77,7 +76,7 @@ const Admin = () => {
     e.preventDefault();
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      await axios.post(`${API_URL}/admin/project`, {
+      await api.post(`/admin/project`, {
         title: projectTitle,
         description: projectDesc,
         requiredSkills: projectSkills.split(',').map(s => s.trim())

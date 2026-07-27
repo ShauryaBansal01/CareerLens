@@ -14,9 +14,9 @@ router.delete('/role/:id', deleteRole);
 router.post('/project', addProject);
 router.delete('/project/:id', deleteProject);
 
-// Feature flags (read requires auth, write requires admin)
+// Feature flags — every route on this router already requires admin above.
 router.get('/feature-flags', getFeatureFlags);
 router.get('/feature-flags/:name', getFeatureFlag);
-router.put('/feature-flags/:name', admin, updateFeatureFlag);
+router.put('/feature-flags/:name', updateFeatureFlag);
 
 module.exports = router;

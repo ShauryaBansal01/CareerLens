@@ -5,7 +5,7 @@ import {
   Sparkles, ArrowRight, LayoutDashboard, UploadCloud, Code2, FileText, Map, Target
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-const FeatureCard = ({ title, desc, icon: Icon, index }) => (
+const FeatureCard = ({ title, desc, icon: Icon }) => (
   <div
     className="group bg-bg-card border border-border-color rounded-2xl p-8 shadow-sm hover:shadow-soft-hover hover:-translate-y-1 transition-all duration-300"
   >
