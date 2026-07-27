@@ -3,6 +3,8 @@ const express = require('express');
 
 beforeAll(() => {
   process.env.JWT_SECRET = 'test-jwt-secret';
+  process.env.SMTP_EMAIL = 'test@careerlens.test';
+  process.env.SMTP_PASSWORD = 'test-password';
 });
 
 jest.mock('../models/User', () => {
@@ -33,18 +35,24 @@ jest.mock('../models/User', () => {
 });
 
 jest.mock('../models/OTP', () => {
-  const mockOTPRecord = { _id: 'otp-id-123', email: 'new@example.com', otp: '123456' };
+  const VALID_CODE = '123456';
 
   return {
-    findOne: jest.fn().mockImplementation((query) => {
-      const record = query && query.email === 'new@example.com' ? mockOTPRecord : null;
-      const q = Promise.resolve(record);
-      q.sort = jest.fn().mockResolvedValue(record);
+    // The controller talks to the model through these two statics; they own
+    // hashing, the attempt limit, and single-use consumption.
+    issue: jest.fn().mockResolvedValue(VALID_CODE),
+    verifyAndConsume: jest.fn().mockImplementation(
+      async (email, code) => code === VALID_CODE
+    ),
+    findOne: jest.fn().mockImplementation(() => {
+      const q = Promise.resolve(null);
+      q.sort = jest.fn().mockResolvedValue(null);
       return q;
     }),
-    create: jest.fn().mockResolvedValue({ otp: '123456' }),
+    create: jest.fn().mockResolvedValue({}),
     deleteMany: jest.fn().mockResolvedValue({ deletedCount: 1 }),
     deleteOne: jest.fn().mockResolvedValue({ deletedCount: 1 }),
+    updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
   };
 });
 
@@ -178,13 +186,24 @@ describe('Auth Routes', () => {
       expect(res.status).toBe(200);
     });
 
-    it('rejects OTP for existing user', async () => {
+    // Must not reveal whether an account exists: an existing address gets the
+    // same status and body as a new one, and simply has no OTP issued.
+    it('does not disclose that an email is already registered', async () => {
       const app = createApp();
-      const res = await request(app)
+      const OTP = require('../models/OTP');
+
+      const newEmail = await request(app)
+        .post('/api/auth/send-otp')
+        .send({ email: 'new@example.com' });
+      const existingEmail = await request(app)
         .post('/api/auth/send-otp')
         .send({ email: 'existing@example.com' });
 
-      expect(res.status).toBe(400);
+      expect(existingEmail.status).toBe(newEmail.status);
+      expect(existingEmail.body).toEqual(newEmail.body);
+      // ...and no code was actually minted for the existing account.
+      expect(OTP.issue).toHaveBeenCalledTimes(1);
+      expect(OTP.issue).toHaveBeenCalledWith('new@example.com');
     });
 
     it('rejects invalid email format', async () => {

@@ -29,14 +29,26 @@ function auditLogger(action) {
   };
 }
 
+const REDACTED_FIELDS = [
+  'password',
+  'newPassword',
+  'confirmPassword',
+  'token',
+  'refreshToken',
+  'key',
+  'apiKey',
+  'secret',
+  // OTPs are short-lived credentials — the audit log is exactly the place a
+  // reset code must not end up.
+  'otp',
+];
+
 function sanitizeBody(body) {
   if (!body) return {};
   const sanitized = { ...body };
-  delete sanitized.password;
-  delete sanitized.token;
-  delete sanitized.key;
-  delete sanitized.apiKey;
-  delete sanitized.secret;
+  for (const field of REDACTED_FIELDS) {
+    delete sanitized[field];
+  }
   return sanitized;
 }
 

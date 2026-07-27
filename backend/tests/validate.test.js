@@ -29,8 +29,30 @@ describe('Validation Schemas', () => {
         name: 'John',
         email: 'john@example.com',
         password: 'password123',
+        otp: '123456',
       });
       expect(result.success).toBe(true);
+    });
+
+    it('rejects registration without an OTP', () => {
+      const result = schemas.register.safeParse({
+        name: 'John',
+        email: 'john@example.com',
+        password: 'password123',
+      });
+      expect(result.success).toBe(false);
+    });
+
+    // The OTP schema must match what OTP.generateCode() actually produces —
+    // a mismatch here is what previously broke registration and password reset.
+    it('rejects a non-numeric OTP', () => {
+      const result = schemas.register.safeParse({
+        name: 'John',
+        email: 'john@example.com',
+        password: 'password123',
+        otp: 'A3F92B',
+      });
+      expect(result.success).toBe(false);
     });
 
     it('rejects short name', () => {

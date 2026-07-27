@@ -89,7 +89,7 @@ describe('AI Providers', () => {
     describe('generateText', () => {
       it('returns text and usage on success', async () => {
         mockFetchOnce(200, {
-          content: [{ text: 'Hello from Claude' }],
+          content: [{ type: 'text', text: 'Hello from Claude' }],
           usage: { input_tokens: 10, output_tokens: 5 },
         });
 
@@ -107,7 +107,7 @@ describe('AI Providers', () => {
     describe('generateJSON', () => {
       it('returns parsed JSON', async () => {
         mockFetchOnce(200, {
-          content: [{ text: '{"answer": 42}' }],
+          content: [{ type: 'text', text: '{"answer": 42}' }],
           usage: { input_tokens: 5, output_tokens: 3 },
         });
 
@@ -119,7 +119,7 @@ describe('AI Providers', () => {
     describe('checkHealth', () => {
       it('returns true when API responds', async () => {
         mockFetchOnce(200, {
-          content: [{ text: 'Hi' }],
+          content: [{ type: 'text', text: 'Hi' }],
           usage: {},
         });
         const healthy = await provider.checkHealth();

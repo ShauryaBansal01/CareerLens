@@ -29,3 +29,7 @@ Thumbs.db
 
 # Coverage
 coverage/
+
+# Local env files (only .env.example is tracked)
+frontend/.env
+backend/.env

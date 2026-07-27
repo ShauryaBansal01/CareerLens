@@ -2,7 +2,9 @@ const { z } = require('zod');
 
 const validate = (schema) => (req, res, next) => {
   try {
-    schema.parse(req.body);
+    // Assign the parsed result back: zod strips unknown keys, so downstream
+    // handlers can't be fed fields the schema never allowed.
+    req.body = schema.parse(req.body);
     next();
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -14,6 +16,9 @@ const validate = (schema) => (req, res, next) => {
   }
 };
 
+// Must stay in sync with OTP.generateCode() in models/OTP.js
+const otpCode = z.string().regex(/^\d{6}$/, 'OTP must be 6 digits');
+
 const schemas = {
   login: z.object({
     email: z.string().email('Valid email is required'),
@@ -23,16 +28,20 @@ const schemas = {
     name: z.string().min(2, 'Name must be at least 2 characters').max(100),
     email: z.string().email('Valid email is required'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
-    role: z.string().optional(),
-    otp: z.string().length(6, 'OTP must be 6 digits').optional(),
+    // `role` is deliberately absent — it is never client-assignable.
+    otp: otpCode,
   }),
   sendOtp: z.object({
     email: z.string().email('Valid email is required'),
   }),
   resetPassword: z.object({
     email: z.string().email('Valid email is required'),
-    otp: z.string().length(6, 'OTP must be 6 digits'),
+    otp: otpCode,
     password: z.string().min(8, 'Password must be at least 8 characters'),
+  }),
+  refreshToken: z.object({
+    refreshToken: z.string().min(1, 'Refresh token is required'),
+    refreshFamily: z.string().min(1, 'Refresh family is required'),
   }),
   profileUpdate: z.object({
     basics: z.object({
