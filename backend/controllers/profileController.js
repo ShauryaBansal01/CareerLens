@@ -65,7 +65,7 @@ exports.updateProfile = async (req, res) => {
     const parsed = profileSchema.parse(req.body);
     const { basics, skills, experience, education, projects, customLinks } = parsed;
 
-    let profile = await UserProfile.findOne({ user: req.user.id });
+    const profile = await UserProfile.findOne({ user: req.user.id });
     
     if (!profile) {
       return res.status(404).json({ message: 'Profile not found' });

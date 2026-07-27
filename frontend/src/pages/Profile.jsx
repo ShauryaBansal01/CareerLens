@@ -1,10 +1,9 @@
 import { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import AuthContext from '../context/AuthContext';
 import { Save, AlertCircle, Plus, Trash2, Link2 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const Profile = () => {
   useEffect(() => { document.title = 'My Profile | CareerLens'; }, []);
@@ -27,7 +26,7 @@ const Profile = () => {
     const fetchProfile = async () => {
       if (!user) return;
       try {
-        const res = await axios.get(`${API_URL}/profile`, {
+        const res = await api.get(`/profile`, {
           headers: { Authorization: `Bearer ${user.token}` }
         });
         setProfile(res.data);
@@ -46,7 +45,7 @@ const Profile = () => {
       setSaving(true);
       setError(null);
       setSuccess(false);
-      const res = await axios.put(`${API_URL}/profile`, profile, {
+      const res = await api.put(`/profile`, profile, {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       setProfile(res.data);
