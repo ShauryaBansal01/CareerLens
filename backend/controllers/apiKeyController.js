@@ -22,6 +22,7 @@ exports.getAPIKeys = async (req, res) => {
       defaultProvider: user.defaultAIProvider
     });
   } catch (error) {
+    console.error('[apiKeys] getAPIKeys failed:', error);
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
@@ -52,6 +53,9 @@ exports.saveAPIKey = async (req, res) => {
       const aiProvider = AIServiceFactory.getProvider(provider, key);
       await aiProvider.checkHealth();
     } catch (err) {
+      // Log the real reason — a rejected key could be genuinely invalid, or
+      // the provider could just be down, and the 400 alone can't distinguish.
+      console.warn(`[apiKeys] validation failed for ${provider}:`, err.message);
       return res.status(400).json({ success: false, message: `Invalid API key for provider ${provider}. Validation failed.` });
     }
 
@@ -71,11 +75,12 @@ exports.saveAPIKey = async (req, res) => {
       });
     }
 
-    // Also update default provider if this is their first key
-    const user = await User.findById(req.user._id);
-    if (!user.defaultAIProvider || user.defaultAIProvider !== provider) {
-      user.defaultAIProvider = provider;
-      await user.save();
+    // Point the user's default at the provider they just configured.
+    // updateOne, not save(): the User document here was loaded without its
+    // `select: false` password field, so a full save() runs the pre-save hook
+    // against an undefined password and throws.
+    if (req.user.defaultAIProvider !== provider) {
+      await User.updateOne({ _id: req.user._id }, { defaultAIProvider: provider });
     }
 
     res.status(200).json({
@@ -108,6 +113,7 @@ exports.deleteAPIKey = async (req, res) => {
 
     res.status(200).json({ success: true, message: 'API Key deleted' });
   } catch (error) {
+    console.error('[apiKeys] deleteAPIKey failed:', error);
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 };

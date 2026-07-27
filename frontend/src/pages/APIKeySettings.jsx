@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { Trash2, CheckCircle2, AlertCircle, Key } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -37,7 +37,7 @@ const APIKeySettings = () => {
       return;
     }
     try {
-      const { data } = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/keys`, config);
+      const { data } = await api.get(`/keys`, config);
       setKeys(data.data);
       if (data.defaultProvider) setDefaultProvider(data.defaultProvider);
       setLoading(false);
@@ -54,7 +54,7 @@ const APIKeySettings = () => {
     setSaving(true);
 
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/keys`, formState, config);
+      await api.post(`/keys`, formState, config);
       toast.success(`API Key for ${providers.find(p => p.id === formState.provider).name} saved!`);
       setFormState({ ...formState, key: '' });
       fetchKeys();
@@ -68,10 +68,10 @@ const APIKeySettings = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('This action cannot be undone. Are you sure you want to delete this API key?')) return;
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/keys/${id}`, config);
+      await api.delete(`/keys/${id}`, config);
       setKeys(keys.filter(k => k.id !== id));
       toast.success('API key deleted');
-    } catch (err) {
+    } catch {
       toast.error('Failed to delete API key');
     }
   };

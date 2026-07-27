@@ -11,6 +11,12 @@ const aiUsageSchema = new mongoose.Schema({
     enum: ['gemini', 'openai', 'anthropic'],
     required: true
   },
+  // Which concrete model served the call — costs vary by an order of
+  // magnitude within a provider, so the provider alone can't explain a bill.
+  model: {
+    type: String,
+    default: null
+  },
   feature: {
     type: String,
     enum: [
