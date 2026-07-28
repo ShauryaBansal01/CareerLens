@@ -38,9 +38,12 @@ exports.generateRoadmap = async (req, res) => {
       const parsedRoadmap = response.data;
 
       // ── Persist roadmap into UserAnalysis (merge with existing record) ───────
+      // Scoped by roleName as well as user: a user can now hold one analysis
+      // per role, so filtering on `user` alone would attach this roadmap to an
+      // arbitrary one of them.
       if (req.user) {
         await UserAnalysis.findOneAndUpdate(
-          { user: req.user.id },
+          { user: req.user.id, roleName },
           { $set: { roadmap: parsedRoadmap } },
           { returnDocument: 'after' }
         );

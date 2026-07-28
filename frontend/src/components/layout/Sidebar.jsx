@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import AuthContext from '../../context/AuthContext';
 import TaskContext from '../../context/TaskContext';
@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   UploadCloud,
   Gauge,
+  Target,
   Code2,
   PenTool,
   KeyRound,
@@ -28,6 +29,7 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Upload Resume', href: '/upload', icon: UploadCloud },
   { name: 'Resume Analyzer', href: '/resume-ai', icon: Gauge },
+  { name: 'Skill Gap', href: '/skill-gap', icon: Target },
   { name: 'LaTeX Builder', href: '/resume-latex', icon: Code2 },
   { name: 'Cover Letter', href: '/cover-letter', icon: PenTool },
 ];
@@ -208,6 +210,47 @@ export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const panelRef = useRef(null);
+  const openButtonRef = useRef(null);
+
+  // While the drawer is open: Escape closes it, the page behind stops
+  // scrolling, and focus moves into the panel. Previously the drawer trapped
+  // nothing — Escape did nothing and the page scrolled underneath it.
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        setMobileMenuOpen(false);
+      }
+    };
+
+    const { overflow } = document.body.style;
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', onKeyDown);
+
+    // Focus the panel so screen readers announce the drawer and the next Tab
+    // lands inside it rather than back in the page behind.
+    panelRef.current?.focus();
+
+    return () => {
+      document.body.style.overflow = overflow;
+      document.removeEventListener('keydown', onKeyDown);
+      // Return focus to the control that opened the drawer.
+      openButtonRef.current?.focus();
+    };
+  }, [mobileMenuOpen]);
+
+  // A route change should always dismiss the drawer, including navigations
+  // that don't come from a NavItem click (browser back, redirects). Adjusting
+  // during render rather than in an effect avoids rendering the stale open
+  // drawer for a frame over the new page.
+  const [pathAtRender, setPathAtRender] = useState(location.pathname);
+  if (pathAtRender !== location.pathname) {
+    setPathAtRender(location.pathname);
+    if (mobileMenuOpen) setMobileMenuOpen(false);
+  }
 
   const taskList = Object.values(tasks);
 
@@ -231,10 +274,13 @@ export function Sidebar() {
       {/* Mobile Top Bar */}
       <div className="sticky top-0 z-40 flex items-center gap-x-6 border-b border-border-color bg-bg-card px-4 py-4 shadow-sm sm:px-6 lg:hidden">
         <button
+          ref={openButtonRef}
           type="button"
           className="-m-2.5 p-2.5 text-text-muted hover:text-text-main focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded-md"
           onClick={() => setMobileMenuOpen(true)}
-          aria-label="Open sidebar"
+          aria-label="Open navigation menu"
+          aria-expanded={mobileMenuOpen}
+          aria-haspopup="dialog"
         >
           <Menu className="h-5 w-5" aria-hidden="true" />
         </button>
@@ -245,19 +291,27 @@ export function Sidebar() {
       {mobileMenuOpen && (
         <div className="relative z-50 lg:hidden">
           <div
-            className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm"
+            className="motion-safe:animate-fade-in fixed inset-0 bg-slate-900/80 backdrop-blur-sm"
             onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
           />
           <div className="fixed inset-0 flex">
-            <div className="relative mr-16 flex w-full max-w-xs flex-1 flex-col bg-bg-card pb-4 pt-5">
+            <div
+              ref={panelRef}
+              tabIndex={-1}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Navigation menu"
+              className="relative mr-16 flex w-full max-w-xs flex-1 flex-col bg-bg-card pb-4 pt-5 shadow-xl outline-none"
+            >
               <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
                 <button
                   type="button"
                   className="-m-2.5 p-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded-md"
                   onClick={() => setMobileMenuOpen(false)}
-                  aria-label="Close sidebar"
+                  aria-label="Close navigation menu"
                 >
-                  <X className="h-6 w-6 text-text-main" aria-hidden="true" />
+                  <X className="h-6 w-6 text-white" aria-hidden="true" />
                 </button>
               </div>
               <SidebarContent isMobile {...contentProps} />

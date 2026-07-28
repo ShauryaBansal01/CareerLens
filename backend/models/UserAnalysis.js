@@ -5,7 +5,6 @@ const userAnalysisSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
-    unique: true,   // one record per user, always overwritten on re-run
   },
   roleId:   { type: String, required: true },
   roleName: { type: String, required: true },
@@ -42,5 +41,15 @@ const userAnalysisSchema = new mongoose.Schema({
     advanced:     { type: mongoose.Schema.Types.Mixed, default: [] },
   },
 }, { timestamps: true });
+
+// One analysis per (user, role) rather than per user. `user` alone used to be
+// unique, which meant analysing a second role silently destroyed the first and
+// forced a billed re-run to get it back.
+//
+// NOTE: if a deployment already has UserAnalysis documents, the old single-field
+// unique index on `user` must be dropped for this to take effect —
+// `db.useranalyses.dropIndex('user_1')`. Mongoose creates new indexes but never
+// removes ones it no longer declares.
+userAnalysisSchema.index({ user: 1, roleId: 1 }, { unique: true });
 
 module.exports = mongoose.model('UserAnalysis', userAnalysisSchema);
