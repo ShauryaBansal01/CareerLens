@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   UploadCloud,
   Gauge,
+  Target,
   Code2,
   PenTool,
   KeyRound,
@@ -28,6 +29,7 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Upload Resume', href: '/upload', icon: UploadCloud },
   { name: 'Resume Analyzer', href: '/resume-ai', icon: Gauge },
+  { name: 'Skill Gap', href: '/skill-gap', icon: Target },
   { name: 'LaTeX Builder', href: '/resume-latex', icon: Code2 },
   { name: 'Cover Letter', href: '/cover-letter', icon: PenTool },
 ];
