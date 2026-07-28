@@ -20,6 +20,7 @@ import ForgotPassword from './pages/ForgotPassword';
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const UploadResume = lazy(() => import('./pages/UploadResume'));
 const ResumeAI = lazy(() => import('./pages/ResumeAI'));
+const SkillGap = lazy(() => import('./pages/SkillGap'));
 const ResumeLatex = lazy(() => import('./pages/ResumeLatex'));
 const CoverLetter = lazy(() => import('./pages/CoverLetter'));
 const Profile = lazy(() => import('./pages/Profile'));
@@ -197,6 +198,7 @@ function App() {
                 <Route path="/upload" element={<AppRoute><UploadResume /></AppRoute>} />
                 <Route path="/profile" element={<AppRoute><Profile /></AppRoute>} />
                 <Route path="/resume-ai" element={<AppRoute><ResumeAI /></AppRoute>} />
+                <Route path="/skill-gap" element={<AppRoute><SkillGap /></AppRoute>} />
                 <Route path="/cover-letter" element={<AppRoute><CoverLetter /></AppRoute>} />
                 <Route path="/resume-latex" element={<AppRoute><ResumeLatex /></AppRoute>} />
                 <Route path="/settings/keys" element={<AppRoute><APIKeySettings /></AppRoute>} />
