@@ -8,7 +8,8 @@
     "test": "jest --forceExit --detectOpenHandles",
     "test:watch": "jest --watch --forceExit",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "seed:roles": "node scripts/seedRoles.js"
   },
   "keywords": [],
   "author": "",
@@ -34,7 +35,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@shelf/jest-mongodb": "^6.0.2",
     "eslint": "^10.8.0",
     "globals": "^17.8.0",
     "jest": "^30.4.2",
