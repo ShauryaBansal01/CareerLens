@@ -10,38 +10,43 @@ on:
     branches: [main]
 
 jobs:
-  frontend:
-    name: Deploy Frontend → Vercel
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          # workflow_run checks out the default branch by default; pin to the
-          # exact commit CI validated.
-          ref: ${{ github.event.workflow_run.head_sha }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
-        working-directory: frontend
-      - run: npm run build
-        working-directory: frontend
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
+  # NOTE: there is deliberately no Vercel job here.
+  #
+  # Vercel deploys this repo through its own Git integration, which already
+  # builds and promotes every push to main and reports back as the "Vercel"
+  # commit status. The workflow used to run amondnet/vercel-action as well —
+  # a second, redundant deploy path that had never once succeeded, because
+  # VERCEL_TOKEN was never set. It failed with "Input required and not
+  # supplied: vercel-token" on every run since the workflow was added, marking
+  # otherwise-healthy deploys red.
+  #
+  # If you ever want CI to own the frontend deploy instead of the Git
+  # integration, disconnect the Vercel project from GitHub first, or the two
+  # will race to promote different builds.
 
   backend:
     name: Deploy Backend → Render
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
-      - name: Trigger Render Deploy
+      - name: Check deploy hook is configured
+        id: check
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
-          curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::RENDER_DEPLOY_HOOK_URL is not set — skipping backend deploy."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Without the guard above, an unset secret expanded to an empty string and
+      # the step ran `curl -X POST ""`, failing with "URL rejected: Malformed
+      # input to a URL function". Skipping is honest; failing on a missing
+      # optional secret is just noise.
+      - name: Trigger Render deploy
+        if: steps.check.outputs.configured == 'true'
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"
