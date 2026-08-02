@@ -7,6 +7,11 @@ const fs = require('fs');
 const path = require('path');
 const { invalidateUserCache } = require('../middleware/aiCache');
 const { buildResumeContext } = require('../utils/buildResumeContext');
+// Hoisted from five separate inline require() calls scattered through the
+// handlers below. Node caches modules so this was never a performance problem,
+// but it hid the file's real dependencies.
+const scoreService = require('../services/scoreService');
+const atsService = require('../services/atsService');
 
 function sanitizeLatexCode(code) {
   if (!code) return '';
@@ -47,6 +52,13 @@ exports.uploadResume = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    // multer's fileFilter checks the Content-Type the client claims, which is
+    // trivially forged. Verify the actual file signature before handing the
+    // buffer to the parser.
+    if (req.file.buffer.subarray(0, 5).toString('latin1') !== '%PDF-') {
+      return res.status(400).json({ message: 'That file is not a valid PDF.' });
     }
 
     const data = await pdfParse(req.file.buffer);
@@ -281,7 +293,6 @@ good = things already done well (2-3 items)`;
 
     // Enrich with multi-dimensional scoring
     try {
-      const scoreService = require('../services/scoreService');
       const scoreResult = await scoreService.scoreWithAI(req.ai, resume.rawLatexCode || '', {
         rawText: resume.rawText || '',
         extractedSkills: resume.extractedSkills || [],
@@ -309,7 +320,6 @@ good = things already done well (2-3 items)`;
 
     // Enrich with ATS analysis (runs automatically — no separate call needed)
     try {
-      const atsService = require('../services/atsService');
       const atsResult = await atsService.analyzeATS(resume.rawLatexCode || '', {
         rawText: resume.rawText || '',
         extractedSkills: resume.extractedSkills || [],
@@ -400,7 +410,6 @@ keywords = top 5-8 ATS keywords from the job description missing in the resume`;
     const optimization = response.data;
 
     try {
-      const scoreService = require('../services/scoreService');
       const scoreResult = await scoreService.scoreWithAI(req.ai, resume.rawLatexCode || '', {
         rawText: resume.rawText || '',
         extractedSkills: resume.extractedSkills || [],
@@ -932,9 +941,6 @@ exports.getATSScore = async (req, res) => {
       rawText: resume.rawText || '',
       extractedSkills: resume.extractedSkills || [],
     };
-
-    const atsService = require('../services/atsService');
-    const scoreService = require('../services/scoreService');
 
     const atsResult = await atsService.analyzeATS(resume.rawLatexCode || '', resumeData, jobDescription || '');
 
