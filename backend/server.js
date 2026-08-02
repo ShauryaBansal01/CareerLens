@@ -77,9 +77,17 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health check — no rate limiting (used by Render & UptimeRobot)
-app.get('/', (req, res) => {
+const health = (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime() });
-});
+};
+
+app.get('/', health);
+
+// Registered before the /api rate limiter so polling it never consumes a
+// caller's request budget. The frontend previously probed liveness with
+// `api.get('/../')`, which only reached the root because the browser normalises
+// `/api/..` away — fragile, and it broke if the API was mounted on a subpath.
+app.get('/api/health', health);
 
 // Apply rate limiter only to API routes (not health check)
 app.use('/api', generalLimiter);

@@ -72,7 +72,7 @@ export default function Dashboard() {
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const res = await api.get('/../');
+        const res = await api.get('/health');
         if (res.status === 200) setApiStatus('operational');
         else setApiStatus('degraded');
       } catch {
