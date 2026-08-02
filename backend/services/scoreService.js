@@ -1,4 +1,9 @@
-const ACTION_VERBS = [
+// De-duplicated at module load. The literal below was hand-maintained and had
+// eight repeats ('accelerated', 'implemented', 'mentored', 'instituted',
+// 'pioneered', 'reduced', 'reengineered', 'revitalized'). Because matching used
+// `filter` over this array, one occurrence of a repeated verb scored twice and
+// was listed twice back to the user.
+const ACTION_VERBS = [...new Set([
   'achieved', 'accelerated', 'architected', 'built', 'championed', 'configured',
   'consolidated', 'created', 'debugged', 'decreased', 'delivered', 'deployed',
   'designed', 'developed', 'devised', 'doubled', 'drove', 'eliminated',
@@ -24,47 +29,92 @@ const ACTION_VERBS = [
   'stimulated', 'strategized', 'surpassed', 'sustained', 'systematized', 'tightened',
   'trained', 'tripled', 'unified', 'unlocked', 'utilized', 'validated',
   'weighed', 'widened', 'won', 'wrote'
-];
+])];
 
+// Tokenize once and intersect, rather than running ~140 regexes over the whole
+// document. Same result, one pass, and a Set can't double-count.
 function countActionVerbs(text) {
   if (!text) return { count: 0, verbs: [] };
-  const lower = text.toLowerCase();
-  const found = ACTION_VERBS.filter(v => {
-    const regex = new RegExp(`\\b${v}\\b`, 'i');
-    return regex.test(lower);
-  });
+  const words = new Set(text.toLowerCase().match(/\b[a-z]+\b/g) || []);
+  const found = ACTION_VERBS.filter((v) => words.has(v));
   return { count: found.length, verbs: found };
 }
 
+// Ordered most-specific first: a span already claimed by an earlier pattern is
+// not counted again, so "$100k" is one metric rather than three.
+//
+// The previous implementation summed six overlapping patterns, one of which was
+// a bare /\d{2,}/ — that matched every year, postcode and phone fragment on the
+// page, so a resume full of dates scored as though it were full of achievements.
+const METRIC_PATTERNS = [
+  /\d+(?:\.\d+)?\s?%/g,
+  /[$€£]\s?\d+(?:[.,]\d+)*\s?[kKmMbB]?\b/g,
+  /\b\d+(?:\.\d+)?\s?x\b/gi,
+  /\b\d+(?:[.,]\d{3})*\+?\s*(?:users|customers|clients|requests|queries|transactions|records|documents|files|nodes|pods|containers|services|APIs|endpoints|pages|components|tests|downloads|installs|hours|weeks|months)\b/gi,
+  /\b\d+(?:\.\d+)?[kKmMbB]\b/g,
+];
+
 function countQuantifiedMetrics(text) {
   if (!text) return 0;
-  const patterns = [
-    /\d+%/g,
-    /\$\d+[kkmMbB]?/g,
-    /\d+x\b/g,
-    /\d+\s*(?:users|customers|clients|requests|queries|transactions|records|documents|files|nodes|pods|containers|services|APIs|endpoints|pages|components|tests)/gi,
-    /\d+[kKmM]\b/g,
-    /\d{2,}/g,
-  ];
+
+  const claimed = [];
   let total = 0;
-  for (const pattern of patterns) {
-    const matches = text.match(pattern);
-    if (matches) total += matches.length;
+
+  for (const pattern of METRIC_PATTERNS) {
+    pattern.lastIndex = 0;
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      const start = match.index;
+      const end = start + match[0].length;
+      // Skip anything overlapping a span an earlier pattern already claimed.
+      if (claimed.some(([s, e]) => start < e && end > s)) continue;
+      claimed.push([start, end]);
+      total += 1;
+    }
   }
+
   return total;
 }
 
+// Collect only the string *values* from the parsed resume. Previously this was
+// JSON.stringify(resumeData), which fed field names, braces, quotes and every
+// numeric value into the verb and metric counters — scoring the data structure
+// rather than the resume.
+function collectText(value, depth = 0) {
+  if (depth > 5 || value == null) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return '';
+  if (Array.isArray(value)) return value.map((v) => collectText(v, depth + 1)).join(' ');
+  if (typeof value === 'object') return Object.values(value).map((v) => collectText(v, depth + 1)).join(' ');
+  return '';
+}
+
+// Counts at which a resume earns full marks on each signal.
+const TARGET_ACTION_VERBS = 5;
+const TARGET_METRICS = 3;
+
+const EXPECTED_HEADERS = ['experience', 'education', 'skills', 'projects', 'summary', 'objective', 'certifications'];
+
+// A well-formed resume carries roughly this many standard sections; finding
+// more shouldn't push the score past full marks.
+const HEADERS_FOR_FULL_MARKS = 5;
+
 function checkSectionHeaders(text) {
-  const expectedHeaders = ['experience', 'education', 'skills', 'projects', 'summary', 'objective', 'certifications'];
-  const lower = text.toLowerCase();
-  const found = expectedHeaders.filter(h => {
-    const regex = new RegExp(`\\\\section\\{([^}]*${h}[^}]*)\\}`, 'i');
-    return regex.test(lower);
+  const lower = (text || '').toLowerCase();
+
+  const found = EXPECTED_HEADERS.filter((h) => {
+    // LaTeX resumes: \section{Experience} / \section*{Work Experience}
+    if (new RegExp(`\\\\section\\*?\\{[^}]*${h}[^}]*\\}`, 'i').test(lower)) return true;
+    // Plain-text resumes: a line that is just the header. This path was missing
+    // entirely, so any resume scored from rawText reported zero sections.
+    return new RegExp(`^\\s*${h}\\b[^\\n]{0,20}$`, 'im').test(lower);
   });
+
   return {
     present: found,
-    missing: expectedHeaders.filter(h => !found.includes(h)),
-    score: Math.round((found.length / Math.min(expectedHeaders.length, 5)) * 100)
+    missing: EXPECTED_HEADERS.filter((h) => !found.includes(h)),
+    // Clamped: dividing 7 possible headers by 5 previously allowed 140%.
+    score: Math.min(100, Math.round((found.length / HEADERS_FOR_FULL_MARKS) * 100)),
   };
 }
 
@@ -115,35 +165,49 @@ function calculateLatexParseability(text) {
 
 exports.scoreResume = async (resumeLatex, resumeData = {}, jobDescription = '') => {
   const text = resumeLatex || resumeData.rawText || '';
-  const fullText = text + ' ' + JSON.stringify(resumeData);
+  const fullText = `${text} ${collectText(resumeData)}`;
 
   const actionVerbs = countActionVerbs(fullText);
   const quantifiedMetrics = countQuantifiedMetrics(fullText);
-  const verbScore = Math.min(Math.round((actionVerbs.count / 5) * 25), 25);
-  const metricScore = Math.min(Math.round((quantifiedMetrics / 3) * 25), 25);
+
+  // Normalised 0-1 signals. Kept separate because they feed two different
+  // dimensions below.
+  const verbRatio = Math.min(actionVerbs.count / TARGET_ACTION_VERBS, 1);
+  const metricRatio = Math.min(quantifiedMetrics / TARGET_METRICS, 1);
 
   const sectionCheck = checkSectionHeaders(text);
   const bulletCheck = checkBulletConsistency(text);
   const formattingWarnings = checkForbiddenPatterns(text);
   const parseability = calculateLatexParseability(text);
 
-  const contentQuality = Math.round((verbScore + metricScore) / 50 * 30);
+  // Every dimension is on a real 0-100 scale.
+  //
+  // `contentQuality` used to be `(verbScore + metricScore) / 50 * 30`, which
+  // capped at 30 while being reported as `max: 100` — so a flawless resume
+  // showed 30/100 and rendered permanently red in the UI, and the weighted
+  // total could never exceed 79.
+  //
+  // It also shared both inputs with `impact`, so verbs and metrics silently
+  // drove 40% of the total through two supposedly independent bars. They are
+  // now split: language strength vs. quantified outcomes.
+  const contentQuality = Math.round(verbRatio * 100);
+  const impactScore = Math.round(metricRatio * 100);
   const atsParsability = parseability.score;
-  const formatConsistency = Math.min(100, sectionCheck.score + (bulletCheck.consistent ? 20 : 0) - (formattingWarnings.length * 10));
+  const formatConsistency = Math.max(0, Math.min(100, sectionCheck.score + (bulletCheck.consistent ? 20 : 0) - (formattingWarnings.length * 10)));
 
   let keywordRelevance = 50;
   if (jobDescription && jobDescription.length > 20) {
     const jdWords = jobDescription.toLowerCase().match(/\b[a-z]{3,}\b/g) || [];
-    const resumeWords = fullText.toLowerCase().match(/\b[a-z]{3,}\b/g) || [];
+    // A Set, not an array — `resumeWords.includes` inside a filter made this
+    // O(topWords × resumeLength) on every scoring call.
+    const resumeWords = new Set(fullText.toLowerCase().match(/\b[a-z]{3,}\b/g) || []);
     const jdUnique = [...new Set(jdWords)];
     const jdFreq = {};
     jdWords.forEach(w => { jdFreq[w] = (jdFreq[w] || 0) + 1; });
     const topJdWords = jdUnique.sort((a, b) => (jdFreq[b] || 0) - (jdFreq[a] || 0)).slice(0, 50);
-    const matches = topJdWords.filter(w => resumeWords.includes(w));
+    const matches = topJdWords.filter(w => resumeWords.has(w));
     keywordRelevance = Math.round((matches.length / Math.max(topJdWords.length, 1)) * 100);
   }
-
-  const impactScore = Math.min(100, Math.round((metricScore + verbScore) * 2));
 
   const totalScore = Math.round(
     (contentQuality * 0.30) +
@@ -171,8 +235,8 @@ exports.scoreResume = async (resumeLatex, resumeData = {}, jobDescription = '') 
       parseability
     },
     suggestions: [
-      ...(actionVerbs.count < 5 ? ['Add more action verbs — aim for at least 5 across your resume'] : []),
-      ...(quantifiedMetrics < 3 ? ['Include quantifiable metrics — percentages, dollar amounts, or scale numbers'] : []),
+      ...(actionVerbs.count < TARGET_ACTION_VERBS ? [`Add more action verbs — aim for at least ${TARGET_ACTION_VERBS} across your resume`] : []),
+      ...(quantifiedMetrics < TARGET_METRICS ? ['Include quantifiable metrics — percentages, dollar amounts, or scale numbers'] : []),
       ...(sectionCheck.missing.length > 0 ? [`Missing standard sections: ${sectionCheck.missing.join(', ')}`] : []),
       ...formattingWarnings
     ]
