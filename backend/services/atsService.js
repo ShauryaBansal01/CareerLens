@@ -16,6 +16,13 @@ const STANDARD_SECTION_HEADERS = [
   { name: 'Certifications', aliases: ['certificates', 'licenses', 'accreditations'] },
 ];
 
+// Number of standard sections at which a resume earns full section marks.
+const SECTIONS_FOR_FULL_MARKS = 4;
+
+// Percentage of the resume that can be matched keywords before it reads as
+// stuffing rather than relevance.
+const STUFFING_THRESHOLD = 15;
+
 function stripLatex(text) {
   if (!text) return '';
   return text
@@ -75,12 +82,12 @@ function checkParseability(latexText) {
     contactFound: foundContact,
     sectionsFound: sectionsPresent,
     contactCompleteness: foundContact.length >= 2 ? 100 : foundContact.length >= 1 ? 50 : 0,
-    sectionCompleteness: Math.round((sectionsPresent.length / Math.min(STANDARD_SECTION_HEADERS.length, 4)) * 100),
-    score: Math.round((
+    // Clamped: 6 possible headers over a divisor of 4 previously yielded 150%.
+    sectionCompleteness: Math.min(100, Math.round((sectionsPresent.length / SECTIONS_FOR_FULL_MARKS) * 100)),
+    score:
       (contentRatio > 0.4 ? 30 : contentRatio > 0.2 ? 15 : 0) +
       (sectionsPresent.length >= 3 ? 30 : sectionsPresent.length >= 2 ? 20 : 10) +
       (foundContact.length >= 2 ? 40 : foundContact.length >= 1 ? 20 : 0)
-    ) * (100 / 100))
   };
 }
 
@@ -112,7 +119,23 @@ function checkFormatCompliance(latexText) {
 
 function analyzeKeywords(latexText, jobDescription) {
   if (!jobDescription || jobDescription.length < 20) {
-    return { keywords: [], keywordMatches: [], density: 0, score: 100 };
+    // `score: null` means "not applicable", and analyzeATS re-normalises the
+    // remaining weights around it.
+    //
+    // This used to return 100. Since keyword relevance carries 40% of the
+    // overall score, omitting a job description handed the user a free 40
+    // points — so pasting the real job description, the thing we want them to
+    // do, made their score go *down*.
+    return {
+      topKeywords: [],
+      keywordMatches: [],
+      matchRatio: 0,
+      matchCount: 0,
+      totalKeywords: 0,
+      keywordDensity: 0,
+      score: null,
+      applicable: false,
+    };
   }
 
   const plainText = stripLatex(latexText).toLowerCase();
@@ -151,16 +174,32 @@ function analyzeKeywords(latexText, jobDescription) {
   const matchCount = keywordMatches.filter(m => m.found).length;
   const matchRatio = matchCount / Math.max(keywordMatches.length, 1);
 
+  // Density = how much of the resume is matched keywords.
+  //
+  // This previously summed each keyword's frequency *in the job description*
+  // and divided by the resume's length — two different corpora, so the figure
+  // meant nothing. Worse, it rose with match quality, so a well-targeted resume
+  // crossed the "keyword stuffing" threshold and was penalised: matching
+  // resumes scored *below* irrelevant ones.
+  const resumeFreq = {};
+  resumeWords.forEach((w) => { resumeFreq[w] = (resumeFreq[w] || 0) + 1; });
+
   const totalResumeWords = resumeWords.length;
-  const matchedResumeCount = keywordMatches
+  const matchedOccurrences = keywordMatches
     .filter(m => m.found)
-    .reduce((sum, m) => sum + m.frequency, 0);
+    .reduce((sum, m) => sum + (resumeFreq[m.keyword] || 0), 0);
+
   const keywordDensity = totalResumeWords > 0
-    ? parseFloat(((matchedResumeCount / totalResumeWords) * 100).toFixed(2))
+    ? parseFloat(((matchedOccurrences / totalResumeWords) * 100).toFixed(2))
     : 0;
 
-  const densityScore = keywordDensity > 10 ? Math.max(0, 100 - (keywordDensity - 10) * 5) : Math.min(100, (keywordDensity / 3) * 100);
-  const finalScore = Math.round((matchRatio * 0.6 + (densityScore / 100) * 0.4) * 100);
+  // Coverage of the job description's vocabulary is the signal. Density is only
+  // a guard against genuine stuffing, applied as a bounded penalty so the score
+  // stays monotonic in match quality.
+  const stuffingPenalty = keywordDensity > STUFFING_THRESHOLD
+    ? Math.min(30, Math.round((keywordDensity - STUFFING_THRESHOLD) * 3))
+    : 0;
+  const finalScore = Math.max(0, Math.round(matchRatio * 100) - stuffingPenalty);
 
   return {
     topKeywords: jdKeywords.slice(0, 10),
@@ -169,7 +208,8 @@ function analyzeKeywords(latexText, jobDescription) {
     matchCount,
     totalKeywords: keywordMatches.length,
     keywordDensity,
-    score: finalScore
+    score: finalScore,
+    applicable: true,
   };
 }
 
@@ -193,20 +233,33 @@ exports.analyzeATS = async (resumeLatex, resumeData = {}, jobDescription = '') =
   const formatCompliance = checkFormatCompliance(latexText);
   const keywordAnalysis = analyzeKeywords(latexText, jobDescription);
 
-  const overallScore = Math.round(
-    (parseability.score * 0.35) +
-    (formatCompliance.score * 0.25) +
-    (keywordAnalysis.score * 0.40)
-  );
+  // Re-normalise so a missing job description neither inflates nor deflates the
+  // result — the remaining dimensions simply carry proportionally more weight.
+  const WEIGHTS = { parseability: 0.35, format: 0.25, keyword: 0.40 };
+  const keywordsApplicable = keywordAnalysis.score !== null;
+
+  const weightedSum =
+    parseability.score * WEIGHTS.parseability +
+    formatCompliance.score * WEIGHTS.format +
+    (keywordsApplicable ? keywordAnalysis.score * WEIGHTS.keyword : 0);
+
+  const totalWeight = WEIGHTS.parseability + WEIGHTS.format + (keywordsApplicable ? WEIGHTS.keyword : 0);
+
+  const overallScore = Math.round(weightedSum / totalWeight);
 
   const checks = [
-    { category: 'parseability', passed: parseability.score >= 70, detail: `ATS text extraction ratio: ${parseability.contentRatio * 100}%` },
+    // Math.round, because contentRatio is a float: 0.29 * 100 rendered as
+    // "28.999999999999996%" in the UI.
+    { category: 'parseability', passed: parseability.score >= 70, detail: `ATS text extraction ratio: ${Math.round(parseability.contentRatio * 100)}%` },
     { category: 'parseability', passed: parseability.sectionsFound.length >= 3, detail: `Standard sections found: ${parseability.sectionsFound.join(', ') || 'none'}` },
     { category: 'parseability', passed: parseability.contactFound.length >= 2, detail: `Contact info found: ${parseability.contactFound.join(', ') || 'incomplete'}` },
     { category: 'format', passed: formatCompliance.violations.filter(v => v.type === 'critical').length === 0, detail: `Format violations: ${formatCompliance.violations.length}` },
     { category: 'format', passed: formatCompliance.score >= 70, detail: `Format compliance score: ${formatCompliance.score}/100` },
-    { category: 'keywords', passed: keywordAnalysis.matchRatio >= 0.5, detail: `Keyword match rate: ${Math.round(keywordAnalysis.matchRatio * 100)}%` },
-    { category: 'keywords', passed: keywordAnalysis.score >= 60, detail: `Keyword score: ${keywordAnalysis.score}/100` },
+    // Keyword checks only make sense against a job description.
+    ...(keywordsApplicable ? [
+      { category: 'keywords', passed: keywordAnalysis.matchRatio >= 0.5, detail: `Keyword match rate: ${Math.round(keywordAnalysis.matchRatio * 100)}%` },
+      { category: 'keywords', passed: keywordAnalysis.score >= 60, detail: `Keyword score: ${keywordAnalysis.score}/100` },
+    ] : []),
   ];
 
   const warnings = formatCompliance.violations
@@ -216,7 +269,7 @@ exports.analyzeATS = async (resumeLatex, resumeData = {}, jobDescription = '') =
   const criticalIssues = [
     ...formatCompliance.violations.filter(v => v.type === 'critical').map(v => v.message),
     ...(parseability.score < 50 ? ['Low ATS parseability — text extraction may fail'] : []),
-    ...(keywordAnalysis.score < 40 ? ['Poor keyword alignment with job description'] : []),
+    ...(keywordsApplicable && keywordAnalysis.score < 40 ? ['Poor keyword alignment with job description'] : []),
   ];
 
   return {
