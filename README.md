@@ -10,7 +10,7 @@ Build, analyze, and tailor your resume with CareerLens. Upload your resume, gene
 
 ## Features
 
-Everything you need to land your next role — a complete suite of AI-powered tools designed to optimize every step of your job search.
+Everything you need to land your next role — a complete suite of AI-powered tools designed to optimize every step of your resume building .
 
 | Feature | What it does |
 | --- | --- |
