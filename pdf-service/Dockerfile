@@ -15,9 +15,26 @@ RUN mvn -B -DskipTests package
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Never run as root.
-RUN addgroup -S app && adduser -S app -G app
+# Alpine ships almost no fonts, so PDFBox substituted a fallback face for the
+# standard-14 (Helvetica, Times) on every uploaded resume. That matters here
+# beyond appearance: column detection measures glyph X positions, and a
+# substituted face has different metrics than the one the PDF asked for.
+# Liberation is metric-compatible with the Helvetica/Arial family, so the
+# positions PDFBox reports now match what the document intended.
+#
+# This does not eliminate the first-request font scan (~70ms) — PDFBox builds
+# its own cache lazily and there is no supported way to prime it at build time.
+RUN apk add --no-cache ttf-dejavu ttf-liberation fontconfig
+
+# Never run as root. The home directory must exist and be writable: PDFBox
+# caches its font scan in $HOME/.pdfbox.cache, and when it cannot write there it
+# repeats the full scan on every request rather than just the first.
+RUN addgroup -S app && adduser -S app -G app -h /home/app \
+ && mkdir -p /home/app && chown -R app:app /home/app
+ENV HOME=/home/app
+
 USER app
+RUN fc-cache -f > /dev/null 2>&1
 
 COPY --from=build /app/target/pdf-service-*.jar app.jar
 

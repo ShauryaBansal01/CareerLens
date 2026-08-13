@@ -83,6 +83,12 @@ docker build -t careerlens-pdf-service .
 docker run -p 8080:8080 -e PDF_SERVICE_TOKEN=your-secret careerlens-pdf-service
 ```
 
+The image installs Liberation and DejaVu fonts. Alpine ships almost none, and
+without them PDFBox substitutes a fallback face for the standard-14 fonts
+(Helvetica, Times). That is not cosmetic here — column detection measures glyph
+X positions, and a substituted face has different metrics than the document
+asked for. Liberation is metric-compatible with the Helvetica/Arial family.
+
 Then point the Node backend at it:
 
 ```
