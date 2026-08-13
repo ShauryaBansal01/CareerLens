@@ -105,6 +105,32 @@ cd frontend && npm run dev    # http://localhost:5173
 
 ---
 
+## Deployment
+
+The frontend deploys to Vercel and the backend to Render, both from `main`.
+
+The optional Java PDF layout service (`pdf-service/`) is declared as a Render
+Blueprint in [`render.yaml`](render.yaml). From the Render dashboard choose
+**Blueprints → New Blueprint Instance** and point it at this repository; the
+Docker runtime, root directory, `/health` check and a generated
+`PDF_SERVICE_TOKEN` are all applied from that file.
+
+Then set three variables on the **backend** service so it starts using it:
+
+| Variable | Value |
+| --- | --- |
+| `PDF_SERVICE_URL` | the deployed service URL |
+| `PDF_SERVICE_TOKEN` | must match the value Render generated for the service |
+| `PDF_SERVICE_TIMEOUT_MS` | `30000` on the free tier |
+
+The timeout override matters: the default is 15s, and a cold JVM on a free
+instance takes 10–20s to answer. Without it the first upload after an idle
+period times out and silently falls back to `pdf-parse`, losing the layout
+warnings. Leaving the service undeployed entirely is also supported — uploads
+work exactly as before, minus those warnings.
+
+---
+
 ## License
 
 Distributed under the **MIT License**. See `LICENSE` for more information.

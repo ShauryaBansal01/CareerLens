@@ -43,6 +43,79 @@ const ScoreRing = ({ score, size = 80 }) => {
   );
 };
 
+// ── ATS compliance summary ─────────────────────────────────────────────────────
+// This used to render only counts, so a user saw a red "1 critical issue" badge
+// with no way to find out what the issue was. The messages carry the entire
+// actionable payload — including the uploaded-PDF layout warnings, which are the
+// only signal that a resume is multi-column and will be scrambled by a real ATS.
+const AtsComplianceSummary = ({ analysis }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  const critical = analysis.criticalIssues || [];
+  const warnings = analysis.warnings || [];
+  const passed = analysis.checks?.filter((c) => c.passed).length || 0;
+  const total = analysis.checks?.length || 0;
+  const hasDetail = critical.length > 0 || warnings.length > 0;
+
+  return (
+    <div className="mt-4 pt-3 border-t border-border-color">
+      <div className="flex items-center flex-wrap gap-x-4 gap-y-1.5">
+        <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">ATS Compliance</span>
+        <span
+          className="text-[11px] font-semibold"
+          style={{ color: analysis.overallScore >= 70 ? '#10b981' : analysis.overallScore >= 40 ? '#f59e0b' : '#ef4444' }}
+        >
+          Score: {analysis.overallScore}/100
+        </span>
+        <span className="flex items-center gap-1 text-[11px] text-text-muted">
+          <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+          {passed}/{total} checks passed
+        </span>
+        {critical.length > 0 && (
+          <span className="flex items-center gap-1 text-[11px] text-red-500">
+            <AlertCircle className="w-3 h-3" />
+            {critical.length} critical {critical.length === 1 ? 'issue' : 'issues'}
+          </span>
+        )}
+        {warnings.length > 0 && (
+          <span className="flex items-center gap-1 text-[11px] text-amber-500">
+            <AlertTriangle className="w-3 h-3" />
+            {warnings.length} {warnings.length === 1 ? 'warning' : 'warnings'}
+          </span>
+        )}
+        {hasDetail && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
+            className="ml-auto flex items-center gap-1 text-[11px] font-medium text-blue-600 dark:text-blue-400 bg-transparent border-none cursor-pointer hover:underline"
+          >
+            {expanded ? 'Hide details' : 'View details'}
+            {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          </button>
+        )}
+      </div>
+
+      {expanded && hasDetail && (
+        <ul className="mt-3 space-y-1.5 list-none pl-0">
+          {critical.map((issue, i) => (
+            <li key={`critical-${i}`} className="flex items-start gap-2 text-[11px] leading-relaxed text-text-main">
+              <AlertCircle className="w-3 h-3 mt-0.5 shrink-0 text-red-500" />
+              <span>{issue}</span>
+            </li>
+          ))}
+          {warnings.map((warning, i) => (
+            <li key={`warning-${i}`} className="flex items-start gap-2 text-[11px] leading-relaxed text-text-muted">
+              <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0 text-amber-500" />
+              <span>{warning}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
+
 // ── Collapsible feedback card (with location + quote + preview) ────────────────
 const FeedbackCard = ({ item, type }) => {
   const [open, setOpen] = useState(false);
@@ -894,32 +967,7 @@ const ResumeAI = () => {
 
                     {/* ATS compliance summary (inline, auto-fetched) */}
                     {improveFeedback.atsAnalysis && (
-                      <div className="mt-4 pt-3 border-t border-border-color">
-                        <div className="flex items-center flex-wrap gap-x-4 gap-y-1.5">
-                          <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">ATS Compliance</span>
-                          <span className="text-[11px] font-semibold" style={{
-                            color: improveFeedback.atsAnalysis.overallScore >= 70 ? '#10b981' : improveFeedback.atsAnalysis.overallScore >= 40 ? '#f59e0b' : '#ef4444'
-                          }}>
-                            Score: {improveFeedback.atsAnalysis.overallScore}/100
-                          </span>
-                          <span className="flex items-center gap-1 text-[11px] text-text-muted">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                            {improveFeedback.atsAnalysis.checks?.filter(c => c.passed).length || 0}/{improveFeedback.atsAnalysis.checks?.length || 0} checks passed
-                          </span>
-                          {improveFeedback.atsAnalysis.criticalIssues?.length > 0 && (
-                            <span className="flex items-center gap-1 text-[11px] text-red-500">
-                              <AlertCircle className="w-3 h-3" />
-                              {improveFeedback.atsAnalysis.criticalIssues.length} critical {improveFeedback.atsAnalysis.criticalIssues.length === 1 ? 'issue' : 'issues'}
-                            </span>
-                          )}
-                          {improveFeedback.atsAnalysis.warnings?.length > 0 && (
-                            <span className="flex items-center gap-1 text-[11px] text-amber-500">
-                              <AlertTriangle className="w-3 h-3" />
-                              {improveFeedback.atsAnalysis.warnings.length} warnings
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                      <AtsComplianceSummary analysis={improveFeedback.atsAnalysis} />
                     )}
 
                     {/* Summary + actions */}
