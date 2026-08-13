@@ -151,7 +151,7 @@ const server = app.listen(PORT, () => {
 
 // ── Graceful Shutdown ─────────────────────────────────────────────────
 const { cleanup: cleanupAiCache } = require('./middleware/aiCache');
-const { cacheClose } = require('./config/redis');
+const { cacheClose } = require('./config/cache');
 const { closeEmailTransport } = require('./utils/sendEmail');
 const mongoose = require('mongoose');
 

@@ -4,9 +4,9 @@ const rateLimit = require('express-rate-limit');
  * NOTE ON STORAGE: these limiters use express-rate-limit's default in-memory
  * store, so counters are per-process and reset on deploy. That is adequate for
  * the current single-instance deployment. If the backend is ever scaled to
- * more than one instance, swap in a shared store (e.g. rate-limit-redis backed
- * by the REDIS_URL already used by config/redis.js) or the effective limit
- * becomes `max * instanceCount`.
+ * more than one instance, this needs a shared store or the effective limit
+ * becomes `max * instanceCount` — the same caveat applies to the response
+ * cache in config/cache.js.
  *
  * These all key off `req.ip`, which is only meaningful because server.js sets
  * `trust proxy` — without it every request appears to come from the load

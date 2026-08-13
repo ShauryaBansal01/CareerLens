@@ -2,7 +2,7 @@
 const Resume = require('../models/Resume');
 const ResumeVersion = require('../models/ResumeVersion');
 const UserProfile = require('../models/UserProfile');
-const pdfParse = require('pdf-parse');
+const { extractPdf } = require('../services/pdfExtractionService');
 const fs = require('fs');
 const path = require('path');
 const { invalidateUserCache } = require('../middleware/aiCache');
@@ -61,8 +61,16 @@ exports.uploadResume = async (req, res) => {
       return res.status(400).json({ message: 'That file is not a valid PDF.' });
     }
 
-    const data = await pdfParse(req.file.buffer);
-    const rawText = data.text;
+    // Layout-aware when pdf-service is configured, plain pdf-parse otherwise.
+    const extraction = await extractPdf(req.file.buffer);
+    const rawText = extraction.text;
+    const sourceLayout = {
+      pageCount: extraction.pageCount,
+      columnCount: extraction.columnCount,
+      hasImages: extraction.hasImages,
+      warnings: extraction.layoutWarnings,
+      extractedBy: extraction.source,
+    };
 
     let extractedSkills = [];
     let education = 'Not explicitly found';
@@ -167,6 +175,7 @@ exports.uploadResume = async (req, res) => {
         resume.education = education;
         resume.experience = experience;
         resume.rawText = rawText;
+        resume.sourceLayout = sourceLayout;
         if(rawLatexCode) {
            resume.rawLatexCode = rawLatexCode;
         }
@@ -178,7 +187,8 @@ exports.uploadResume = async (req, res) => {
           education,
           experience,
           rawText,
-          rawLatexCode
+          rawLatexCode,
+          sourceLayout
         });
       }
       
@@ -198,6 +208,12 @@ exports.uploadResume = async (req, res) => {
 
     res.status(200).json(resume);
   } catch (error) {
+    // An unreadable PDF is the user's problem to fix, not a server fault —
+    // 422 with a message they can act on beats a blanket 500.
+    if (error.code === 'PDF_PARSE_FAILED') {
+      console.warn('PDF parse failed:', error.cause?.message || error.message);
+      return res.status(422).json({ message: error.message });
+    }
     console.error(error);
     res.status(500).json({ message: 'Server error processing resume' });
   }
@@ -323,6 +339,7 @@ good = things already done well (2-3 items)`;
       const atsResult = await atsService.analyzeATS(resume.rawLatexCode || '', {
         rawText: resume.rawText || '',
         extractedSkills: resume.extractedSkills || [],
+        sourceLayout: resume.sourceLayout,
       }, '');
       feedback.atsAnalysis = {
         overallScore: atsResult.overallScore,
@@ -940,6 +957,7 @@ exports.getATSScore = async (req, res) => {
       rawLatexCode: resume.rawLatexCode || '',
       rawText: resume.rawText || '',
       extractedSkills: resume.extractedSkills || [],
+      sourceLayout: resume.sourceLayout,
     };
 
     const atsResult = await atsService.analyzeATS(resume.rawLatexCode || '', resumeData, jobDescription || '');

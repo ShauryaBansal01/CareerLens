@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { cacheGet, cacheSet, cacheDel } = require('../config/redis');
+const { cacheGet, cacheSet, cacheDel } = require('../config/cache');
 
 const DEFAULT_TTL_MS = 5 * 60 * 1000;
 
@@ -38,7 +38,8 @@ async function invalidateUserCache(userId) {
 }
 
 function cleanup() {
-  // Redis handles TTL natively; in-memory fallback is ephemeral
+  // Entries carry their own expiry and are checked on read, so there is no
+  // sweep to run. The cache dies with the process.
 }
 
 module.exports = { aiCache, invalidateUserCache, cleanup };

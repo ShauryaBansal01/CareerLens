@@ -57,7 +57,6 @@ Fill in these values — the server exits on startup if `JWT_SECRET` is missing:
 | `GEMINI_API_KEY` | ✅ | The default AI provider. Users can add their own OpenAI or Anthropic keys in-app. |
 | `ENCRYPTION_KEY` | ✅ | 32-byte hex, used to encrypt user-supplied API keys. Generate with:<br>`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
 | `SMTP_EMAIL`<br>`SMTP_PASSWORD` | ✅ | Required to deliver signup and password-reset codes. |
-| `REDIS_URL` | — | Optional. Without it, caching falls back to an in-process store. |
 | `SENTRY_DSN` | — | Optional error reporting. |
 
 ### 3. Configure the frontend

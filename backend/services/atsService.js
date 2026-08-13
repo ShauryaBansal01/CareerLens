@@ -213,6 +213,31 @@ function analyzeKeywords(latexText, jobDescription) {
   };
 }
 
+/**
+ * Layout problems found in the *uploaded PDF*, as opposed to the LaTeX source.
+ *
+ * The regex checks in this file can only inspect LaTeX, so a two-column resume
+ * uploaded as a PDF — precisely the layout ATS parsers scramble — was invisible
+ * to the scorer. pdf-service supplies these; without it the list is empty and
+ * behaviour is unchanged.
+ */
+function sourceLayoutIssues(resumeData) {
+  const layout = resumeData.sourceLayout;
+  if (!layout || !Array.isArray(layout.warnings)) return { critical: [], warnings: [] };
+
+  const critical = [];
+  const warnings = [];
+
+  for (const message of layout.warnings) {
+    // Multi-column and scanned documents break extraction outright; page count
+    // is advice.
+    if (/multi-column|scanned/i.test(message)) critical.push(message);
+    else warnings.push(message);
+  }
+
+  return { critical, warnings };
+}
+
 exports.analyzeATS = async (resumeLatex, resumeData = {}, jobDescription = '') => {
   const latexText = resumeLatex || resumeData.rawLatexCode || '';
 
@@ -262,11 +287,17 @@ exports.analyzeATS = async (resumeLatex, resumeData = {}, jobDescription = '') =
     ] : []),
   ];
 
-  const warnings = formatCompliance.violations
-    .filter(v => v.type === 'medium' || v.type === 'low')
-    .map(v => v.message);
+  const layoutIssues = sourceLayoutIssues(resumeData);
+
+  const warnings = [
+    ...formatCompliance.violations
+      .filter(v => v.type === 'medium' || v.type === 'low')
+      .map(v => v.message),
+    ...layoutIssues.warnings,
+  ];
 
   const criticalIssues = [
+    ...layoutIssues.critical,
     ...formatCompliance.violations.filter(v => v.type === 'critical').map(v => v.message),
     ...(parseability.score < 50 ? ['Low ATS parseability — text extraction may fail'] : []),
     ...(keywordsApplicable && keywordAnalysis.score < 40 ? ['Poor keyword alignment with job description'] : []),

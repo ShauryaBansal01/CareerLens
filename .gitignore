@@ -12,6 +12,10 @@ dist/
 build/
 .next/
 
+# Java build output (pdf-service). The fat jar is ~23MB — built, not committed.
+target/
+*.class
+
 # Logs
 *.log
 npm-debug.log*

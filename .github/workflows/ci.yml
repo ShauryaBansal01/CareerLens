@@ -27,6 +27,23 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  pdf-service:
+    name: PDF Service — Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pdf-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+      # The Maven wrapper is committed, so no Maven install step is needed and
+      # CI builds with the exact version the project pins.
+      - run: ./mvnw -B test
+
   backend:
     name: Backend — Lint & Test
     runs-on: ubuntu-latest

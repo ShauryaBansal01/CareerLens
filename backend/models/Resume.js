@@ -21,7 +21,18 @@ const resumeSchema = new mongoose.Schema({
   rawLatexCode: {
     type: String,
     default: ""
-  }
+  },
+
+  // Layout facts about the *uploaded* PDF, populated only when pdf-service is
+  // configured. pdf-parse cannot produce these — it returns a flat string with
+  // no glyph geometry — so they stay null on the fallback path.
+  sourceLayout: {
+    pageCount:   { type: Number, default: null },
+    columnCount: { type: Number, default: null },
+    hasImages:   { type: Boolean, default: false },
+    warnings:    { type: [String], default: [] },
+    extractedBy: { type: String, default: null },
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Resume', resumeSchema);
