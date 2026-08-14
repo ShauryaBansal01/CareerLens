@@ -34,4 +34,10 @@ const resumeVersionSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+// Compound rather than a plain `user` index: the version list filters on user
+// and sorts by updatedAt descending. With both fields in the index Mongo walks
+// it in order and returns rows already sorted; with only `user` it would fetch
+// every match and sort them in memory, which is also capped at 32MB.
+resumeVersionSchema.index({ user: 1, updatedAt: -1 });
+
 module.exports = mongoose.model('ResumeVersion', resumeVersionSchema);

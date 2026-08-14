@@ -10,6 +10,9 @@ import {
   UploadCloud,
   KeyRound,
   History,
+  Route,
+  Rocket,
+  ExternalLink,
 } from 'lucide-react';
 import api from '../services/api';
 import { Card } from '../components/ui/Card';
@@ -19,6 +22,17 @@ import { Badge } from '../components/ui/Badge';
 const PROFICIENCY_VARIANT = { strong: 'success', moderate: 'primary', basic: 'secondary' };
 const PRIORITY_VARIANT = { critical: 'destructive', important: 'primary', 'nice-to-have': 'secondary' };
 const PRIORITY_ORDER = { critical: 0, important: 1, 'nice-to-have': 2 };
+
+const DIFFICULTY_VARIANT = { Beginner: 'success', Intermediate: 'primary', Advanced: 'destructive' };
+
+const ROADMAP_PHASES = [
+  { key: 'beginner', label: 'Foundations', weeks: 'Weeks 1–4' },
+  { key: 'intermediate', label: 'Applied', weeks: 'Weeks 5–10' },
+  { key: 'advanced', label: 'Production', weeks: 'Weeks 11–16' },
+];
+
+const hasRoadmapContent = (roadmap) =>
+  ROADMAP_PHASES.some(({ key }) => (roadmap?.[key]?.length ?? 0) > 0);
 
 const formatDate = (value) =>
   value ? new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
@@ -50,6 +64,17 @@ const SkillGap = () => {
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState(null);
+
+  // The learning plan is a second, separate AI step. It is not folded into
+  // `runAnalysis` because it costs two more calls and is only useful once the
+  // user has actually looked at their gaps and decided to act on them.
+  //
+  // The roadmap is persisted server-side onto the UserAnalysis record, so it
+  // comes back for free with /analysis/latest. The project list is not — the
+  // endpoint returns it without saving — so it lives in component state and is
+  // regenerated on demand.
+  const [projects, setProjects] = useState([]);
+  const [buildingPlan, setBuildingPlan] = useState(false);
 
   // Load a stored result. This is a plain Mongo read — no AI call, no cost —
   // which is what lets the page restore itself on every visit.
@@ -100,6 +125,9 @@ const SkillGap = () => {
     setSelectedRoleId(roleId);
     setError(null);
     setRecord(null);
+    // Projects belong to the previous role's gaps — showing them against a new
+    // role would be actively misleading.
+    setProjects([]);
     // Only reach for a stored result — never analyse on selection, or simply
     // browsing the dropdown would bill an AI call per role.
     if (roleId && analyzedAt(roleId)) await loadStored(roleId);
@@ -117,6 +145,9 @@ const SkillGap = () => {
         { roleId: selectedRoleId, roleName: data.role, updatedAt: new Date().toISOString() },
         ...prev.filter((h) => h.roleId !== selectedRoleId),
       ]);
+      // A re-run produces a new gap set, so any plan built from the old one is
+      // stale. The server clears the stored roadmap for the same reason.
+      setProjects([]);
       toast.success(`Analysis complete for ${data.role}`);
     } catch (err) {
       const described = describeError(err);
@@ -129,10 +160,54 @@ const SkillGap = () => {
 
   const analysis = showingSelectedRole ? record?.analysis : null;
   const scoring = showingSelectedRole ? record?.scoring : null;
+  const roadmap = showingSelectedRole ? record?.roadmap : null;
 
   const missingSorted = [...(analysis?.missingSkills || [])].sort(
     (a, b) => (PRIORITY_ORDER[a.priority] ?? 9) - (PRIORITY_ORDER[b.priority] ?? 9)
   );
+
+  /**
+   * Builds the learning plan: a phased roadmap plus concrete portfolio projects,
+   * both derived from the gaps this analysis found.
+   *
+   * The two calls run concurrently because neither depends on the other, and
+   * they are settled rather than raced so one failing still shows the other —
+   * a roadmap with no project ideas is far better than an error page.
+   */
+  const buildPlan = async () => {
+    const missingSkills = missingSorted.map((item) => item.skill);
+    if (!missingSkills.length) return;
+
+    setBuildingPlan(true);
+    setError(null);
+
+    const [roadmapResult, projectsResult] = await Promise.allSettled([
+      // `roleName` from a stored record, `role` from a fresh analyze response.
+      api.post('/roadmap/generate', { roleName: record.roleName ?? record.role, missingSkills }),
+      api.post('/projects/recommend', { missingSkills }),
+    ]);
+
+    if (roadmapResult.status === 'fulfilled') {
+      const { role: _role, ...phases } = roadmapResult.value.data;
+      setRecord((prev) => (prev ? { ...prev, roadmap: phases } : prev));
+    }
+
+    if (projectsResult.status === 'fulfilled') {
+      setProjects(Array.isArray(projectsResult.value.data) ? projectsResult.value.data : []);
+    }
+
+    if (roadmapResult.status === 'rejected' && projectsResult.status === 'rejected') {
+      const described = describeError(roadmapResult.reason);
+      setError(described);
+      toast.error(described.text);
+    } else if (roadmapResult.status === 'rejected' || projectsResult.status === 'rejected') {
+      toast.error('Part of the plan could not be generated. Showing what came back.');
+    } else {
+      toast.success('Learning plan ready');
+    }
+
+    setBuildingPlan(false);
+  };
 
   return (
     <div className="min-h-[calc(100vh-64px)] px-4 py-8 md:py-12 relative z-10">
@@ -317,6 +392,133 @@ const SkillGap = () => {
                 )}
               </Card>
             </div>
+
+            {/* ── Learning plan ────────────────────────────────────────── */}
+            {missingSorted.length > 0 && (
+              <Card className="p-6">
+                <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Route className="h-5 w-5 text-accent-600" aria-hidden="true" />
+                      <h2 className="text-xl font-bold text-text-main tracking-tight">Learning plan</h2>
+                    </div>
+                    <p className="text-[14px] text-text-muted">
+                      A phased roadmap and portfolio projects built from the {missingSorted.length} skill
+                      {missingSorted.length === 1 ? '' : 's'} above.
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={buildPlan}
+                    disabled={buildingPlan}
+                    isLoading={buildingPlan}
+                    variant={hasRoadmapContent(roadmap) ? 'outline' : 'default'}
+                    icon={Sparkles}
+                    className="min-h-[44px]"
+                  >
+                    {buildingPlan
+                      ? 'Building…'
+                      : hasRoadmapContent(roadmap)
+                        ? 'Rebuild plan'
+                        : 'Build learning plan'}
+                  </Button>
+                </div>
+
+                {!hasRoadmapContent(roadmap) && !projects.length && !buildingPlan && (
+                  <p className="text-sm text-text-muted">
+                    Not generated yet. Building this uses two AI calls.
+                  </p>
+                )}
+
+                {hasRoadmapContent(roadmap) && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {ROADMAP_PHASES.map(({ key, label, weeks }) => (
+                      <div key={key} className="rounded-xl border border-border-color p-4">
+                        <div className="mb-3">
+                          <p className="text-sm font-bold text-text-main">{label}</p>
+                          <p className="text-xs text-text-muted">{weeks}</p>
+                        </div>
+                        {roadmap[key]?.length ? (
+                          <ul className="space-y-2.5">
+                            {roadmap[key].map((step, i) => (
+                              <li key={`${key}-${step.skill || i}`} className="text-sm">
+                                <div className="flex items-start justify-between gap-2">
+                                  <span className="font-medium text-text-main first-letter:uppercase">
+                                    {step.skill}
+                                  </span>
+                                  {step.timeEstimate && (
+                                    <span className="text-[11px] text-text-muted shrink-0 mt-0.5">
+                                      {step.timeEstimate}
+                                    </span>
+                                  )}
+                                </div>
+                                {step.resource && (
+                                  <a
+                                    href={step.resource}
+                                    target="_blank"
+                                    /* noreferrer as well as noopener: without it the
+                                       destination receives this app's URL as referrer. */
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-[11px] text-accent-600 hover:underline mt-0.5"
+                                  >
+                                    Resource <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                                  </a>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-xs text-text-muted">Nothing scheduled for this phase.</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {projects.length > 0 && (
+                  <div className="mt-6 pt-6 border-t border-border-color">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Rocket className="h-5 w-5 text-accent-600" aria-hidden="true" />
+                      <h3 className="text-lg font-bold text-text-main tracking-tight">
+                        Portfolio projects ({projects.length})
+                      </h3>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                      {projects.map((project, i) => (
+                        <div key={project.title || i} className="rounded-xl border border-border-color p-4">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <p className="text-sm font-bold text-text-main">{project.title}</p>
+                            {project.difficulty && (
+                              <Badge variant={DIFFICULTY_VARIANT[project.difficulty] || 'secondary'}>
+                                {project.difficulty}
+                              </Badge>
+                            )}
+                          </div>
+                          {project.description && (
+                            <p className="text-xs text-text-muted leading-relaxed mb-3">{project.description}</p>
+                          )}
+                          {project.requiredSkills?.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mb-2">
+                              {project.requiredSkills.map((skill) => (
+                                <span
+                                  key={skill}
+                                  className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-text-muted"
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {project.deployTarget && (
+                            <p className="text-[11px] text-text-muted">Deploy to {project.deployTarget}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </Card>
+            )}
           </div>
         )}
 

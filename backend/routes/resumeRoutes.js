@@ -19,7 +19,6 @@ const {
   generateCoverLetter,
   optimizeResumeFromFeedback,
   rewriteSection,
-  getATSScore,
 } = require('../controllers/resumeController');
 const { protect } = require('../middleware/authMiddleware');
 const injectAI = require('../middleware/injectAI');
@@ -52,7 +51,6 @@ router.post('/optimize', aiLimiter, validate(schemas.optimizeForCompany), aiCach
 router.post('/optimize-from-feedback', aiLimiter, validate(schemas.optimizeResumeFromFeedback), aiCache, injectAI, optimizeResumeFromFeedback);
 router.post('/rewrite-section', aiLimiter, validate(schemas.rewriteSection), injectAI, rewriteSection);
 router.post('/cover-letter', aiLimiter, validate(schemas.coverLetter), injectAI, generateCoverLetter);
-router.post('/ats-score', aiLimiter, injectAI, getATSScore);
 
 // LaTeX Routes
 router.get('/latex', getLatexCode);
