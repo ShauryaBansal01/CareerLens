@@ -35,4 +35,10 @@ const resumeSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
+// `Resume.findOne({ user })` is the single hottest query in the app — it runs on
+// essentially every authenticated page load and from twelve call sites. Without
+// this index that is a full collection scan, so read latency grows linearly with
+// total users rather than staying flat.
+resumeSchema.index({ user: 1 });
+
 module.exports = mongoose.model('Resume', resumeSchema);

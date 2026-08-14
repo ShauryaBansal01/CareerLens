@@ -944,38 +944,11 @@ Return EXACTLY this JSON (no markdown):
 // @desc    Calculate ATS compatibility score
 // @route   POST /api/resume/ats-score
 // @access  Private
-exports.getATSScore = async (req, res) => {
-  try {
-    const { jobDescription } = req.body;
-
-    const resume = await Resume.findOne({ user: req.user.id });
-    if (!resume) {
-      return res.status(404).json({ message: 'No resume found. Please upload your resume first.' });
-    }
-
-    const resumeData = {
-      rawLatexCode: resume.rawLatexCode || '',
-      rawText: resume.rawText || '',
-      extractedSkills: resume.extractedSkills || [],
-      sourceLayout: resume.sourceLayout,
-    };
-
-    const atsResult = await atsService.analyzeATS(resume.rawLatexCode || '', resumeData, jobDescription || '');
-
-    const dimensionResult = await scoreService.scoreWithAI(req.ai, resume.rawLatexCode || '', resumeData, jobDescription || '');
-
-    res.status(200).json({
-      atsScore: atsResult.overallScore,
-      atsAnalysis: atsResult,
-      dimensionScores: dimensionResult.dimensions,
-      totalScore: dimensionResult.totalScore,
-      suggestions: dimensionResult.suggestions,
-      aiSummary: dimensionResult.aiSummary || '',
-    });
-  } catch (error) {
-    console.error('ATS Score Error:', error);
-    res.status(500).json({ message: 'Failed to calculate ATS score.' });
-  }
-};
+// `getATSScore` (POST /resume/ats-score) was removed here. It had no caller in
+// the frontend and returned the same atsAnalysis, dimensionScores and
+// suggestions that POST /resume/improve already produces — while running the
+// same two expensive AI-backed scoring passes. An unreferenced endpoint that
+// costs money per request is worth deleting rather than maintaining; the
+// behaviour is still reachable through /resume/improve.
 
 

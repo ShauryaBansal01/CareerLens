@@ -694,16 +694,25 @@ const ResumeAI = () => {
   };
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
-  const handleImprove = async () => {
+  // `forceFresh` is set by the Re-analyze button. The improve request has an
+  // empty body, so its server-side cache key is constant per user and a plain
+  // retry inside the 5-minute TTL replays the previous answer — which defeats
+  // the point of asking again. Only an explicit re-analyze bypasses the cache;
+  // the automatic first analysis still benefits from it.
+  const handleImprove = async ({ forceFresh = false } = {}) => {
     // Clear old optimize state
     if (optimizeFbTask) clearTask('resume-optimize-feedback');
     setAcceptedChanges({});
+
+    const requestCfg = forceFresh
+      ? { ...cfg, headers: { ...cfg.headers, 'Cache-Control': 'no-cache' } }
+      : cfg;
 
     startTask(
       'resume-improve',
       'Analyzing Resume',
       async () => {
-        const res = await api.post(`/resume/improve`, {}, cfg);
+        const res = await api.post(`/resume/improve`, {}, requestCfg);
         return res.data;
       },
       '/resume-ai',
@@ -901,7 +910,7 @@ const ResumeAI = () => {
                 <p className="text-sm text-text-muted mb-6 text-center max-w-[380px]">
                   Our AI will review your resume like a senior recruiter at a top tech company.
                 </p>
-                <Button onClick={handleImprove} className="gap-2">
+                <Button onClick={() => handleImprove()} className="gap-2">
                   Analyze My Resume
                   <ArrowRight className="w-4 h-4" />
                 </Button>
@@ -977,7 +986,7 @@ const ResumeAI = () => {
                       </p>
                       <div className="flex items-center gap-3 shrink-0">
                         <button
-                          onClick={() => { clearTask('resume-improve'); clearTask('resume-optimize-feedback'); handleImprove(); }}
+                          onClick={() => { clearTask('resume-improve'); clearTask('resume-optimize-feedback'); handleImprove({ forceFresh: true }); }}
                           className="text-xs text-blue-600 dark:text-blue-400 bg-transparent border-none cursor-pointer flex items-center gap-1 hover:underline"
                         >
                           <RefreshCw className="w-3 h-3" /> Re-analyze
