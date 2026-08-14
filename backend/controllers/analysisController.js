@@ -48,7 +48,17 @@ exports.analyzeSkills = async (req, res) => {
       { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
     );
 
-    res.status(200).json({ role: role.roleName, roleId: roleId.toString(), analysis, scoring });
+    // `roleName` mirrors what GET /analysis/latest returns for the same record.
+    // Without it the two endpoints describe the same entity with different field
+    // names, and a client that stores this response cannot use it where it uses
+    // the stored one. `role` is kept so existing callers keep working.
+    res.status(200).json({
+      role: role.roleName,
+      roleName: role.roleName,
+      roleId: roleId.toString(),
+      analysis,
+      scoring,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
