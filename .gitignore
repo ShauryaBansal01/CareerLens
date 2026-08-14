@@ -37,7 +37,12 @@ coverage/
 # Playwright run artifacts (traces, failure screenshots, HTML report)
 test-results/
 playwright-report/
+# Screenshots written by the e2e specs themselves, regenerated on every run.
+e2e-*.png
 
 # Local env files (only .env.example is tracked)
 frontend/.env
 backend/.env
+
+# Personal notes (interview prep) — local only, not part of the project.
+docs/

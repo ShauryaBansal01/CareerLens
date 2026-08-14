@@ -1,19 +1,41 @@
 const crypto = require('crypto');
 
-// The encryption key must be 32 bytes (256 bits) for aes-256-gcm
-// We fall back to a dummy key ONLY for development, but in production,
-// missing ENCRYPTION_KEY should throw an error.
+// The encryption key must be 32 bytes (256 bits) for aes-256-gcm.
+//
+// The fallback below is a constant published in this repository, so anything
+// encrypted under it is effectively plaintext. It is therefore allowed only
+// where it is explicitly safe.
+//
+// This check is deliberately an allow-list rather than `NODE_ENV === 'production'`.
+// Node does not default NODE_ENV to anything, and Render does not set it: a
+// deny-list would treat an unset value as "not production" and silently encrypt
+// real users' API keys under the public constant.
+const DEV_ENVIRONMENTS = ['development', 'test'];
+
+const DEV_FALLBACK_KEY = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+
 const getEncryptionKey = () => {
   if (process.env.ENCRYPTION_KEY) {
-    return Buffer.from(process.env.ENCRYPTION_KEY, 'hex');
+    const key = Buffer.from(process.env.ENCRYPTION_KEY, 'hex');
+    // A short hex string parses without error and yields a short buffer, which
+    // createCipheriv then rejects with an opaque message at call time. Fail
+    // here instead, where the cause is obvious.
+    if (key.length !== 32) {
+      throw new Error(
+        `ENCRYPTION_KEY must be 32 bytes (64 hex characters); got ${key.length} bytes.`
+      );
+    }
+    return key;
   }
-  
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('ENCRYPTION_KEY environment variable is missing in production');
+
+  if (!DEV_ENVIRONMENTS.includes(process.env.NODE_ENV)) {
+    throw new Error(
+      'ENCRYPTION_KEY is required unless NODE_ENV is "development" or "test". ' +
+      'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
+    );
   }
-  
-  // Dev fallback 32-byte hex string (64 characters)
-  return Buffer.from('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef', 'hex');
+
+  return Buffer.from(DEV_FALLBACK_KEY, 'hex');
 };
 
 const ALGORITHM = 'aes-256-gcm';

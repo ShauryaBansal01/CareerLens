@@ -14,12 +14,28 @@ function getCacheKey(req) {
   return `aicache:${userId}:${endpoint}:${bodyHash}`;
 }
 
+/**
+ * `POST /resume/improve` sends an empty body, so its cache key is constant for
+ * a given user and every call inside the TTL replays the first response. That
+ * made the "Re-analyze" button a no-op — the one action whose entire purpose is
+ * to produce a new answer.
+ *
+ * Honouring `Cache-Control: no-cache` lets the caller opt out explicitly. The
+ * response is still written back, so the refreshed result is what subsequent
+ * requests get rather than the stale one lingering.
+ */
+function wantsFreshResult(req) {
+  return /\bno-cache\b/i.test(req.headers['cache-control'] || '');
+}
+
 async function aiCache(req, res, next) {
   const key = getCacheKey(req);
 
-  const cached = await cacheGet(key);
-  if (cached) {
-    return res.status(200).json(cached);
+  if (!wantsFreshResult(req)) {
+    const cached = await cacheGet(key);
+    if (cached) {
+      return res.status(200).json(cached);
+    }
   }
 
   const originalJson = res.json.bind(res);
